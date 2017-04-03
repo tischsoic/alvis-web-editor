@@ -1,0 +1,22 @@
+{
+  "name": "alvis-web-editor",
+  "version": "0.0.0",
+  "description": "Alvis Web Editor",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tischsoic/alvis-web-editor.git"
+  },
+  "keywords": [
+    "alvis"
+  ],
+  "author": "Jakub Brzegowski",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tischsoic/alvis-web-editor/issues"
+  },
+  "homepage": "https://github.com/tischsoic/alvis-web-editor#readme"
+}
