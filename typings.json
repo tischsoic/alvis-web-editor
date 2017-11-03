@@ -1,0 +1,7 @@
+{
+    "name": "myKubaTypings",
+    "version": false,
+    "globalDependencies": {
+        "mxgraph": "file:mxGraph-typescript-types/types/js/mxClient.d.ts"
+    }
+}

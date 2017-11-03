@@ -1,12 +1,27 @@
+const webpack = require('webpack');
+const path = require('path');
+
+console.log(path.join(__dirname, "dist"))
 var clientConfig = {
-    entry: "./src/client/index.tsx",
+    entry: [
+        // 'react-hot-loader/patch',
+        'webpack-hot-middleware/client',
+        './src/client/index.tsx'
+    ],
+
     output: {
         filename: "bundle.js",
-        path: __dirname + "/dist"
+        path: path.join(__dirname, "dist"),
+        publicPath: '/dist/'
     },
 
     // Enable sourcemaps for debugging webpack's output.
     devtool: "source-map",
+
+    plugins: [
+        new webpack.HotModuleReplacementPlugin(),
+        // new webpack.NoEmitOnErrorsPlugin()
+    ],
 
     resolve: {
         // Add '.ts' and '.tsx' as resolvable extensions.
@@ -35,7 +50,7 @@ var clientConfig = {
 
 // In future beneath code should be changes, see for more information: http://stackoverflow.com/questions/29911491/using-webpack-on-server-side-of-nodejs
 // and look at this library: "webpack-node-externals".
-var path = require('path');
+// var path = require('path');
 var fs = require('fs');
 
 var nodeModules = {};
@@ -48,10 +63,12 @@ fs.readdirSync('node_modules')
   });
 
 var serverConfig = {
-    entry: "./src/server/index.ts",
+    // entry: "./src/server/server.ts",
+    entry: './server.js',
     output: {
         filename: "server.js",
-        path: __dirname + "/dist"
+        path: path.resolve(__dirname, "dist/"),
+        publicPath: path.resolve(__dirname, "dist/")
     },
     target: 'node',
 
@@ -85,4 +102,5 @@ var serverConfig = {
     // },
 };
 
-module.exports = [clientConfig, serverConfig];
+module.exports = [clientConfig] // Disabled server config for a while  //, serverConfig];
+// module.exports = clientConfig

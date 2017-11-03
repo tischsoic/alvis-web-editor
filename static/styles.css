@@ -1,0 +1,23 @@
+.game {
+    display: fles;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.board {
+    display: flex;
+    flex-direction: column;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.cell {
+    height: 30px;
+    width: 30px;
+
+    background-color: #ccc;
+}
