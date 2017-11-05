@@ -1,6 +1,5 @@
 import {
     alvisProjectRecordFactory, IAlvisProjectRecord,
-    hierarchyRecordFactory, IHierarchyRecord,
     hierarchyNodeRecordFactory, IHierarchyNodeRecord,
     pageRecordFactory, IPageRecord,
     agentRecordFactory, IAgentRecord,
@@ -18,63 +17,21 @@ function getFstElementByTagName(root: Element | XMLDocument, tagName: string): E
     return element;
 }
 
-function elsToList<T>(els: NodeListOf<Element>, mapBy: (el: Element) => T): List<T> {
-    let elsList = List<T>([]);
-
-    for (let i = 0; i < els.length; ++i) {
-        const el = els.item(i);
-
-        elsList = elsList.push(mapBy(el));
-    }
-
-    return elsList;
-}
-
-function hierarchyNodeToRecord(node: Element): IHierarchyNodeRecord {
-    let subNodesNames: List<string> = List<string>([]);
-    const subNodes = node.children;
-
-    for (let i = 0; i < subNodes.length; ++i) {
-        const subNode = subNodes[i],
-            subNodeName = subNode.getAttribute('name');
-
-        subNodesNames = subNodesNames.push(subNodeName);
-    }
-
+function hierarchyNodeToRecord(node: Element, internalId: string, subNodesInternalIds: List<string>): IHierarchyNodeRecord {
     return hierarchyNodeRecordFactory({
+        internalId,
         agent: node.getAttribute('agent'),
         name: node.getAttribute('name'),
-        subNodesNames
+        subNodesInternalIds
     });
 }
 
-// function hierarchyNodesToList(subNodes: NodeListOf<Element>): List<IHierarchyNodeRecord> {
-//     let nodesList = List<IHierarchyNodeRecord>([]);
 
-//     for (let i = 0; i < subNodes.length; ++i) {
-//         const subNode = subNodes.item(i),
-//             subSubNodes = subNode.getElementsByTagName('node'),
-//             subSubNodesList = subSubNodes.length === 0
-//                 ? hierarchyNodesToList(subSubNodes)
-//                 : List([]);
 
-//         nodesList = nodesList.push(hierarchyNodeToRecord(subNode, List([])));
-//     }
-
-//     return nodesList;
-// }
-
-function hierarchyToRecord(hierarchy: Element): IHierarchyRecord {
-    const hierarchyNodesElements = hierarchy.getElementsByTagName('node');
-
-    return hierarchyRecordFactory({
-        hierarchyNodes: elsToList(hierarchyNodesElements, hierarchyNodeToRecord),
-    })
-}
-
-function portToRecord(port: Element): IPortRecord {
+function portToRecord(port: Element, internalId: string): IPortRecord {
     return portRecordFactory({
-        id: port.getAttribute('id'),
+        internalId: internalId.toString(),
+        mxGraphId: null,
         name: port.getAttribute('name'),
         x: parseFloat(port.getAttribute('x')),
         y: parseFloat(port.getAttribute('y')),
@@ -82,9 +39,10 @@ function portToRecord(port: Element): IPortRecord {
     })
 }
 
-function agentToRecord(agent: Element): IAgentRecord {
+function agentToRecord(agent: Element, internalId: string, portsInternalIds: List<string>): IAgentRecord {
     return agentRecordFactory({
-        phantomId: null,
+        internalId,
+        mxGraphId: null,
         name: agent.getAttribute('name'),
         index: agent.getAttribute('index'),
         active: parseInt(agent.getAttribute('active')),
@@ -94,13 +52,12 @@ function agentToRecord(agent: Element): IAgentRecord {
         width: parseFloat(agent.getAttribute('width')),
         x: parseFloat(agent.getAttribute('x')),
         y: parseFloat(agent.getAttribute('y')),
-        portsIds: elsToList<string>(agent.getElementsByTagName('port'), (port: Element): string => {
-            return port.getAttribute('id');
-        }),
+        portsInternalIds,
     })
 }
 
-function connectionToRecord(connection: Element): IConnectionRecord {
+function connectionToRecord(connection: Element,
+    internalId: string, sourcePortInternalId: string, targetPortInternalId: string): IConnectionRecord {
     let direction: ConnectionDirection;
 
     const directionRough = connection.getAttribute('direction');
@@ -113,20 +70,22 @@ function connectionToRecord(connection: Element): IConnectionRecord {
     }
 
     return connectionRecordFactory({
-        phantomId: null,
+        internalId,
+        mxGraphId: null,
         direction,
-        sourcePortId: connection.getAttribute('source'),
-        targetPortId: connection.getAttribute('target'),
+        sourcePortInternalId,
+        targetPortInternalId,
         style: connection.getAttribute('style'),
     });
 }
 
-function pageToRecord(page: Element): IPageRecord {
+function pageToRecord(page: Element, internalId: string,
+    agentsInternalIds: List<string>, connectionsInternalIds: List<string>): IPageRecord {
     return pageRecordFactory({
+        internalId,
         name: page.getAttribute('name'),
-        ports: elsToList(page.getElementsByTagName('port'), portToRecord),
-        agents: elsToList(page.getElementsByTagName('agent'), agentToRecord),
-        connections: elsToList(page.getElementsByTagName('connection'), connectionToRecord),
+        agentsInternalIds,
+        // connectionsInternalIds,
     })
 }
 
@@ -134,6 +93,96 @@ function codeToRecord(code: Element): IAlvisCodeRecord {
     return alvisCodeRecordFactory({
         text: code.textContent
     })
+}
+
+function getHierarchyNodesData(hierarchyNodesElements: NodeListOf<Element>): List<IHierarchyNodeRecord> {
+    const hierarchyNodes: IHierarchyNodeRecord[] = [],
+        xmlNameToInternalId = [];
+
+    for (let i = 0; i < hierarchyNodesElements.length; ++i) {
+        const hierarchyNodeElement = hierarchyNodesElements[i];
+        xmlNameToInternalId[hierarchyNodeElement.getAttribute('name')] = i;
+    }
+    for (let i = 0; i < hierarchyNodesElements.length; ++i) {
+        const hierarchyNodeElement = hierarchyNodesElements[i],
+            subNodesInternalIds: string[] = [];
+
+        for (let j = 0; j < hierarchyNodeElement.children.length; ++j) {
+            const child = hierarchyNodeElement.children[j];
+
+            subNodesInternalIds.push(xmlNameToInternalId[child.getAttribute('name')]);
+        }
+
+        const hierarchyNodeInternalId = hierarchyNodes.length.toString(),
+            hierarchyNodeRecord
+                = hierarchyNodeToRecord(hierarchyNodeElement, hierarchyNodeInternalId, List(subNodesInternalIds));
+
+        hierarchyNodes.push(hierarchyNodeRecord);
+    }
+
+    return List(hierarchyNodes);
+}
+
+function getPagesData(pagesElements: NodeListOf<Element>) {
+    const xmlIdToInternalId = [];
+    const pages: IPageRecord[] = [],
+        agents: IAgentRecord[] = [],
+        ports: IPortRecord[] = [],
+        connections: IConnectionRecord[] = [];
+
+    for (let i = 0; i < pages.length; ++i) {
+        const pageElement = pagesElements[i],
+            pageAgentsElements = pageElement.getElementsByTagName('agent'),
+            pageConnectionsElements = pageElement.getElementsByTagName('connection'),
+            pageAgentsInternalIds = [],
+            pageConnectionsInternalIds = [];
+
+        for (let j = 0; j < pageAgentsElements.length; ++j) {
+            const agentElement = pageAgentsElements[j],
+                agentPortsElements = agentElement.getElementsByTagName('port'),
+                agentPortsInternalIds: string[] = [];
+
+            for (let k = 0; k < agentPortsElements.length; ++k) {
+                const portElement = agentPortsElements[k],
+                    portInternalId = ports.length.toString(),
+                    portRecord = portToRecord(portElement, portInternalId);
+
+                ports.push(portRecord);
+                xmlIdToInternalId[portElement.getAttribute('id')] = portInternalId;
+                agentPortsInternalIds.push(portInternalId);
+            }
+            const agentInternalId = agents.length.toString(),
+                agentRecord = agentToRecord(agentElement, agentInternalId, List(agentPortsInternalIds));
+
+            agents.push(agentRecord);
+            pageAgentsInternalIds.push(agentInternalId);
+        }
+
+        for (let l = 0; l < pageConnectionsElements.length; ++l) {
+            const connectionElement = pageConnectionsElements[l],
+                connectionInternalId = connections.length.toString(),
+                connectionRecord = connectionToRecord(
+                    connectionElement,
+                    connectionInternalId,
+                    xmlIdToInternalId[connectionElement.getAttribute('source')],
+                    xmlIdToInternalId[connectionElement.getAttribute('target')],
+                )
+
+            connections.push(connectionRecord);
+            pageConnectionsInternalIds.push(connectionInternalId);
+        }
+
+        const pageInternalId = pages.length.toString(),
+            pageRecord = pageToRecord(pageElement, pageInternalId,
+                List(pageAgentsInternalIds), List(pageConnectionsInternalIds));
+    }
+
+    return {
+        pages: List(pages),
+        agents: List(agents),
+        ports: List(ports),
+        connections: List(connections),
+    }
 }
 
 function parseAlvisProjectXML(xmlDocument: XMLDocument): IAlvisProjectRecord {
@@ -149,11 +198,16 @@ function parseAlvisProjectXML(xmlDocument: XMLDocument): IAlvisProjectRecord {
     }
 
     const hierarchyNodes = hierarchy.getElementsByTagName('node'),
-        pages = alvisProject.getElementsByTagName('page');
+        pages = alvisProject.getElementsByTagName('page'),
+        pagesData = getPagesData(pages),
+        hierarchyNodesData = getHierarchyNodesData(hierarchyNodes);
 
     const alvisProjectRecord = alvisProjectRecordFactory({
-        hierarchy: hierarchyToRecord(hierarchy),
-        pages: elsToList(pages, pageToRecord),
+        hierarchyNodes: hierarchyNodesData,
+        pages: pagesData.pages,
+        agents: pagesData.agents,
+        ports: pagesData.ports,
+        connections: pagesData.connections,
         code: codeToRecord(code),
     });
     xmlDocument.getElementsByTagNameNS

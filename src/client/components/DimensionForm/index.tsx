@@ -1,8 +1,19 @@
 import * as React from 'react';
+import {List} from 'immutable';
+
+import {
+    IAgentRecord,
+    IPortRecord,
+    IConnectionRecord,
+    agentRecordFactory,
+} from "../../models/alvisProject";
 
 // TO DO
 // should not be "=> any", probably
-export interface DimensionFormProps { xDim: number, onXDimChange:(newXDim: number) => any, getYDim:() => any };
+export interface DimensionFormProps {
+    xDim: number, onXDimChange: (newXDim: number) => any, getYDim: () => any,
+    addActiveAgent: (agent) => any
+};
 export interface DimensionFormState { };
 
 export class DimensionForm extends React.Component<DimensionFormProps, DimensionFormState> {
@@ -22,8 +33,24 @@ export class DimensionForm extends React.Component<DimensionFormProps, Dimension
         // console.log('asdfasdfasdf3')
         return (
             <div>
-                Wymiar jakiś  asdfasfd x: <input type="text" value={this.props.xDim} onChange={this.handleInputChange}/><br />
-                Pobranie wymiaru y: <button onClick={this.props.getYDim}>Pobierz!</button>
+                Wymiar jakiś  asdfasfd x: <input type="text" value={this.props.xDim} onChange={this.handleInputChange} /><br />
+                Pobranie wymiaru y: <button onClick={this.props.getYDim}>Pobierz!</button><br />
+                <button onClick={() => {
+                    this.props.addActiveAgent(agentRecordFactory({
+                        phantomId: null,
+                        name: 'A',
+                        portsIds: List<string>([]),
+                        index: null,
+                        active: 1, // TO DO: maybe boolean
+                        running: null, // TO DO: maybe boolean
+                        height: 100,
+                        width: 100,
+                        x: 0,
+                        y: 0,
+                        color: 'white',
+                    }));
+                }
+                }>Dodaj agenta!</button>
             </div>
         )
     }

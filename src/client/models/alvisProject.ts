@@ -2,7 +2,8 @@ import { Record, List } from 'immutable';
 import { TypedRecord, makeTypedFactory } from 'typed-immutable-record';
 
 export interface IPort {
-    readonly id: string,
+    readonly internalId: string,
+    readonly mxGraphId: string,
     readonly name: string,
     readonly x: number,
     readonly y: number,
@@ -11,7 +12,8 @@ export interface IPort {
 export interface IPortRecord
     extends TypedRecord<IPortRecord>, IPort { };
 const defaultPortRecord = {
-    id: null,
+    internalId: null,
+    mxGraphId: null,
     name: null,
     x: null,
     y: null,
@@ -22,9 +24,10 @@ export const portRecordFactory
 
 
 export interface IAgent {
-    readonly phantomId: string, // Only to know which agent is which in mxGraph
+    readonly internalId: string,
+    readonly mxGraphId: string, // Only to know which agent is which in mxGraph
     readonly name: string,
-    readonly portsIds: List<string>,
+    readonly portsInternalIds: List<string>,
     readonly index: string,
     readonly active: number, // TO DO: maybe boolean
     readonly running: number, // TO DO: maybe boolean
@@ -37,9 +40,10 @@ export interface IAgent {
 export interface IAgentRecord
     extends TypedRecord<IAgentRecord>, IAgent { };
 const defaultAgentRecord: IAgent = {
-    phantomId: null,
+    internalId: null,
+    mxGraphId: null,
     name: null,
-    portsIds: List<string>([]),
+    portsInternalIds: List<string>([]),
     index: null,
     active: null, // TO DO: maybe boolean
     running: null, // TO DO: maybe boolean
@@ -55,19 +59,21 @@ export const agentRecordFactory
 
 export type ConnectionDirection = 'target' | 'source' | 'none'; // TO DO: that is all?
 export interface IConnection {
-    readonly phantomId: string, // Only to know which agent is which in mxGraph
+    readonly internalId: string,
+    readonly mxGraphId: string, // Only to know which agent is which in mxGraph
     readonly direction: ConnectionDirection,
-    readonly sourcePortId: string,
-    readonly targetPortId: string,
+    readonly sourcePortInternalId: string,
+    readonly targetPortInternalId: string,
     readonly style: string,
 }
 export interface IConnectionRecord
     extends TypedRecord<IConnectionRecord>, IConnection { };
 const defaultConnectionRecord: IConnection = {
-    phantomId: null,
+    internalId: null,
+    mxGraphId: null,
     direction: null,
-    sourcePortId: null,
-    targetPortId: null,
+    sourcePortInternalId: null,
+    targetPortInternalId: null,
     style: null,
 }
 export const connectionRecordFactory
@@ -75,18 +81,18 @@ export const connectionRecordFactory
 
 
 export interface IPage {
+    readonly internalId: string,
     readonly name: string,
-    readonly ports: List<IPortRecord>,
-    readonly agents: List<IAgentRecord>,
-    readonly connections: List<IConnectionRecord>,
+    readonly agentsInternalIds: List<string>,
+    // readonly connectionsInternalIds: List<string>,
 }
 export interface IPageRecord
     extends TypedRecord<IPageRecord>, IPage { };
 const defaultPageRecord: IPage = {
+    internalId: null,
     name: null,
-    ports: List<IPortRecord>([]),
-    agents: List<IAgentRecord>([]),
-    connections: List<IConnectionRecord>([]),
+    agentsInternalIds: List<string>([]),
+    // connectionsInternalIds: List<string>([]),
 }
 export const pageRecordFactory
     = makeTypedFactory<IPage, IPageRecord>(defaultPageRecord);
@@ -105,45 +111,53 @@ export const alvisCodeRecordFactory
 
 
 export interface IHierarchyNode {
+    readonly internalId: string,
     readonly name: string,
     readonly agent: string,
-    readonly subNodesNames: List<string>,
+    readonly subNodesInternalIds: List<string>,
 }
 export interface IHierarchyNodeRecord
     extends TypedRecord<IHierarchyNodeRecord>, IHierarchyNode { };
 const defaultHierarchyNodeRecord: IHierarchyNode = {
+    internalId: null,
     name: null,
     agent: null,
-    subNodesNames: List<string>([]),
+    subNodesInternalIds: List<string>([]),
 }
 export const hierarchyNodeRecordFactory
     = makeTypedFactory<IHierarchyNode, IHierarchyNodeRecord>(defaultHierarchyNodeRecord);
 
 
-export interface IHierarchy {
-    readonly hierarchyNodes: List<IHierarchyNodeRecord>,
-    // readonly nodesNames: List<string>,
-}
-export interface IHierarchyRecord
-    extends TypedRecord<IHierarchyRecord>, IHierarchy { };
-const defaultHierarchyRecord: IHierarchy = {
-    hierarchyNodes: List<IHierarchyNodeRecord>([]),
-    // nodesNames: List<string>([]),
-}
-export const hierarchyRecordFactory
-    = makeTypedFactory<IHierarchy, IHierarchyRecord>(defaultHierarchyRecord);
+// export interface IHierarchy {
+//     readonly hierarchyNodes: List<IHierarchyNodeRecord>,
+//     // readonly nodesNames: List<string>,
+// }
+// export interface IHierarchyRecord
+//     extends TypedRecord<IHierarchyRecord>, IHierarchy { };
+// const defaultHierarchyRecord: IHierarchy = {
+//     hierarchyNodes: List<IHierarchyNodeRecord>([]),
+//     // nodesNames: List<string>([]),
+// }
+// export const hierarchyRecordFactory
+//     = makeTypedFactory<IHierarchy, IHierarchyRecord>(defaultHierarchyRecord);
 
 
 export interface IAlvisProject {
-    readonly hierarchy: IHierarchyRecord,
+    readonly hierarchyNodes: List<IHierarchyNodeRecord>,
     readonly pages: List<IPageRecord>,
+    readonly agents: List<IAgentRecord>,
+    readonly ports: List<IPortRecord>,
+    readonly connections: List<IConnectionRecord>,
     readonly code: IAlvisCodeRecord,
 }
 export interface IAlvisProjectRecord
     extends TypedRecord<IAlvisProjectRecord>, IAlvisProject { };
 const defaultAlvisProjectRecord: IAlvisProject = {
-    hierarchy: null,
+    hierarchyNodes: List<IHierarchyNodeRecord>([]),
     pages: List<IPageRecord>([]),
+    agents: List<IAgentRecord>([]),
+    ports: List<IPortRecord>([]),
+    connections: List<IConnectionRecord>([]),
     code: null,
 }
 export const alvisProjectRecordFactory

@@ -7,7 +7,7 @@ import * as mxClasses from "mxgraphAllClasses";
 
 import parseAlvisProjectXML from '../../utils/alvisXmlParser';
 import AlvisGraphManager from '../../utils/AlvisGraphManager';
-import modifyMxGraph from '../../utils/mxGraphModifier';
+import {modifyMxGraph2} from '../../utils/mxGraphModifier';
 // TO DO
 // should not be "=> any", probably
 export interface GraphDisplayProps {
@@ -26,6 +26,11 @@ export class GraphDisplay extends React.Component<GraphDisplayProps, GraphDispla
 
     componentDidUpdate() {
         this.createAlvisGraphFromXML();
+    }
+
+    shouldComponentUpdate() {
+        return false;
+        // return true;
     }
 
     createAlvisGraphFromXML() {
@@ -297,9 +302,9 @@ export class GraphDisplay extends React.Component<GraphDisplayProps, GraphDispla
         // is normally the first child of the root (ie. layer 0).
         const parent = graph.getDefaultParent();
 
-        modifyMxGraph(mx, graph);
+        modifyMxGraph2(mx, graph);
 
-        new AlvisGraphManager(mx, graph, parseAlvisProjectXML(xmlDocument).pages.get(1));
+        // new AlvisGraphManager(mx, graph, parseAlvisProjectXML(xmlDocument).pages.get(1));
 
         // Adds cells to the model in a single step
             // graph.getModel().beginUpdate();
