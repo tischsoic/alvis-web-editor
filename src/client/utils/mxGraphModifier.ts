@@ -15,6 +15,7 @@ export default function modifyMxGraph(mx: mxgraph.allClasses, graph: mxClasses.m
     disableDirectConnectingAgents(mx, graph);
     enableRubberbandSelection(mx, graph);
     enableDelete(mx, graph);
+    addPopupMenu(mx, graph);
 }
 
 // function injectCustomModel(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
@@ -291,7 +292,21 @@ function enableDelete(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
     });
 }
 
+function addPopupMenu(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
+    // Disables built-in context menu
+    mx.mxEvent.disableContextMenu(document.body);
 
+    // Configures automatic expand on mouseover
+    graph.popupMenuHandler.autoExpand = true;
+
+    // Installs context menu
+    graph.popupMenuHandler.factoryMethod = function (menu, cell, evt) {
+        console.log(cell);
+
+        menu.addItem('aligh top', null, () => {graph.alignCells('top', graph.getSelectionCells()) });
+
+    };
+}
 
 
 
@@ -304,11 +319,11 @@ function enableDelete(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
 
 
 export function modifyMxGraph2(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
-    addPopupMenu(mx, graph);
+    addPopupMenu2(mx, graph);
 }
 
 
-function addPopupMenu(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
+function addPopupMenu2(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
     // Disables built-in context menu
     mx.mxEvent.disableContextMenu(document.body);
 

@@ -80,7 +80,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
 
             setGeometry(cell: mxClasses.mxCell, geometry: mxClasses.mxGeometry): mxClasses.mxGeometry {
                 if (alvisGraph.isDuringInternalChanges()) {
-                    return super.remove.apply(this, arguments);
+                    return super.setGeometry.apply(this, arguments);
                 } else {
                     const { x, y, width, height } = geometry,
                         // TO DO: save "ACTIVE_AGENT" type in some enum etc.
@@ -157,7 +157,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         this.changesToApply.forEach((changes) => {
             changes.agentChanges.new.forEach((newAgent) => this.addAgent(newAgent));
             changes.agentChanges.deleted.forEach((deletedAgent) => this.deleteAgent(deletedAgent));
-            // changes.agentChanges.modified.forEach((modifiedAgent) => this.deleteAgent(modifiedAgent));
+            changes.agentChanges.modified.forEach((modifiedAgent) => this.modifyAgent(modifiedAgent));
         })
         this.endInternalChanges();
 
@@ -233,16 +233,19 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
 
     // TO DO
     private modifyAgent(agent: IAgentRecord): IAgentRecord {
-        // this.graph.getModel().beginUpdate();
-        // try {
-        //     const mxGraphAgentId = this.getMxGraphIdByInternalId(agent.internalId),
-        //         cellToDelete = this.graph.getModel().getCell(mxGraphAgentId);
+        const { mx } = this.props;
 
-        //     this.graph.removeCells([cellToDelete])
-        // }
-        // finally {
-        //     this.graph.getModel().endUpdate();
-        // }
+        this.graph.getModel().beginUpdate();
+        try {
+            const mxGraphAgentId = this.getMxGraphIdByInternalId(agent.internalId),
+                cellToModify = this.graph.getModel().getCell(mxGraphAgentId);
+
+            // this.graph.translateCell(cellToModify, agent.x, agent.y);
+            this.graph.resizeCell(cellToModify, new mx.mxRectangle(agent.x, agent.y, agent.width, agent.height), false);
+        }
+        finally {
+            this.graph.getModel().endUpdate();
+        }
 
         return agent;
     }
