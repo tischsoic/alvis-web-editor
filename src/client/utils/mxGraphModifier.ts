@@ -19,7 +19,7 @@ export default function modifyMxGraph(mx: mxgraph.allClasses, graph: mxClasses.m
 }
 
 // function injectCustomModel(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
-    
+
 
 //     mx.mxGraphModel
 
@@ -34,10 +34,7 @@ function manageProcessChangeFn(mx: mxgraph.allClasses, graph: mxClasses.mxGraph,
         const me = this;
         onProcessChange(change, (change) => {
             oldProcessChange.apply(this, args);
-        })
-
-
-
+        });
     }
 }
 
@@ -95,8 +92,6 @@ function addPortValidation(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
             // TO DO: Check what should be returned.
             return false;
         }
-
-        private
     }
 
     graph.multiplicities.push(new PortsConnectionsMultiplicity(true));
@@ -269,9 +264,10 @@ function makePortsTerminalsForConnections(mx: mxgraph.allClasses, graph: mxClass
     // Ports are not used as terminals for edges, they are
     // only used to compute the graphical connection point
     graph.isPort = function (cell) {
-        const geo = this.getCellGeometry(cell);
+        const geo = this.getCellGeometry(cell),
+            isEdge = graph.getModel().isEdge(cell);
 
-        return (geo != null) ? geo.relative : false;
+        return (geo != null) ? geo.relative && !isEdge : false;
     };
 }
 
@@ -303,7 +299,49 @@ function addPopupMenu(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
     graph.popupMenuHandler.factoryMethod = function (menu, cell, evt) {
         console.log(cell);
 
-        menu.addItem('aligh top', null, () => {graph.alignCells('top', graph.getSelectionCells()) });
+        if (cell == null) {
+            menu.addItem('Add active agent.', null, function () { });
+            menu.addItem('Add passive agent.', null, function () { });
+            return;
+        }
+
+        if (cell.isEdge()) {
+            menu.addItem('Direct to source', null, () => { });
+            menu.addItem('Ditect to target', null, () => { });
+            menu.addItem('Undirect', null, () => { });
+            return;
+        }
+
+        if (graph.isPort(cell)) {
+            menu.addItem('Delete', null, () => { });
+            menu.addItem('Edit', null, () => { });
+            menu.addItem('Color', null, () => { });
+            return;
+        }
+
+        menu.addItem('Add port', null, () => {
+            graph.getModel().beginUpdate();
+            try {
+                var portVertex = graph.insertVertex(cell, null, '', 1, 1, 20, 20, 'PORT_STYLE', true);
+                portVertex.geometry.offset = new mx.mxPoint(-10, -10);
+            }
+            finally {
+                graph.getModel().endUpdate();
+            }
+        });
+        menu.addItem('aligh top', null, () => { });
+        const alignSubmenu = menu.addItem('Align', null, null);
+        const getAlignFn = (align: string): () => void => {
+            return () => {
+                graph.alignCells(align, graph.getSelectionCells())
+            };
+        }
+        menu.addItem('Top', null, getAlignFn(mx.mxConstants.ALIGN_TOP), alignSubmenu);
+        menu.addItem('Bottom', null, getAlignFn(mx.mxConstants.ALIGN_BOTTOM), alignSubmenu);
+        menu.addItem('Left', null, getAlignFn(mx.mxConstants.ALIGN_LEFT), alignSubmenu);
+        menu.addItem('Right', null, getAlignFn(mx.mxConstants.ALIGN_RIGHT), alignSubmenu);
+        menu.addItem('Center', null, getAlignFn(mx.mxConstants.ALIGN_MIDDLE), alignSubmenu);
+        menu.addItem('Middle', null, getAlignFn(mx.mxConstants.ALIGN_CENTER), alignSubmenu);
 
     };
 }

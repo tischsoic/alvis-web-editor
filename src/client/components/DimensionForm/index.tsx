@@ -37,9 +37,9 @@ export class DimensionForm extends React.Component<DimensionFormProps, Dimension
                 Pobranie wymiaru y: <button onClick={this.props.getYDim}>Pobierz!</button><br />
                 <button onClick={() => {
                     this.props.addActiveAgent(agentRecordFactory({
-                        phantomId: null,
+                        internalId: null,
                         name: 'A',
-                        portsIds: List<string>([]),
+                        portsInternalIds: List<string>([]),
                         index: null,
                         active: 1, // TO DO: maybe boolean
                         running: null, // TO DO: maybe boolean
@@ -48,6 +48,7 @@ export class DimensionForm extends React.Component<DimensionFormProps, Dimension
                         x: 0,
                         y: 0,
                         color: 'white',
+                        pageInternalId: '0',
                     }));
                 }
                 }>Dodaj agenta!</button>

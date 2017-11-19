@@ -18,9 +18,27 @@ import mxgraph = require('mxgraph');
 
 import * as brace from 'brace';
 import AceEditor from 'react-ace';
+import 'brace/mode/jsx';
 
-import 'brace/mode/java';
-import 'brace/theme/github';
+const languages = [
+    'java',
+]
+
+const themes = [
+    'github',
+]
+
+languages.forEach((lang) => {
+    require(`brace/mode/${lang}`)
+    require(`brace/snippets/${lang}`)
+})
+
+themes.forEach((theme) => {
+    require(`brace/theme/${theme}`)
+})
+/*eslint-disable no-alert, no-console */
+import 'brace/ext/language_tools';
+import 'brace/ext/searchbox';
 
 import {
     IAgentRecord,
@@ -32,9 +50,12 @@ import { List } from 'immutable';
 
 export namespace App {
     export interface StateProps { // extends RouteComponentProps<void> {
+        xml: string,
         dims: DimensionsRec,
         graph: GraphProjectRec,
         agents: List<IAgentRecord>,
+        ports: List<IPortRecord>,
+        connections: List<IConnectionRecord>,
     }
 
     export interface DispatchProps {
@@ -66,15 +87,22 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
 
     componentWillMount() {
         this.props.graphActions.fetchGraphProjectXML();
+        this.props.projectActions.fetchProjectXML();
     }
 
     render() {
         const { xDim, yDim } = this.props.dims;
-        const { xml } = this.props.graph
-        const { agents, projectActions } = this.props;
+        // const { xml } = this.props.graph
+        const { xml, agents, ports, connections, projectActions } = this.props;
 
         const onEditorChange = function (value: string, event?: any): void {
             console.log(arguments)
+        }
+
+        // TO DO: check what is xml string is empty
+        if (xml && xml.length !== 0) {
+            const xmlDocument = this.mx.mxUtils.parseXml(xml)
+            console.log(parseAlvisProjectXML(xmlDocument));
         }
 
 
@@ -86,6 +114,24 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
             },
             onMxGraphAgentModified: (agent: IAgentRecord) => any = (agent) => {
                 projectActions.modifyAgent(agent);
+            },
+            onMxGraphPortAdded: (port: IPortRecord) => any = (port) => {
+                projectActions.addPort(port);
+            },
+            onMxGraphPortDeleted: (portInternalId: string) => any = (portInternalId) => {
+                projectActions.deletePort(portInternalId);
+            },
+            onMxGraphPortModified: (port: IPortRecord) => any = (port) => {
+                projectActions.modifyPort(port);
+            },
+            onMxGraphConnectionAdded: (connection: IConnectionRecord) => any = (connection) => {
+                projectActions.addConnection(connection);
+            },
+            onMxGraphConnectionDeleted: (connectionInternalId: string) => any = (connectionInternalId) => {
+                projectActions.deleteConnection(connectionInternalId);
+            },
+            onMxGraphConnectionModified: (connection: IConnectionRecord) => any = (connection) => {
+                projectActions.modifyConnection(connection);
             };
 
         return (
@@ -99,13 +145,19 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
                 <AlvisGraph
                     mx={this.mx}
                     agents={agents}
-                    ports={List<IPortRecord>()}
-                    connections={List<IConnectionRecord>()}
+                    ports={ports}
+                    connections={connections}
                     onMxGraphAgentAdded={onMxGraphAgentAdded}
                     onMxGraphAgentDeleted={onMxGraphAgentDeleted}
                     onMxGraphAgentModified={onMxGraphAgentModified}
+                    onMxGraphPortAdded={onMxGraphPortAdded}
+                    onMxGraphPortDeleted={onMxGraphPortDeleted}
+                    onMxGraphPortModified={onMxGraphPortModified}
+                    onMxGraphConnectionAdded={onMxGraphConnectionAdded}
+                    onMxGraphConnectionDeleted={onMxGraphConnectionDeleted}
+                    onMxGraphConnectionModified={onMxGraphConnectionModified}
                 />
-                <GraphDisplay xml={xml} />
+                {/* <GraphDisplay xml={xml} /> */}
                 <AceEditor
                     mode="java"
                     theme="github"
@@ -113,6 +165,10 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
                     name="alvisCode_1"
                     value={"alvis Code"}
                     editorProps={{ $blockScrolling: true }}
+                    setOptions={{
+                        enableBasicAutocompletion: true,
+                        enableLiveAutocompletion: true,
+                    }}
                 />
             </div>
         );
@@ -121,9 +177,12 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
 
 function mapStateToProps(state: RootState): App.StateProps {
     return {
+        xml: state.project.xml,
         dims: state.dim,
         graph: state.graph,
         agents: state.project.alvisProject.agents,
+        ports: state.project.alvisProject.ports,
+        connections: state.project.alvisProject.connections,
     };
 }
 

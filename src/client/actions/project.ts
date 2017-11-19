@@ -5,7 +5,7 @@ import { Dimension, Dimensions } from '../models';
 import * as Actions from '../constants/actions';
 
 import {
-    IAgentRecord,
+    IAgentRecord, IPortRecord, IConnectionRecord,
 } from "../models/alvisProject";
 import { List } from 'immutable'
 
@@ -14,20 +14,38 @@ const setProjectXML = createAction<string, string>(
     (value: string) => value
 );
 
-const addAgent = createAction<IAgentRecord, IAgentRecord>(
-    Actions.PROJECT_ADD_AGENT,
-    (agent: IAgentRecord) => agent,
-)
+function createAddElementAction<T extends IAgentRecord | IPortRecord | IConnectionRecord>(actionType: string) {
+    return createAction<T, T>(
+        actionType,
+        (element: T) => element
+    );
+}
 
-const deleteAgent = createAction<string, string>(
-    Actions.PROJECT_DELETE_AGENT,
-    (agentInternalId: string) => agentInternalId,
-)
+function createDeleteElementAction(actionType) {
+    return createAction<string, string>(
+        actionType,
+        (elementInternalId: string) => elementInternalId
+    );
+}
 
-const modifyAgent = createAction<IAgentRecord, IAgentRecord>(
-    Actions.PROJECT_MODIFY_AGENT,
-    (agent: IAgentRecord) => agent,
-)
+function createModifyElementAction<T extends IAgentRecord | IPortRecord | IConnectionRecord>(actionType) {
+    return createAction<T, T>(
+        actionType,
+        (element: T) => element
+    );
+}
+
+const addAgent = createAddElementAction<IAgentRecord>(Actions.PROJECT_ADD_AGENT);
+const deleteAgent = createDeleteElementAction(Actions.PROJECT_DELETE_AGENT);
+const modifyAgent = createModifyElementAction<IAgentRecord>(Actions.PROJECT_MODIFY_AGENT);
+
+const addPort = createAddElementAction<IPortRecord>(Actions.PROJECT_ADD_PORT);
+const deletePort = createDeleteElementAction(Actions.PROJECT_DELETE_PORT);
+const modifyPort = createModifyElementAction<IPortRecord>(Actions.PROJECT_MODIFY_PORT);
+
+const addConnection = createAddElementAction<IConnectionRecord>(Actions.PROJECT_ADD_CONNECTION);
+const deleteConnection = createDeleteElementAction(Actions.PROJECT_DELETE_CONNECTION);
+const modifyConnection = createModifyElementAction<IConnectionRecord>(Actions.PROJECT_MODIFY_CONNECTION);
 
 const fetchProjectXML = (): ((dispatch: redux.Dispatch<any>) => void) => {
     return (dispatch: redux.Dispatch<any>) => {
@@ -45,5 +63,7 @@ const fetchProjectXML = (): ((dispatch: redux.Dispatch<any>) => void) => {
 export {
     setProjectXML,
     addAgent, deleteAgent, modifyAgent,
+    addPort, deletePort, modifyPort,
+    addConnection, deleteConnection, modifyConnection,
     fetchProjectXML,
 };

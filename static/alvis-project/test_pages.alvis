@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE alvisproject PUBLIC "alvisPublicId-v0.1" "alvisSystemId-v0.1">
+<alvisproject>
+<hierarchy>
+<node agent="" name="System">
+<node agent="Agent_2" name="Pa2"/>
+<node agent="Agent_3" name="pag 3"/>
+</node>
+</hierarchy>
+<page name="Pa2"/>
+<page name="System">
+<agent active="0" color="white" height="100.0" index="1" name="Agent_1" running="0" width="140.0" x="40.0" y="60.0"/>
+<agent active="1" color="white" height="100.0" index="1" name="Agent_2" running="0" width="140.0" x="230.0" y="190.0"/>
+<agent active="1" color="white" height="100.0" index="1" name="Agent_3" running="1" width="140.0" x="240.0" y="70.0"/>
+</page>
+<page name="pag 3"/>
+<code/>
+</alvisproject>
+
