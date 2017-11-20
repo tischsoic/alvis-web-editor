@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as mxClasses from "mxgraphAllClasses";
+import { ButtonToolbar, ButtonGroup, Button, GlyphIcon } from 'react-bootstrap';
 
 import AlvisGraphManager from '../utils/AlvisGraphManager';
 import modifyMxGraph from '../utils/mxGraphModifier';
@@ -41,6 +42,7 @@ import {
     getPortAgent
 } from '../utils/alvisProject';
 import { modifyConnection } from '../actions/project';
+import { Glyphicon } from 'react-bootstrap';
 
 
 export interface AlvisGraphState { };
@@ -50,6 +52,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         super(props);
 
         this.onProcessChange = this.onProcessChange.bind(this);
+        this.randomNumber = Math.floor((Math.random() * 100000) + 1);
     }
 
     private graph: mxClasses.mxGraph;
@@ -64,13 +67,15 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
 
     private mxAlvisGraphModel;
 
+    private randomNumber: number;
+
     componentWillMount() {
 
     }
 
     componentDidMount() {
-        const { mx } = this.props;
-        const graphDiv = document.getElementById('alvis-graph-container');
+        const { mx, agents, ports, connections } = this.props;
+        const graphDiv = document.getElementById('alvis-graph-container-' + this.randomNumber);
         const alvisGraph = this;
         const {
             onMxGraphAgentAdded, onMxGraphAgentDeleted, onMxGraphAgentModified,
@@ -112,6 +117,16 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
                         active, color: 'white'
                     }));
                 }
+            }
+
+            setValue(cell: mxClasses.mxCell, value: any): any {
+                console.log(arguments)
+                return super.setValue(cell, value);
+            }
+
+            setStyle(cell: mxClasses.mxCell, style: string): string {
+                console.log(arguments)
+                return super.setStyle(cell, style);
             }
 
             remove(cell: mxClasses.mxCell): mxClasses.mxCell {
@@ -204,13 +219,21 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
             }
 
         });
+
+        this.addChanges(
+            agents, List(),
+            ports, List(),
+            connections, List()
+        );
+
+        this.applyChanges();
     }
 
-    componentWillReceiveProps(nextProps: AlvisGraphProps, nextContext: any) {
-        const { agents, ports, connections } = this.props;
-        const nextAgents = nextProps.agents,
-            nextPorts = nextProps.ports,
-            nextConnections = nextProps.connections;
+    addChanges(
+        nextAgents: List<IAgentRecord>, agents: List<IAgentRecord>,
+        nextPorts: List<IPortRecord>, ports: List<IPortRecord>,
+        nextConnections: List<IConnectionRecord>, connections: List<IConnectionRecord>
+    ) {
         const agentsChanges = this.getChanges(nextAgents, agents),
             portsChanges = this.getChanges(nextPorts, ports),
             connectionsChanges = this.getChanges(nextConnections, connections);
@@ -220,10 +243,21 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
             portsChanges,
             connectionsChanges,
         });
+    }
 
-        if (this.mxAlvisGraphModel.updateLevel == 0) {
-            this.applyChanges();
-        }
+    componentWillReceiveProps(nextProps: AlvisGraphProps, nextContext: any) {
+        const { agents, ports, connections } = this.props;
+        const nextAgents = nextProps.agents,
+            nextPorts = nextProps.ports,
+            nextConnections = nextProps.connections;
+
+        this.addChanges(
+            nextAgents, agents,
+            nextPorts, ports,
+            nextConnections, connections
+        );
+
+        this.applyChanges();
     }
 
     shouldComponentUpdate(nextProps, nextState, nextContext: any) {
@@ -239,9 +273,14 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         console.log(this.props)
         console.log('rendering AlivGraph COmponent')
         return (
-            <div id="alvis-graph-div">
-                {"alvis graph div"}
-                <div id="alvis-graph-container"></div>
+            <div>
+                <ButtonToolbar>
+                    <ButtonGroup>
+                        <Button onClick={() => this.graph.zoomOut()}><Glyphicon glyph='glyphicon-zoom-out' /></Button>
+                        <Button onClick={() => this.graph.zoomIn()}><Glyphicon glyph='glyphicon-zoom-in' /></Button>
+                    </ButtonGroup>
+                </ButtonToolbar>
+                <div id={"alvis-graph-container-" + this.randomNumber}></div>
             </div>
         )
     }
@@ -259,6 +298,10 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
     }
 
     private applyChanges(): void {
+        if (!this.mxAlvisGraphModel || this.mxAlvisGraphModel.updateLevel !== 0) {
+            return;
+        }
+
         this.beginInternalChanges();
         this.changesToApply.forEach((changes) => {
             changes.agentsChanges.new.forEach((newAgent) => this.addAgent(newAgent));
@@ -489,7 +532,8 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
     private addAgent(agent: IAgentRecord): IAgentRecord {
         this.graph.getModel().beginUpdate();
         try {
-            const agentStyle = agent.active === 1 ? 'ACTIVE_AGENT' : 'PASSIVE_AGENT';
+            let agentStyle = agent.active === 1 ? 'ACTIVE_AGENT;' : 'PASSIVE_AGENT;';
+            agentStyle += agent.running === 1 ? 'RUNNING;' : '';
             const agentVertex = this.graph.insertVertex(
                 this.parent, null, agent.name,
                 agent.x, agent.y, agent.width, agent.height,
@@ -547,7 +591,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
             const portAgentMxGraphId = this.getMxGraphIdByInternalId(port.agentInternalId),
                 portAgentVertex = this.graph.getModel().getCell(portAgentMxGraphId);
 
-            var portVertex = this.graph.insertVertex(portAgentVertex, null, port.name, 1, 1, 20, 20, 'PORT_STYLE');
+            var portVertex = this.graph.insertVertex(portAgentVertex, null, port.name, port.x, port.y, 20, 20, 'PORT_STYLE');
             portVertex.geometry.offset = new mx.mxPoint(-10, -10);
             portVertex.geometry.relative = true;
 
@@ -574,10 +618,10 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
             let directionStyle = '';
 
             switch (connection.direction) {
-                case 'source':
+                case 'target':
                     directionStyle = 'startArrow=none;endArrow=block;';
                     break;
-                case 'target':
+                case 'source':
                     directionStyle = 'startArrow=block;endArrow=none;'; // TO DO: Check if 'none' is valid
                     break;
                 case 'none':

@@ -43,7 +43,7 @@ export default handleActions<IProjectRecord, string | [IAlvisProjectRecord, numb
     },
     [Actions.PROJECT_SET_ALVIS_PROJECT]: (state: IProjectRecord, action: Action<[IAlvisProjectRecord, number]>) => {
         const afterProjectSet = state.set('alvisProject', action.payload[0]),
-            afterlastInternalIdSet = state.set('lastInternalId', action.payload[1]);
+            afterlastInternalIdSet = afterProjectSet.set('lastInternalId', action.payload[1]);
 
         return afterlastInternalIdSet;
     },

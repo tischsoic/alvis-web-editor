@@ -113,7 +113,7 @@ function addCellStyles(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
     passiveAgentStyle[mx.mxConstants.STYLE_FILLCOLOR] = 'white';
     passiveAgentStyle[mx.mxConstants.STYLE_STROKECOLOR] = 'black';
     passiveAgentStyle[mx.mxConstants.STYLE_FONTCOLOR] = 'black';
-    passiveAgentStyle[mx.mxConstants.STYLE_ROUNDED] = '1'
+    passiveAgentStyle[mx.mxConstants.STYLE_ROUNDED] = '0'
     graph.getStylesheet().putCellStyle('PASSIVE_AGENT', passiveAgentStyle);
 
     const portStyle = new Object();
@@ -126,6 +126,10 @@ function addCellStyles(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
     portStyle[mx.mxConstants.STYLE_LABEL_POSITION] = 'left'
     portStyle[mx.mxConstants.STYLE_ALIGN] = 'right'
     graph.getStylesheet().putCellStyle('PORT_STYLE', portStyle);
+
+    const runningStyle = new Object();
+    runningStyle[mx.mxConstants.STYLE_FONTSTYLE] = mx.mxConstants.FONT_UNDERLINE;
+    graph.getStylesheet().putCellStyle('RUNNING', runningStyle);
 }
 
 function removeFoldingIcon(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
