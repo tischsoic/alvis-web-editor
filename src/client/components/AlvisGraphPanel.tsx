@@ -125,6 +125,7 @@ export class AlvisGraphPanel extends React.Component<AlvisGraphPanelProps, Alvis
                             agents={agents}
                             ports={ports}
                             connections={connections}
+                            onChangeActivePage={onChangeActivePage}
                             onMxGraphAgentAdded={onMxGraphAgentAdded}
                             onMxGraphAgentDeleted={onMxGraphAgentDeleted}
                             onMxGraphAgentModified={onMxGraphAgentModified}

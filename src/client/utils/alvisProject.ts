@@ -114,6 +114,13 @@ function getListElementIndexWithFn<T>(elements: List<T>) {
     }
 }
 
+export function getListElementByInternalId<T extends IInternalRecord>(elements: List<T>, internalId: string) {
+    const elementIndex = getListElementIndexWithInternalId(elements)(internalId),
+        element = elements.get(elementIndex);
+
+    return element;
+}
+
 // PAGE --------------------------------------------
 
 export const addPageToAlvisProject = (alvisProject: IAlvisProjectRecord) =>

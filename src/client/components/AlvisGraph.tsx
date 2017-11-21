@@ -4,6 +4,7 @@ import { ButtonToolbar, ButtonGroup, Button, GlyphIcon } from 'react-bootstrap';
 
 import AlvisGraphManager from '../utils/AlvisGraphManager';
 import modifyMxGraph from '../utils/mxGraphModifier';
+import { getListElementByInternalId } from '../utils/alvisProject';
 
 import {
     IAgentRecord, agentRecordFactory,
@@ -24,6 +25,8 @@ export interface AlvisGraphProps {
     agents: List<IAgentRecord>,
     ports: List<IPortRecord>,
     connections: List<IConnectionRecord>,
+
+    onChangeActivePage: (newActivePageInternalId: string) => void,
 
     onMxGraphAgentAdded: (agent: IAgentRecord) => any,
     onMxGraphAgentDeleted: (agentInternalId: string) => any,
@@ -52,6 +55,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         super(props);
 
         this.onProcessChange = this.onProcessChange.bind(this);
+        this.changeActivePageToAgentSubPage = this.changeActivePageToAgentSubPage.bind(this);
         this.randomNumber = Math.floor((Math.random() * 100000) + 1);
     }
 
@@ -529,6 +533,35 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         return agent;
     }
 
+    private changeActivePageToAgentSubPage(agentVertexId: string) {
+        const { agents, onChangeActivePage } = this.props;
+        const agentInternalId = this.getInternalIdByMxGrpahId(agentVertexId),
+            agentRecord = getListElementByInternalId(agents, agentInternalId),
+            newActivePageInternalId = agentRecord.subPageInternalId;
+
+        onChangeActivePage(newActivePageInternalId);
+    }
+
+    // TO DO: add removing cell overlays from agents
+    private addAgentHierarchyIconOverlay(agentVertex: mxClasses.mxCell) {
+        const { mx, agents } = this.props;
+
+        const imgWidth = 23, imgHeight = 12,
+        overlay = new mx.mxCellOverlay(new mx.mxImage('images/hierarchy_agent_arrow.png', 23, 12), 'Go to subpage');
+        overlay.cursor = 'hand';
+        overlay.offset = new mx.mxPoint(- imgWidth, - imgHeight);
+        overlay.align = mx.mxConstants.ALIGN_RIGHT;
+        overlay.verticalAlign = mx.mxConstants.ALIGN_BOTTOM;
+
+        const agentVertexId = agentVertex.getId();
+
+        overlay.addListener(mx.mxEvent.CLICK, (sender, event) => {
+            this.changeActivePageToAgentSubPage(agentVertexId);
+        });
+
+        this.graph.addCellOverlay(agentVertex, overlay);
+    }
+
     private addAgent(agent: IAgentRecord): IAgentRecord {
         this.graph.getModel().beginUpdate();
         try {
@@ -539,6 +572,10 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
                 agent.x, agent.y, agent.width, agent.height,
                 agentStyle);
             agentVertex.setConnectable(false);
+
+            if (agent.subPageInternalId !== null) {
+                this.addAgentHierarchyIconOverlay(agentVertex);
+            }
 
             this.mxGraphIdsToInternalIds[agentVertex.getId()] = agent.internalId;
             this.internalIdsToMxGraphIds[agent.internalId] = agentVertex.getId();
