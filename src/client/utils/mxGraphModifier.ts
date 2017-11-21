@@ -1,10 +1,11 @@
 import mxgraph = require('mxgraph');
 import * as mxClasses from "mxgraphAllClasses";
+import { AlvisGraph } from '../components/AlvisGraph';
 
 export function modifyMx(mx: mxgraph.allClasses) {
 }
 
-export default function modifyMxGraph(mx: mxgraph.allClasses, graph: mxClasses.mxGraph,
+export default function modifyMxGraph(mx: mxgraph.allClasses, graph: mxClasses.mxGraph, alvisGraph: AlvisGraph,
     onProcessChange: (change: any, callback: (change: any) => any) => any) {
     manageProcessChangeFn(mx, graph, onProcessChange);
     addPortValidation(mx, graph);
@@ -15,7 +16,14 @@ export default function modifyMxGraph(mx: mxgraph.allClasses, graph: mxClasses.m
     disableDirectConnectingAgents(mx, graph);
     enableRubberbandSelection(mx, graph);
     enableDelete(mx, graph);
-    addPopupMenu(mx, graph);
+    addPopupMenu(mx, graph, alvisGraph);
+    enablePanning(mx, graph);
+}
+
+function enablePanning(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
+    graph.setPanning(true);
+    graph.centerZoom = false;
+    graph.panningHandler.useLeftButtonForPanning = true;
 }
 
 // function injectCustomModel(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
@@ -292,7 +300,7 @@ function enableDelete(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
     });
 }
 
-function addPopupMenu(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
+function addPopupMenu(mx: mxgraph.allClasses, graph: mxClasses.mxGraph, alvisGraph: AlvisGraph) {
     // Disables built-in context menu
     mx.mxEvent.disableContextMenu(document.body);
 
@@ -300,12 +308,21 @@ function addPopupMenu(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
     graph.popupMenuHandler.autoExpand = true;
 
     // Installs context menu
-    graph.popupMenuHandler.factoryMethod = function (menu, cell, evt) {
+    graph.popupMenuHandler.factoryMethod = function (menu, cell, evt: PointerEvent) {
         console.log(cell);
 
         if (cell == null) {
-            menu.addItem('Add active agent.', null, function () { });
-            menu.addItem('Add passive agent.', null, function () { });
+            const addAgent = (active: boolean) => {
+                const { onMxGraphAgentAdded, agents } = alvisGraph.props;
+
+                onMxGraphAgentAdded(alvisGraph.createAgent({
+                    x: evt.offsetX, y: evt.offsetY,
+                    name: 'Agent_' + agents.size,
+                    active: active ? 1 : 0, color: 'white'
+                }));
+            };
+            menu.addItem('Add active agent.', null, () => addAgent(true));
+            menu.addItem('Add passive agent.', null, () => addAgent(false));
             return;
         }
 

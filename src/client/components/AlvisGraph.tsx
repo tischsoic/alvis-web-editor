@@ -19,12 +19,12 @@ import { List } from 'immutable';
 // mxEdgeHandler.prototype.createMarker = function()
 // marker.isValidState ....
 
-
 export interface AlvisGraphProps {
     mx: mxgraph.allClasses,
     agents: List<IAgentRecord>,
     ports: List<IPortRecord>,
     connections: List<IConnectionRecord>,
+    pageInternalId: string,
 
     onChangeActivePage: (newActivePageInternalId: string) => void,
 
@@ -60,6 +60,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
     }
 
     private graph: mxClasses.mxGraph;
+    private outline: mxClasses.mxOutline;
     private parent;
 
     private mxGraphIdsToInternalIds: string[] = [];
@@ -124,8 +125,23 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
             }
 
             setValue(cell: mxClasses.mxCell, value: any): any {
-                console.log(arguments)
-                return super.setValue(cell, value);
+                if (alvisGraph.isDuringInternalChanges()) {
+                    return super.setValue.apply(this, arguments);
+                }
+
+                if (alvisGraph.graph.isPort(cell)) {
+                    onMxGraphPortModified(alvisGraph.createPort({
+                        name: value,
+                        mxGraphId: cell.getId(),
+                    }));
+                } else if (alvisGraph.graph.getModel().isEdge(cell)) {
+
+                } else {
+                    onMxGraphAgentModified(alvisGraph.createAgent({
+                        name: value,
+                        mxGraphId: cell.getId(),
+                    }));
+                }
             }
 
             setStyle(cell: mxClasses.mxCell, style: string): string {
@@ -188,7 +204,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
 
         this.mxAlvisGraphModel = new mxAlvisGraphModel();
         this.graph = new mx.mxGraph(graphDiv, this.mxAlvisGraphModel);
-        modifyMxGraph(mx, this.graph, this.onProcessChange);
+        modifyMxGraph(mx, this.graph, this, this.onProcessChange);
         const oldCellConnected = this.graph.cellConnected;
         const graph = this.graph;
         this.graph.cellConnected = function () {
@@ -210,7 +226,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
             if (cells && cells.length > 0 && alvisGraph.graph.getModel().isEdge(cells[0])) {
                 const target = evt.getProperty('target'),
                     source = evt.getProperty('source'),
-                    direction = 'source',
+                    direction = 'target',
                     style = 'straight',
                     sourcePortInternalId = alvisGraph.getInternalIdByMxGrpahId(source.getId()),
                     targetPortInternalId = alvisGraph.getInternalIdByMxGrpahId(target.getId());
@@ -224,6 +240,9 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
 
         });
 
+        this.instantiateOutline();
+        this.restrictGraphViewToDivBoundries();
+
         this.addChanges(
             agents, List(),
             ports, List(),
@@ -231,6 +250,19 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         );
 
         this.applyChanges();
+    }
+
+    restrictGraphViewToDivBoundries() {
+        const { mx } = this.props;
+        // this.graph.maximumGraphBounds = new mx.mxRectangle(0, 0, 500, 400);
+    }
+
+    instantiateOutline() {
+        const { mx } = this.props;
+        const outlineDiv = document.getElementById('alvis-graph-outline-container-' + this.randomNumber),
+            outline = new mx.mxOutline(this.graph, outlineDiv);
+
+        this.outline = outline;
     }
 
     addChanges(
@@ -280,11 +312,12 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
             <div>
                 <ButtonToolbar>
                     <ButtonGroup>
-                        <Button onClick={() => this.graph.zoomOut()}><Glyphicon glyph='glyphicon-zoom-out' /></Button>
-                        <Button onClick={() => this.graph.zoomIn()}><Glyphicon glyph='glyphicon-zoom-in' /></Button>
+                        <Button onClick={() => this.graph.zoomOut()}><Glyphicon glyph='zoom-out' /></Button>
+                        <Button onClick={() => this.graph.zoomIn()}><Glyphicon glyph='zoom-in' /></Button>
                     </ButtonGroup>
                 </ButtonToolbar>
-                <div id={"alvis-graph-container-" + this.randomNumber}></div>
+                <div id={"alvis-graph-container-" + this.randomNumber} style={{overflow: 'hidden', height: '400px' }}></div>
+                <div id={"alvis-graph-outline-container-" + this.randomNumber} style={{ height: '200px' }}></div>
             </div>
         )
     }
@@ -309,18 +342,22 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         this.beginInternalChanges();
         this.changesToApply.forEach((changes) => {
             changes.agentsChanges.new.forEach((newAgent) => this.addAgent(newAgent));
-            changes.agentsChanges.deleted.forEach((deletedAgent) => this.deleteAgent(deletedAgent));
-            changes.agentsChanges.modified.forEach((modifiedAgent) => this.modifyAgent(modifiedAgent));
-
             changes.portsChanges.new.forEach((newPort) => this.addPort(newPort));
-            changes.portsChanges.deleted.forEach((deletedPort) => this.deletePort(deletedPort));
-            changes.portsChanges.modified.forEach((modifiedPort) => this.modifyPort(modifiedPort));
-
             changes.connectionsChanges.new.forEach((newConnection) => this.addConnection(newConnection));
-            changes.connectionsChanges.deleted.forEach((deletedConnection) => this.deleteConnection(deletedConnection));
+
+            changes.agentsChanges.modified.forEach((modifiedAgent) => this.modifyAgent(modifiedAgent));
+            changes.portsChanges.modified.forEach((modifiedPort) => this.modifyPort(modifiedPort));
             // changes.connectionsChanges.modified.forEach((modifiedPort) => this.modifyPort(modifiedPort));
+
+            changes.connectionsChanges.deleted.forEach((deletedConnection) => this.deleteConnection(deletedConnection));
+            changes.portsChanges.deleted.forEach((deletedPort) => this.deletePort(deletedPort));
+            changes.agentsChanges.deleted.forEach((deletedAgent) => this.deleteAgent(deletedAgent));
+
         })
         this.endInternalChanges();
+
+        this.outline.refresh(); // TO DO: This is because outline was not properly instantiated/refresh after new page was opened, 
+        // question is wheather it is best solution?
 
         this.changesToApply = [];
     }
@@ -343,7 +380,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         return element;
     }
 
-    private createConnection(
+    createConnection(
         { sourcePortInternalId = undefined, targetPortInternalId = undefined,
             direction = undefined, style = undefined, internalId = undefined, mxGraphId = undefined, }: {
                 sourcePortInternalId?: string, targetPortInternalId?: string,
@@ -375,7 +412,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         });
     }
 
-    private createPort({ x = undefined, y = undefined, name = undefined, color = undefined,
+    createPort({ x = undefined, y = undefined, name = undefined, color = undefined,
         agentInternalId = undefined, internalId = undefined, mxGraphId = undefined, }: {
             x?: number, y?: number, name?: string, color?: string,
             agentInternalId?: string, internalId?: string, mxGraphId?: string,
@@ -408,12 +445,12 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         })
     }
 
-    private createAgent({ x = undefined, y = undefined, width = undefined, height = undefined, name = undefined,
-        active = undefined, color = undefined, internalId = undefined, mxGraphId = undefined }: {
-            x?: number, y?: number, width?: number, height?: number, name?: string, active?: number, color?: string,
-            internalId?: string, mxGraphId?: string,
+    createAgent({ x = undefined, y = undefined, width = undefined, height = undefined, name = undefined, running = undefined,
+        active = undefined, color = undefined, subPageInternalId = undefined, internalId = undefined, mxGraphId = undefined }: {
+            x?: number, y?: number, width?: number, height?: number, name?: string, running?: number, active?: number, color?: string,
+            subPageInternalId?: string, internalId?: string, mxGraphId?: string,
         }): IAgentRecord {
-        const { agents } = this.props;
+        const { agents, pageInternalId } = this.props;
 
         if (internalId || mxGraphId) {
             const agent: IAgentRecord = this.getElementByInternalId(agents, internalId ? internalId : this.getInternalIdByMxGrpahId(mxGraphId));
@@ -429,6 +466,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
             modifiedAgent = this.setIfNotUndefined(modifiedAgent, 'name', name);
             modifiedAgent = this.setIfNotUndefined(modifiedAgent, 'active', active);
             modifiedAgent = this.setIfNotUndefined(modifiedAgent, 'color', color);
+            modifiedAgent = this.setIfNotUndefined(modifiedAgent, 'subPageInternalId', subPageInternalId);
 
             return modifiedAgent;
         }
@@ -439,14 +477,14 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
             portsInternalIds: List<string>([]),
             index: null,
             active,
-            running: null,
-            height,
-            width,
+            running: running !== undefined ? running : 0,
+            height: height !== undefined ? height : 100,
+            width: width !== undefined ? width : 140,
             x,
             y,
             color,
-            pageInternalId: '0',
-            subPageInternalId: null,
+            pageInternalId,
+            subPageInternalId: subPageInternalId !== undefined ? subPageInternalId : null,
         })
     }
 
@@ -547,7 +585,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         const { mx, agents } = this.props;
 
         const imgWidth = 23, imgHeight = 12,
-        overlay = new mx.mxCellOverlay(new mx.mxImage('images/hierarchy_agent_arrow.png', 23, 12), 'Go to subpage');
+            overlay = new mx.mxCellOverlay(new mx.mxImage('images/hierarchy_agent_arrow.png', 23, 12), 'Go to subpage');
         overlay.cursor = 'hand';
         overlay.offset = new mx.mxPoint(- imgWidth, - imgHeight);
         overlay.align = mx.mxConstants.ALIGN_RIGHT;

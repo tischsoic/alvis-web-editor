@@ -208,7 +208,7 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
 
         return (
             <div>
-                <div style={{ width: '50%' }}>
+                <div style={{ width: '250px', float: 'left' }}>
                     <Nav bsStyle="tabs" activeKey={codeEditorOpened ? '1' : '2'}>
                         <NavItem eventKey="1" onClick={() => { this.showCodeEditor(); }}>Editor</NavItem>
                         <NavItem eventKey="2" onClick={() => { this.showHierarchyTree(); }}>Hierarchy</NavItem>
@@ -225,11 +225,12 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
                                 enableBasicAutocompletion: true,
                                 enableLiveAutocompletion: true,
                             }}
+                            width='250px'
                         />
                         : <HierarchyTree pages={pages} agents={agents} onPageClick={(page) => this.setActivePageInternalId(page.internalId)} />
                     }
                 </div>
-                <div style={{ width: '50%' }}>
+                <div style={{ width: '500px', float: 'left' }}>
                     <AlvisGraphPanel
                         mx={this.mx}
                         alvisProject={alvisProject}

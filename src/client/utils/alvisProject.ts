@@ -70,6 +70,10 @@ function deleteRecord(alvisProject: IAlvisProjectRecord) {
         const projectWithDeletedRecord = alvisProject.update(key, (records: List<IInternalRecord>) => {
             const recordIndex = getListElementIndexWithInternalId(records)(recordInternalId);
 
+            if (recordIndex === -1) {
+                return records;
+            }
+
             return records.delete(recordIndex);
         });
 
@@ -97,6 +101,10 @@ function updateListElementWithInternalId<T extends IInternalRecord | IInternalRe
 function deleteListElementWithInternalId<T extends IInternalRecord>(elements: List<T>) {
     return (elementInternalId: string): List<T> => {
         const elementToDeleteIndex = getListElementIndexWithInternalId(elements)(elementInternalId);
+
+        if (elementToDeleteIndex === -1) {
+            return elements;
+        }
 
         return elements.delete(elementToDeleteIndex);
     }
@@ -170,7 +178,9 @@ const removeSubPageFromPage = (alvisProject: IAlvisProjectRecord) =>
         const supPage = getPageSupPage(alvisProject)(subPageInternalId),
             subPageInternalIdIndex = getListElementIndexWithFn(supPage.subPagesInternalIds)((id) => id === subPageInternalId),
             pageWithRemovedSubPage = supPage.update('subPagesInternalIds',
-                (subPagesInternalIds) => subPagesInternalIds.delete(subPageInternalIdIndex)),
+                (subPagesInternalIds) => subPageInternalIdIndex !== -1
+                    ? subPagesInternalIds.delete(subPageInternalIdIndex)
+                    : subPagesInternalIds),
             updatedProject = changeRecord(alvisProject)(pageWithRemovedSubPage, 'pages');
 
         return updatedProject;
@@ -217,7 +227,9 @@ const removeAgentFromPage = (alvisProject: IAlvisProjectRecord) =>
         const agentPage = getAgentPage(alvisProject)(agentInternalId),
             agentInternalIdToRemoveIndex = getListElementIndexWithFn(agentPage.agentsInternalIds)((id) => id === agentInternalId),
             pageWithRemovedAgent = agentPage.update('agentsInternalIds',
-                (agentsInternalIds) => agentsInternalIds.delete(agentInternalIdToRemoveIndex)),
+                (agentsInternalIds) => agentInternalIdToRemoveIndex !== -1
+                    ? agentsInternalIds.delete(agentInternalIdToRemoveIndex)
+                    : agentsInternalIds),
             updatedProject = changeRecord(alvisProject)(pageWithRemovedAgent, 'pages');
 
         return updatedProject;
@@ -290,7 +302,9 @@ const removePortFromAgent = (alvisProject: IAlvisProjectRecord) =>
         const portAgent = getPortAgent(alvisProject)(portInternalId),
             agentPortsInternalIds: List<string> = portAgent.get('portsInternalIds'),
             portToRemoveIndex = getListElementIndexWithFn(agentPortsInternalIds)((id) => id === portInternalId),
-            agentWithRemovedPort = portAgent.set('portsInternalIds', agentPortsInternalIds.delete(portToRemoveIndex)),
+            agentWithRemovedPort = portAgent.set('portsInternalIds', portToRemoveIndex !== -1
+                ? agentPortsInternalIds.delete(portToRemoveIndex)
+                : agentPortsInternalIds),
             updatedProject = changeRecord(alvisProject)(agentWithRemovedPort, 'agents');
 
         return updatedProject;

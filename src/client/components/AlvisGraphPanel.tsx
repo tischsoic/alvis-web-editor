@@ -116,15 +116,17 @@ export class AlvisGraphPanel extends React.Component<AlvisGraphPanelProps, Alvis
                 const page = pageElements.page,
                     agents = pageElements.agents.toList(),
                     ports = pageElements.ports.toList(),
-                    connections = pageElements.connections.toList();
+                    connections = pageElements.connections.toList(),
+                    pageInternalId = page.internalId;
 
                 return (
-                    <Tab eventKey={page.internalId} title={page.name} key={page.internalId}>
+                    <Tab eventKey={pageInternalId} title={page.name} key={pageInternalId}>
                         <AlvisGraph
                             mx={mx}
                             agents={agents}
                             ports={ports}
                             connections={connections}
+                            pageInternalId={pageInternalId}
                             onChangeActivePage={onChangeActivePage}
                             onMxGraphAgentAdded={onMxGraphAgentAdded}
                             onMxGraphAgentDeleted={onMxGraphAgentDeleted}
