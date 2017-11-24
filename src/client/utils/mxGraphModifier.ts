@@ -23,7 +23,7 @@ export default function modifyMxGraph(mx: mxgraph.allClasses, graph: mxClasses.m
 function enablePanning(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
     graph.setPanning(true);
     graph.centerZoom = false;
-    graph.panningHandler.useLeftButtonForPanning = true;
+    // graph.panningHandler.useLeftButtonForPanning = true;
 }
 
 // function injectCustomModel(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
@@ -341,16 +341,33 @@ function addPopupMenu(mx: mxgraph.allClasses, graph: mxClasses.mxGraph, alvisGra
         }
 
         menu.addItem('Add port', null, () => {
+            const { ports } = alvisGraph.props;
+            const portsCount = ports.size,
+                portName = 'port_' + portsCount;
+
             graph.getModel().beginUpdate();
             try {
-                var portVertex = graph.insertVertex(cell, null, '', 1, 1, 20, 20, 'PORT_STYLE', true);
+                var portVertex = graph.insertVertex(cell, null, portName, 1, 1, 20, 20, 'PORT_STYLE', true);
                 portVertex.geometry.offset = new mx.mxPoint(-10, -10);
             }
             finally {
                 graph.getModel().endUpdate();
             }
         });
-        menu.addItem('aligh top', null, () => { });
+
+        menu.addItem('Add page', null, () => {
+            const { onMxGraphPageAdded } = alvisGraph.props;
+            const agentInternalId = alvisGraph.getInternalIdByMxGrpahId(cell.getId());
+
+            alvisGraph.getNameFromUser((chosenName: string) => {
+                if (chosenName === null) {
+                    return;
+                }
+                onMxGraphPageAdded(alvisGraph.createPage(chosenName, agentInternalId));
+            })
+
+        });
+
         const alignSubmenu = menu.addItem('Align', null, null);
         const getAlignFn = (align: string): () => void => {
             return () => {
@@ -371,6 +388,38 @@ function addPopupMenu(mx: mxgraph.allClasses, graph: mxClasses.mxGraph, alvisGra
 
 
 //--------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

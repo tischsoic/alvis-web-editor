@@ -12,7 +12,7 @@
 <agent active="1" color="white" height="100.0" index="1" name="pag 3 agent" running="0" width="140.0" x="80.0" y="70.0"/>
 </page>
 <page name="System">
-<agent active="0" color="white" height="100.0" index="1" name="Agent_1" running="0" width="140.0" x="20.0" y="80.0">
+<agent active="0" color="red" height="100.0" index="1" name="Agent_1" running="0" width="140.0" x="20.0" y="80.0">
 <port color="white" id="722064955" name="port_0" x="0.0" y="0.2"/>
 <port color="white" id="1336330071" name="port_1" x="1.0" y="0.5"/>
 </agent>

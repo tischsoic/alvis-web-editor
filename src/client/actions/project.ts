@@ -7,6 +7,7 @@ import * as Actions from '../constants/actions';
 import {
     IAgentRecord, IPortRecord, IConnectionRecord,
     IAlvisProjectRecord,
+    IPageRecord,
 } from "../models/alvisProject";
 import { List } from 'immutable'
 
@@ -22,7 +23,7 @@ const setAlvisProject = createAction<[IAlvisProjectRecord, number], [IAlvisProje
     (value: [IAlvisProjectRecord, number]) => value
 );
 
-function createAddElementAction<T extends IAgentRecord | IPortRecord | IConnectionRecord>(actionType: string) {
+function createAddElementAction<T extends IAgentRecord | IPortRecord | IConnectionRecord | IPageRecord>(actionType: string) {
     return createAction<T, T>(
         actionType,
         (element: T) => element
@@ -36,12 +37,16 @@ function createDeleteElementAction(actionType) {
     );
 }
 
-function createModifyElementAction<T extends IAgentRecord | IPortRecord | IConnectionRecord>(actionType) {
+function createModifyElementAction<T extends IAgentRecord | IPortRecord | IConnectionRecord | IPageRecord>(actionType) {
     return createAction<T, T>(
         actionType,
         (element: T) => element
     );
 }
+
+const addPage = createAddElementAction<IPageRecord>(Actions.PROJECT_ADD_PAGE);
+const deletePage = createDeleteElementAction(Actions.PROJECT_DELETE_PAGE);
+const modifyPage = createModifyElementAction<IPageRecord>(Actions.PROJECT_MODIFY_PAGE);
 
 const addAgent = createAddElementAction<IAgentRecord>(Actions.PROJECT_ADD_AGENT);
 const deleteAgent = createDeleteElementAction(Actions.PROJECT_DELETE_AGENT);
@@ -79,6 +84,7 @@ const fetchProjectXML = (parseXml: (xml: string) => XMLDocument): ((dispatch: re
 
 export {
     setProjectXML,
+    addPage, deletePage, modifyPage,
     addAgent, deleteAgent, modifyAgent,
     addPort, deletePort, modifyPort,
     addConnection, deleteConnection, modifyConnection,

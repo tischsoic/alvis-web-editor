@@ -21,6 +21,8 @@ export interface AlvisGraphPanelProps {
 
     mx: mxgraph.allClasses,
 
+    onMxGraphPageAdded: (page: IPageRecord) => any,
+
     onMxGraphAgentAdded: (agent: IAgentRecord) => any,
     onMxGraphAgentDeleted: (agentInternalId: string) => any,
     onMxGraphAgentModified: (agent: IAgentRecord) => any,
@@ -44,7 +46,7 @@ export class AlvisGraphPanel extends React.Component<AlvisGraphPanelProps, Alvis
 
         const { activePageInternalId } = this.props;
         const openedPagesInternalIds = activePageInternalId !== null ? [activePageInternalId] : [];
-        this.state = {
+        this.state = { // TO DO: Check how initial state should be set - getInitialState() function overwriting
             openedPagesInternalIds: List(openedPagesInternalIds),
         };
     }
@@ -105,6 +107,7 @@ export class AlvisGraphPanel extends React.Component<AlvisGraphPanelProps, Alvis
 
     render() {
         const { activePageInternalId, onChangeActivePage, mx,
+            onMxGraphPageAdded,
             onMxGraphAgentAdded, onMxGraphAgentDeleted, onMxGraphAgentModified,
             onMxGraphPortAdded, onMxGraphPortDeleted, onMxGraphPortModified,
             onMxGraphConnectionAdded, onMxGraphConnectionDeleted, onMxGraphConnectionModified,
@@ -128,6 +131,7 @@ export class AlvisGraphPanel extends React.Component<AlvisGraphPanelProps, Alvis
                             connections={connections}
                             pageInternalId={pageInternalId}
                             onChangeActivePage={onChangeActivePage}
+                            onMxGraphPageAdded={onMxGraphPageAdded}
                             onMxGraphAgentAdded={onMxGraphAgentAdded}
                             onMxGraphAgentDeleted={onMxGraphAgentDeleted}
                             onMxGraphAgentModified={onMxGraphAgentModified}

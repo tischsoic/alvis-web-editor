@@ -8,11 +8,14 @@ import {
     IPageRecord,
 } from "../models/alvisProject";
 import { List } from 'immutable';
+import { Button, Glyphicon } from 'react-bootstrap';
 
 export interface HierarchyTreeProps {
     pages: List<IPageRecord>,
     agents: List<IAgentRecord>,
     onPageClick: (page: IPageRecord) => void,
+
+    onMxGraphPageDeleted: (pageInternalId: string) => any,
 };
 
 export interface HierarchyTreeState { };
@@ -46,14 +49,21 @@ export class HierarchyTree extends React.Component<HierarchyTreeProps, Hierarchy
     }
 
     getPageTree(page: IPageRecord) {
-        const { onPageClick } = this.props;
+        const { onPageClick, onMxGraphPageDeleted } = this.props;
         const subPages = page.subPagesInternalIds.map((pageInternalId) => this.getPageByInternalId(pageInternalId)),
             subPagesTrees = subPages.map((subPage) => this.getPageTree(subPage)),
-            supAgent = this.getPageSupAgent(page);
+            supAgent = this.getPageSupAgent(page),
+            pageInternalId = page.internalId;
 
         return (
-            <li key={page.internalId}>
-                <a href='#' onClick={() => onPageClick(page)}>{page.name + (supAgent ? ' < ' + supAgent.name : '')}</a>
+            <li key={pageInternalId}>
+                <Button bsStyle='link' bsSize='small' onClick={() => onPageClick(page)}>
+                    {page.name + (supAgent ? ' < ' + supAgent.name : '')}
+                </Button>
+                {page.name !== 'System' &&
+                    <Button bsStyle="danger" bsSize='xsmall' onClick={() => onMxGraphPageDeleted(pageInternalId)}>
+                        <Glyphicon glyph='remove' />
+                    </Button>} {/* TO DO: store 'System' name in some config! */}
                 {subPagesTrees.size !== 0
                     ? <ul> {subPagesTrees} </ul>
                     : null

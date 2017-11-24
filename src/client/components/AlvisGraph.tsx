@@ -1,12 +1,16 @@
 import * as React from 'react';
 import * as mxClasses from "mxgraphAllClasses";
-import { ButtonToolbar, ButtonGroup, Button, GlyphIcon } from 'react-bootstrap';
+import {
+    ButtonToolbar, ButtonGroup, Button, Glyphicon, Modal,
+    FormGroup, FormControl, ControlLabel,
+} from 'react-bootstrap';
 
 import AlvisGraphManager from '../utils/AlvisGraphManager';
 import modifyMxGraph from '../utils/mxGraphModifier';
 import { getListElementByInternalId } from '../utils/alvisProject';
 
 import {
+    IPageRecord, pageRecordFactory,
     IAgentRecord, agentRecordFactory,
     IPortRecord, portRecordFactory,
     IConnectionRecord, connectionRecordFactory, IInternalRecord,
@@ -28,6 +32,8 @@ export interface AlvisGraphProps {
 
     onChangeActivePage: (newActivePageInternalId: string) => void,
 
+    onMxGraphPageAdded: (page: IPageRecord) => any,
+
     onMxGraphAgentAdded: (agent: IAgentRecord) => any,
     onMxGraphAgentDeleted: (agentInternalId: string) => any,
     onMxGraphAgentModified: (agent: IAgentRecord) => any,
@@ -45,10 +51,13 @@ import {
     getPortAgent
 } from '../utils/alvisProject';
 import { modifyConnection } from '../actions/project';
-import { Glyphicon } from 'react-bootstrap';
 
 
-export interface AlvisGraphState { };
+export interface AlvisGraphState {
+    showChooseNameModal: boolean,
+    chooseNameModalName: string,
+    chooseNameCallback: (chosenName: string) => void,
+};
 
 export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState> {
     constructor(props: AlvisGraphProps) {
@@ -56,7 +65,13 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
 
         this.onProcessChange = this.onProcessChange.bind(this);
         this.changeActivePageToAgentSubPage = this.changeActivePageToAgentSubPage.bind(this);
-        this.randomNumber = Math.floor((Math.random() * 100000) + 1);
+        this.randomNumber = Math.floor((Math.random() * 100000) + 1); // TO DO: set unique ID based on alvis Page ID
+
+        this.state = {
+            showChooseNameModal: false,
+            chooseNameModalName: '',
+            chooseNameCallback: null,
+        }
     }
 
     private graph: mxClasses.mxGraph;
@@ -65,6 +80,8 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
 
     private mxGraphIdsToInternalIds: string[] = [];
     private internalIdsToMxGraphIds: string[] = [];
+
+    private mxGraphIdsToHierarchicalIconOverlays: mxClasses.mxCellOverlay[] = [];
 
     private duringInternalChanges: boolean = false;
 
@@ -125,7 +142,8 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
             }
 
             setValue(cell: mxClasses.mxCell, value: any): any {
-                if (alvisGraph.isDuringInternalChanges()) {
+                const cellId = cell.getId();
+                if (cellId === null || alvisGraph.isDuringInternalChanges()) {
                     return super.setValue.apply(this, arguments);
                 }
 
@@ -150,7 +168,8 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
             }
 
             remove(cell: mxClasses.mxCell): mxClasses.mxCell {
-                if (alvisGraph.isDuringInternalChanges()) {
+                const cellId = cell.getId();
+                if (cellId === null || alvisGraph.isDuringInternalChanges()) {
                     return super.remove.apply(this, arguments);
                 }
 
@@ -169,7 +188,8 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
             }
 
             setGeometry(cell: mxClasses.mxCell, geometry: mxClasses.mxGeometry): mxClasses.mxGeometry {
-                if (alvisGraph.isDuringInternalChanges()) {
+                const cellId = cell.getId();
+                if (cellId === null || alvisGraph.isDuringInternalChanges()) {
                     return super.setGeometry.apply(this, arguments);
                 }
                 const { x, y, width, height } = geometry;
@@ -223,6 +243,8 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
 
             const cells = evt.getProperty('cells');
 
+            // TO DO: Check if this is a problem: during agent deletetion, the edge connected to agent's port is also deleted
+            // but mxGraph also tries to delete this edge after it tries to delete agent - two actions are called delete_agent DELETE_cONNECTION
             if (cells && cells.length > 0 && alvisGraph.graph.getModel().isEdge(cells[0])) {
                 const target = evt.getProperty('target'),
                     source = evt.getProperty('source'),
@@ -296,9 +318,18 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         this.applyChanges();
     }
 
-    shouldComponentUpdate(nextProps, nextState, nextContext: any) {
+    private stateRelatedToChooseNameModalHasChanged(nextState: AlvisGraphState): boolean {
+        const { showChooseNameModal, chooseNameModalName } = this.state;
+        const showChooseNameModalNew = nextState.showChooseNameModal,
+            chooseNameModalNameNew = nextState.chooseNameModalName;
+
+        return showChooseNameModal !== showChooseNameModalNew
+            || chooseNameModalName !== chooseNameModalNameNew;
+    }
+
+    shouldComponentUpdate(nextProps, nextState: AlvisGraphState, nextContext: any) {
         console.log("ATTENTION!!! shouldComponentUpdate");
-        return false;
+        return this.stateRelatedToChooseNameModalHasChanged(nextState);
     }
 
     // componentWillUpdate?(nextProps: P, nextState: S, nextContext: any): void;
@@ -308,18 +339,85 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
     render() {
         console.log(this.props)
         console.log('rendering AlivGraph COmponent')
+        const { showChooseNameModal } = this.state;
+        const onModalNameChange = (e) => {
+            this.setState({
+                chooseNameModalName: e.target.value,
+            })
+        };
+
         return (
-            <div>
+            <div className="modal-container">
+                <Modal
+                    show={showChooseNameModal}
+                    onHide={() => this.onChooseNameModalClose(false)}
+                    container={this}
+                    bsSize="small"
+                    aria-labelledby="contained-modal-title-sm"
+                >
+                    <Modal.Header closeButton>
+                        <Modal.Title id="contained-modal-title-sm">Choose name</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <form>
+                            <FormGroup
+                                controlId="chooseNameFormGroup"
+                            >
+                                <FormControl
+                                    type="text"
+                                    value={this.state.chooseNameModalName}
+                                    placeholder="Enter name"
+                                    onChange={onModalNameChange}
+                                />
+                                <FormControl.Feedback />
+                            </FormGroup>
+                        </form>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button onClick={() => this.onChooseNameModalClose(true)}>OK</Button>
+                        <Button onClick={() => this.onChooseNameModalClose(false)}>Cancel</Button>
+                    </Modal.Footer>
+                </Modal>
                 <ButtonToolbar>
                     <ButtonGroup>
                         <Button onClick={() => this.graph.zoomOut()}><Glyphicon glyph='zoom-out' /></Button>
                         <Button onClick={() => this.graph.zoomIn()}><Glyphicon glyph='zoom-in' /></Button>
                     </ButtonGroup>
                 </ButtonToolbar>
-                <div id={"alvis-graph-container-" + this.randomNumber} style={{overflow: 'hidden', height: '400px' }}></div>
+                <div id={"alvis-graph-container-" + this.randomNumber} style={{ overflow: 'hidden', height: '400px' }}></div>
                 <div id={"alvis-graph-outline-container-" + this.randomNumber} style={{ height: '200px' }}></div>
             </div>
         )
+    }
+
+    private onChooseNameModalClose(success: boolean) {
+        const { chooseNameModalName, chooseNameCallback } = this.state;
+        const finalChosenName = success ? chooseNameModalName : null;
+
+        if (chooseNameCallback !== null) {
+            chooseNameCallback(finalChosenName);
+        }
+
+        this.setState({
+            showChooseNameModal: false,
+            chooseNameModalName: '',
+            chooseNameCallback: null,
+        });
+    }
+
+    public getNameFromUser(callback: (name: string) => void) {
+        const { showChooseNameModal } = this.state;
+        if (showChooseNameModal) {
+            throw {
+                message: 'Choose name modal was already opened!',
+            };
+        }
+
+        this.setState({
+            showChooseNameModal: true,
+            chooseNameModalName: '',
+            chooseNameCallback: callback,
+        });
     }
 
     private beginInternalChanges() {
@@ -488,6 +586,16 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         })
     }
 
+    createPage(name: string, supAgentInternalId: string): IPageRecord {
+        return pageRecordFactory({
+            internalId: null,
+            name,
+            agentsInternalIds: List<string>(),
+            subPagesInternalIds: List<string>(),
+            supAgentInternalId,
+        })
+    }
+
     private onProcessChange(change: any, callback) {
         callback(change);
         return;
@@ -529,7 +637,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
 
     }
 
-    private getInternalIdByMxGrpahId(mxGraphId: string): string | undefined {
+    getInternalIdByMxGrpahId(mxGraphId: string): string | undefined {
         return this.mxGraphIdsToInternalIds[mxGraphId];
     }
 
@@ -548,6 +656,12 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
 
             // this.graph.translateCell(cellToModify, agent.x, agent.y);
             this.graph.resizeCell(cellToModify, new mx.mxRectangle(agent.x, agent.y, agent.width, agent.height), false);
+
+            if (agent.subPageInternalId !== null) {
+                this.addAgentHierarchyIconOverlay(cellToModify);
+            } else {
+                this.removeAgentHierarchyIconOverlayIfExists(cellToModify);
+            }
         }
         finally {
             this.graph.getModel().endUpdate();
@@ -580,6 +694,26 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         onChangeActivePage(newActivePageInternalId);
     }
 
+    private getAgentHierarchicalIconOverlay(agentVertexId: string) {
+        return this.mxGraphIdsToHierarchicalIconOverlays[agentVertexId];
+    }
+
+    private setAgentHierarchicalIconOverlay(agentVertexId: string, overlay: mxClasses.mxCellOverlay) {
+        this.mxGraphIdsToHierarchicalIconOverlays[agentVertexId] = overlay; // TO DO: Check why it does not check what is being assigned
+    }
+
+    private removeAgentHierarchyIconOverlayIfExists(agentVertex: mxClasses.mxCell) {
+        const agentVertexId = agentVertex.getId(),
+            overlay = this.getAgentHierarchicalIconOverlay(agentVertexId);
+
+        if (!overlay) {
+            return;
+        }
+
+        this.graph.removeCellOverlay(agentVertex, overlay);
+        this.setAgentHierarchicalIconOverlay(agentVertexId, undefined);
+    }
+
     // TO DO: add removing cell overlays from agents
     private addAgentHierarchyIconOverlay(agentVertex: mxClasses.mxCell) {
         const { mx, agents } = this.props;
@@ -598,6 +732,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         });
 
         this.graph.addCellOverlay(agentVertex, overlay);
+        this.setAgentHierarchicalIconOverlay(agentVertexId, overlay);
     }
 
     private addAgent(agent: IAgentRecord): IAgentRecord {
@@ -605,6 +740,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         try {
             let agentStyle = agent.active === 1 ? 'ACTIVE_AGENT;' : 'PASSIVE_AGENT;';
             agentStyle += agent.running === 1 ? 'RUNNING;' : '';
+            agentStyle += 'fillColor=' + agent.color + ';';  // TO DO: this.props.mx.mxConstants.STYLE_FILLCOLOR
             const agentVertex = this.graph.insertVertex(
                 this.parent, null, agent.name,
                 agent.x, agent.y, agent.width, agent.height,
@@ -631,9 +767,12 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         this.graph.getModel().beginUpdate();
         try {
             const mxGraphPortId = this.getMxGraphIdByInternalId(port.internalId),
-                cellToModify = this.graph.getModel().getCell(mxGraphPortId);
+                cellToModify = this.graph.getModel().getCell(mxGraphPortId),
+                cellToModifyGeometry = cellToModify.geometry,
+                dx = (port.x - cellToModifyGeometry.x) * 100,
+                dy = (port.y - cellToModifyGeometry.y) * 100;
 
-            this.graph.moveCells([cellToModify], (port.x - 1) * 100, (port.y - 1) * 100);
+            this.graph.moveCells([cellToModify], dx, dy);
             // this.graph.translateCell(cellToModify, port.x, port.y);
             // this.graph.resizeCell(cellToModify, new mx.mxRectangle(port.x, port.y, 20, 20), false);
         }
@@ -687,7 +826,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
             const sourcePortMxGraphId = this.getMxGraphIdByInternalId(connection.sourcePortInternalId),
                 targetPortMxGraphId = this.getMxGraphIdByInternalId(connection.targetPortInternalId),
                 sourcePortRecord = this.getElementByInternalId(ports, connection.sourcePortInternalId), // TO DO: think over it
-                // can it be whatever port recordafter change? Maybe we should rather provide port from state of this change 
+                // can it be whatever port recordafter change? Maybe we should rather provide port from state of this change
                 targetPortRecord = this.getElementByInternalId(ports, connection.targetPortInternalId),
                 edgePortsStyle = `sourcePort=${sourcePortMxGraphId};targetPort=${targetPortMxGraphId};`;
             let directionStyle = '';

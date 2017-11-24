@@ -219,7 +219,7 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
                             theme="github"
                             onChange={onEditorChange}
                             name="alvisCode_1"
-                            value={"alvis Code"}
+                            value={alvisProject.code.text}
                             editorProps={{ $blockScrolling: true }}
                             setOptions={{
                                 enableBasicAutocompletion: true,
@@ -227,7 +227,12 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
                             }}
                             width='250px'
                         />
-                        : <HierarchyTree pages={pages} agents={agents} onPageClick={(page) => this.setActivePageInternalId(page.internalId)} />
+                        : <HierarchyTree
+                            pages={pages}
+                            agents={agents}
+                            onPageClick={(page) => this.setActivePageInternalId(page.internalId)}
+                            onMxGraphPageDeleted={projectActions.deletePage}
+                        />
                     }
                 </div>
                 <div style={{ width: '500px', float: 'left' }}>
@@ -237,6 +242,7 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
                         projectId={0}
                         onChangeActivePage={(newActivePageInternalId: string) => this.setActivePageInternalId(newActivePageInternalId)}
                         activePageInternalId={activePageInternalId}
+                        onMxGraphPageAdded={projectActions.addPage}
                         onMxGraphAgentAdded={onMxGraphAgentAdded}
                         onMxGraphAgentDeleted={onMxGraphAgentDeleted}
                         onMxGraphAgentModified={onMxGraphAgentModified}

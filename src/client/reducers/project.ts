@@ -5,6 +5,7 @@ import {
     IAgentRecord, IAgent,
     IPortRecord,
     IConnectionRecord,
+    IPageRecord,
 } from '../models/alvisProject';
 import {
     IProjectRecord,
@@ -22,7 +23,7 @@ const initialState: IProjectRecord = projectRecordFactory({
     lastInternalId: 0,
 });
 
-function addElementToState<T extends IAgentRecord | IPortRecord | IConnectionRecord>(
+function addElementToState<T extends IAgentRecord | IPortRecord | IConnectionRecord | IPageRecord>(
     state: IProjectRecord, elementRecord: T,
     fnToModifyAlvisProjectRecord: (p: IAlvisProjectRecord) => (el: T) => IAlvisProjectRecord
 ) {
@@ -35,7 +36,7 @@ function addElementToState<T extends IAgentRecord | IPortRecord | IConnectionRec
     return stateAfterElementAdded;
 }
 
-export default handleActions<IProjectRecord, string | [IAlvisProjectRecord, number] | IAgentRecord | IPortRecord | IConnectionRecord>({
+export default handleActions<IProjectRecord, string | [IAlvisProjectRecord, number] | IAgentRecord | IPortRecord | IConnectionRecord | IPageRecord>({
     [Actions.PROJECT_SET_XML]: (state: IProjectRecord, action: Action<string>) => {
         console.log("reducers project:");
         console.log(action.payload)
@@ -46,6 +47,15 @@ export default handleActions<IProjectRecord, string | [IAlvisProjectRecord, numb
             afterlastInternalIdSet = afterProjectSet.set('lastInternalId', action.payload[1]);
 
         return afterlastInternalIdSet;
+    },
+    [Actions.PROJECT_ADD_PAGE]: (state: IProjectRecord, action: Action<IPageRecord>) => {
+        return addElementToState(state, action.payload, apManager.addPageToAlvisProject);
+    },
+    [Actions.PROJECT_DELETE_PAGE]: (state: IProjectRecord, action: Action<string>) => {
+        return state.set('alvisProject', apManager.deletePageInAlvisProject(state.alvisProject)(action.payload));
+    },
+    [Actions.PROJECT_MODIFY_PAGE]: (state: IProjectRecord, action: Action<IPageRecord>) => {
+        return state.set('alvisProject', apManager.modifyPageInAlvisProject(state.alvisProject)(action.payload));
     },
     [Actions.PROJECT_ADD_AGENT]: (state: IProjectRecord, action: Action<IAgentRecord>) => {
         return addElementToState(state, action.payload, apManager.addAgentToAlvisProject);

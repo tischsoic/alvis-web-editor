@@ -135,9 +135,10 @@ export const addPageToAlvisProject = (alvisProject: IAlvisProjectRecord) =>
     (newPage: IPageRecord): IAlvisProjectRecord => {
         const afterPageAddedToProject = addRecord(alvisProject)(newPage, 'pages'),
             supAgent = <IAgentRecord>getRecord(alvisProject)(newPage.supAgentInternalId, 'agents'),
-            afterAddedToSupPage = assignSubPageToPage(afterPageAddedToProject)(newPage.internalId, supAgent.pageInternalId);
+            afterAddedToSupPage = assignSubPageToPage(afterPageAddedToProject)(newPage.internalId, supAgent.pageInternalId),
+            afterAssignedToAgent = assignSubPageToAgent(afterAddedToSupPage)(supAgent, newPage.internalId);
 
-        return afterAddedToSupPage;
+        return afterAssignedToAgent;
     }
 
 export const modifyPageInAlvisProject = (alvisProject: IAlvisProjectRecord) =>
@@ -162,6 +163,22 @@ export const deletePageInAlvisProject = (alvisProject: IAlvisProjectRecord) =>
 
         return afterPageRemoved;
     }
+
+const assignSubPageToAgent = (alvisProject: IAlvisProjectRecord) =>
+    (supAgent: IAgentRecord, pageInternalId: string): IAlvisProjectRecord => {
+        const agentWithPageAssigned = supAgent.set('subPageInternalId', pageInternalId),
+            updatedProject = changeRecord(alvisProject)(agentWithPageAssigned, 'agents');
+
+        return updatedProject;
+    }
+
+// const removeSubPageFromAgent = (alvisProject: IAlvisProjectRecord) =>
+//     (supAgent: IAgentRecord, pageInternalId: string): IAlvisProjectRecord => {
+//         const agentWithPageAssigned = supAgent.set('subPageInternalId', pageInternalId),
+//             updatedProject = changeRecord(alvisProject)(agentWithPageAssigned, 'agents');
+
+//         return updatedProject;
+//     }
 
 const assignSubPageToPage = (alvisProject: IAlvisProjectRecord) =>
     (subPageInternalId: string, pageInternalId: string): IAlvisProjectRecord => {
@@ -261,6 +278,17 @@ export const deleteAgentInAlvisProject = (alvisProject: IAlvisProjectRecord) =>
 
         return afterAgentRemoved;
     }
+
+// TO DO: delete agent subpage
+// export const deleteAgentSubPageIfExists = (alvisProject: IAlvisProjectRecord) =>
+//     (agent: IAgentRecord): IAlvisProjectRecord => {
+//         const afterConnectionsRemoved = deleteAgentPortsConnections(alvisProject)(agentToDeleteInternalId),
+//             afterPortsRemoved = deleteAgentPorts(afterConnectionsRemoved)(agentToDeleteInternalId),
+//             afterAgentRemovedFromPage = removeAgentFromPage(afterPortsRemoved)(agentToDeleteInternalId),
+//             afterAgentRemoved = deleteRecord(afterAgentRemovedFromPage)(agentToDeleteInternalId, 'agents');
+
+//         return afterAgentRemoved;
+//     }
 
 const deleteAgentPorts = (alvisProject: IAlvisProjectRecord) =>
     (agentInternalId: string): IAlvisProjectRecord => {
