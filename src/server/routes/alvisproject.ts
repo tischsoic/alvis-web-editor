@@ -16,7 +16,7 @@ export class AlvisProjectRoute extends BaseRoute {
     }
 
     public index(req: Request, res: Response, next: NextFunction) {
-        fs.readFile('./static/alvis-project/fst_project.alvis', 'utf-8', (err, data: Buffer) => {
+        fs.readFile('./static/alvis-project/fst_project.alvis', 'utf-8', (err, data: string) => { // TO DO: check data type?? previous BUffer
             if (err) {
                 return console.log(err);
             }

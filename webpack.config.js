@@ -63,12 +63,12 @@ fs.readdirSync('node_modules')
   });
 
 var serverConfig = {
-    // entry: "./src/server/server.ts",
-    entry: './server.js',
+    entry: "./server.ts",
+    // entry: './server.js',
     output: {
-        filename: "server.js",
-        path: path.resolve(__dirname, "dist/"),
-        publicPath: path.resolve(__dirname, "dist/")
+        filename: "./server.js",
+        path: path.resolve(__dirname, "dist"),
+        publicPath: "/dist/"
     },
     target: 'node',
 
@@ -102,5 +102,8 @@ var serverConfig = {
     // },
 };
 
-module.exports = [clientConfig] // Disabled server config for a while  //, serverConfig];
+// module.exports = [clientConfig] // Disabled server config for a while  //, serverConfig];
+// module.exports = [clientConfig, serverConfig]
+module.exports = [serverConfig]
+// module.exports = [clientConfig]
 // module.exports = clientConfig

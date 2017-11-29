@@ -1,11 +1,11 @@
-var server = require("./dist/server/server");
+import {Server} from './src/server/server';
 var debug = require("debug")("express:server");
 var http = require("http");
 
 var httpPort = normalizePort(process.env.PORT || 3001);
 
-console.log(server) 
-var app = server.Server.bootstrap().app;
+console.log(Server) 
+var app = Server.bootstrap().app;
 app.set("port", httpPort);
 var httpServer = http.createServer(app);
 
