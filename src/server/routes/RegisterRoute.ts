@@ -18,7 +18,9 @@ export class RegisterRoute extends BaseRoute {
         });
     }
 
-    private async index(req: Request, res: Response, next: NextFunction) {
+    
+
+    private async index(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const reqBody = req.body,
                 userData: IUserAttribute = {
@@ -28,8 +30,8 @@ export class RegisterRoute extends BaseRoute {
                     lastname: reqBody.lastname,
                     activated: false,
                 },
-            newEntity = db.models.User.build(userData),
-            savedUser = await newEntity.save();
+                newEntity = db.models.User.build(userData),
+                savedUser = await newEntity.save();
 
             res.json({ success: true });
         } catch (e) {

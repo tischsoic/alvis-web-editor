@@ -19,8 +19,6 @@ export interface AlvisGraphPanelProps {
     projectId: number,
     onChangeActivePage: (newActivePageInternalId: string) => void,
 
-    mx: mxgraph.allClasses,
-
     onMxGraphPageAdded: (page: IPageRecord) => any,
 
     onMxGraphAgentAdded: (agent: IAgentRecord) => any,
@@ -106,7 +104,7 @@ export class AlvisGraphPanel extends React.Component<AlvisGraphPanelProps, Alvis
     }
 
     render() {
-        const { activePageInternalId, onChangeActivePage, mx,
+        const { activePageInternalId, onChangeActivePage, 
             onMxGraphPageAdded,
             onMxGraphAgentAdded, onMxGraphAgentDeleted, onMxGraphAgentModified,
             onMxGraphPortAdded, onMxGraphPortDeleted, onMxGraphPortModified,
@@ -125,7 +123,6 @@ export class AlvisGraphPanel extends React.Component<AlvisGraphPanelProps, Alvis
                 return (
                     <Tab eventKey={pageInternalId} title={page.name} key={pageInternalId}>
                         <AlvisGraph
-                            mx={mx}
                             agents={agents}
                             ports={ports}
                             connections={connections}

@@ -5,9 +5,9 @@ import {
     FormGroup, FormControl, ControlLabel,
 } from 'react-bootstrap';
 
-import AlvisGraphManager from '../utils/AlvisGraphManager';
 import modifyMxGraph from '../utils/mxGraphModifier';
 import { getListElementByInternalId } from '../utils/alvisProject';
+import { mx } from '../utils/mx';
 
 import {
     IPageRecord, pageRecordFactory,
@@ -24,7 +24,6 @@ import { List } from 'immutable';
 // marker.isValidState ....
 
 export interface AlvisGraphProps {
-    mx: mxgraph.allClasses,
     agents: List<IAgentRecord>,
     ports: List<IPortRecord>,
     connections: List<IConnectionRecord>,
@@ -96,7 +95,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
     }
 
     componentDidMount() {
-        const { mx, agents, ports, connections } = this.props;
+        const { agents, ports, connections } = this.props;
         const graphDiv = document.getElementById('alvis-graph-container-' + this.randomNumber);
         const alvisGraph = this;
         const {
@@ -275,12 +274,11 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
     }
 
     restrictGraphViewToDivBoundries() {
-        const { mx } = this.props;
+        // const { mx } = this.props;
         // this.graph.maximumGraphBounds = new mx.mxRectangle(0, 0, 500, 400);
     }
 
     instantiateOutline() {
-        const { mx } = this.props;
         const outlineDiv = document.getElementById('alvis-graph-outline-container-' + this.randomNumber),
             outline = new mx.mxOutline(this.graph, outlineDiv);
 
@@ -647,8 +645,6 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
 
     // TO DO
     private modifyAgent(agent: IAgentRecord): IAgentRecord {
-        const { mx } = this.props;
-
         this.graph.getModel().beginUpdate();
         try {
             const mxGraphAgentId = this.getMxGraphIdByInternalId(agent.internalId),
@@ -716,8 +712,6 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
 
     // TO DO: add removing cell overlays from agents
     private addAgentHierarchyIconOverlay(agentVertex: mxClasses.mxCell) {
-        const { mx, agents } = this.props;
-
         const imgWidth = 23, imgHeight = 12,
             overlay = new mx.mxCellOverlay(new mx.mxImage('images/hierarchy_agent_arrow.png', 23, 12), 'Go to subpage');
         overlay.cursor = 'hand';
@@ -762,8 +756,6 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
     }
 
     private modifyPort(port: IPortRecord): IPortRecord {
-        const { mx } = this.props;
-
         this.graph.getModel().beginUpdate();
         try {
             const mxGraphPortId = this.getMxGraphIdByInternalId(port.internalId),
@@ -799,7 +791,6 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
     }
 
     private addPort(port: IPortRecord): IPortRecord {
-        const { mx } = this.props;
         this.graph.getModel().beginUpdate();
         try {
             const portAgentMxGraphId = this.getMxGraphIdByInternalId(port.agentInternalId),
@@ -820,7 +811,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
     }
 
     private addConnection(connection: IConnectionRecord): IConnectionRecord {
-        const { mx, ports } = this.props;
+        const { ports } = this.props;
         this.graph.getModel().beginUpdate();
         try {
             const sourcePortMxGraphId = this.getMxGraphIdByInternalId(connection.sourcePortInternalId),

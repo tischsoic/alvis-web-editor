@@ -1,7 +1,6 @@
 import * as redux from 'redux';
 import { createAction, Action } from 'redux-actions';
 import axios, { AxiosResponse, AxiosError, AxiosPromise } from 'axios';
-import { Dimension, Dimensions } from '../models';
 import * as Actions from '../constants/actions';
 
 import {

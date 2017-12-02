@@ -104,6 +104,6 @@ var serverConfig = {
 
 // module.exports = [clientConfig] // Disabled server config for a while  //, serverConfig];
 // module.exports = [clientConfig, serverConfig]
-module.exports = [serverConfig]
-// module.exports = [clientConfig]
+// module.exports = [serverConfig]
+module.exports = [clientConfig]
 // module.exports = clientConfig

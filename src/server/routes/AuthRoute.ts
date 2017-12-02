@@ -18,7 +18,7 @@ export class AuthRoute extends BaseRoute {
         });
     }
 
-    private async index(req: Request, res: Response, next: NextFunction) {
+    private async index(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const reqBody = req.body,
                 user = await db.models.User.findOne({
@@ -29,7 +29,7 @@ export class AuthRoute extends BaseRoute {
 
             if (!user) {
                 res.status(401).json({ success: false, message: 'Authentication failed. User not found.' });
-                return;
+                return; // TO DO: check:  Can i return void?
             }
 
             if (user.password != sha512(reqBody.password, dbPasswordSalt)) {

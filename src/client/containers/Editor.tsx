@@ -1,25 +1,21 @@
 import * as React from 'react';
 import axios, { AxiosResponse, AxiosError, AxiosPromise } from 'axios';
-import * as dimActions from '../../actions/dimensions';
-import * as graphActions from '../../actions/graph';
-import * as projectActions from '../../actions/project';
+import * as projectActions from '../actions/project';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
-import { RouteComponentProps } from 'react-router';
-import { RootState } from '../../reducers';
-import { DimensionForm } from '../../components';
-import { DimensionsRec, GraphProjectRec } from '../../models';
-import { GameBoard } from '../../components/GameBoard';
-import { GraphDisplay } from '../../components/GraphDisplay';
-import parseAlvisProjectXML from '../../utils/alvisXmlParser';
+import { RouteComponentProps, Redirect, Switch, Route, withRouter } from 'react-router';
+import { RootState } from '../reducers';
+import parseAlvisProjectXML from '../utils/alvisXmlParser';
+import { IAppRecord } from '../models/app';
 
-import { Nav, NavItem, Grid, Row, Col } from 'react-bootstrap';
+import { Nav, NavItem, Grid, Row, Col, Modal, Button } from 'react-bootstrap';
 
-import { AlvisGraph } from '../../components/AlvisGraph';
-import { AlvisGraphPanel } from '../../components/AlvisGraphPanel';
-import { HierarchyTree } from '../../components/HierarchyTree';
+import { AlvisGraph } from '../components/AlvisGraph';
+import { AlvisGraphPanel } from '../components/AlvisGraphPanel';
+import { HierarchyTree } from '../components/HierarchyTree';
 
-import mxgraph = require('mxgraph');
+// import mxgraph = require('mxgraph');
+import { mx } from '../utils/mx';
 
 import * as brace from 'brace';
 import AceEditor from 'react-ace';
@@ -52,14 +48,15 @@ import {
     IPageRecord,
     agentRecordFactory,
     IAlvisProjectRecord,
-} from "../../models/alvisProject";
+} from "../models/alvisProject";
 import { List } from 'immutable';
+import { LoginPanel } from '../components/LoginPanel';
+import { RegisterPanel } from '../components/RegisterPanel';
 
-export namespace App {
+export namespace Editor {
     export interface StateProps { // extends RouteComponentProps<void> {
+        appData: IAppRecord,
         xml: string,
-        dims: DimensionsRec,
-        graph: GraphProjectRec,
         alvisProject: IAlvisProjectRecord,
         agents: List<IAgentRecord>,
         ports: List<IPortRecord>,
@@ -68,9 +65,7 @@ export namespace App {
     }
 
     export interface DispatchProps {
-        actions: typeof dimActions,
-        graphActions: typeof graphActions,
-        projectActions: typeof projectActions, // TO DO thunk actions types are wrong
+        projectBindedActions: typeof projectActions, // TO DO thunk actions types are wrong
     }
 
     export interface OwnProps { }
@@ -84,10 +79,10 @@ export namespace App {
     }
 }
 
-// @connect<App.StateProps, App.DispatchProps, App.State>(mapStateToProps, mapDispatchToProps)
-// @connect<App.StateProps, App.DispatchProps, App.AllProps>(mapStateToProps, mapDispatchToProps)
-export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
-    constructor(props?: App.AllProps, context?: App.OwnState) {
+// @connect<Editor.StateProps, Editor.DispatchProps, Editor.State>(mapStateToProps, mapDispatchToProps)
+// @connect<Editor.StateProps, Editor.DispatchProps, Editor.AllProps>(mapStateToProps, mapDispatchToProps)
+export class EditorComponent extends React.Component<Editor.AllProps, Editor.OwnState> {
+    constructor(props?: Editor.AllProps, context?: Editor.OwnState) {
         super(props, context);
 
         const systemPage = this.getSystemPage(this.props.alvisProject.pages);
@@ -97,21 +92,13 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
             hierarchyTreeOpened: false,
             activePageInternalId: systemPage ? systemPage.internalId : null,
         };
-
-        this.mx = mxgraph({
-            mxImageBasePath: "./mxgraph/images",
-            mxBasePath: "./mxgraph"
-        });
     }
-
-    private mx: mxgraph.allClasses;
 
     componentWillMount() {
-        this.props.graphActions.fetchGraphProjectXML();
-        this.props.projectActions.fetchProjectXML(this.mx.mxUtils.parseXml);
+        this.props.projectBindedActions.fetchProjectXML(mx.mxUtils.parseXml);
     }
 
-    componentWillReceiveProps(nextProps: App.AllProps) {
+    componentWillReceiveProps(nextProps: Editor.AllProps) {
         const { activePageInternalId } = this.state,
             nextPages = nextProps.alvisProject.pages,
             nextPagesInternalIds = nextPages.map((page) => page.internalId);
@@ -161,50 +148,13 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
     }
 
     render() {
-        const { xDim, yDim } = this.props.dims;
-        // const { xml } = this.props.graph
-        const { xml, pages, agents, ports, connections, projectActions, alvisProject } = this.props;
+        const { xml, pages, agents, ports, connections, projectBindedActions, alvisProject } = this.props;
         const { codeEditorOpened, hierarchyTreeOpened, activePageInternalId } = this.state;
+        const { appData } = this.props;
 
         const onEditorChange = function (value: string, event?: any): void {
             console.log(arguments)
         }
-
-        // TO DO: check what is xml string is empty
-        if (xml && xml.length !== 0) {
-            const xmlDocument = this.mx.mxUtils.parseXml(xml)
-            console.log(parseAlvisProjectXML(xmlDocument));
-        }
-
-        console.log(agents);
-
-        const onMxGraphAgentAdded: (agent: IAgentRecord) => any = (agent) => {
-            projectActions.addAgent(agent);
-        },
-            onMxGraphAgentDeleted: (agentInternalId: string) => any = (agentInternalId) => {
-                projectActions.deleteAgent(agentInternalId);
-            },
-            onMxGraphAgentModified: (agent: IAgentRecord) => any = (agent) => {
-                projectActions.modifyAgent(agent);
-            },
-            onMxGraphPortAdded: (port: IPortRecord) => any = (port) => {
-                projectActions.addPort(port);
-            },
-            onMxGraphPortDeleted: (portInternalId: string) => any = (portInternalId) => {
-                projectActions.deletePort(portInternalId);
-            },
-            onMxGraphPortModified: (port: IPortRecord) => any = (port) => {
-                projectActions.modifyPort(port);
-            },
-            onMxGraphConnectionAdded: (connection: IConnectionRecord) => any = (connection) => {
-                projectActions.addConnection(connection);
-            },
-            onMxGraphConnectionDeleted: (connectionInternalId: string) => any = (connectionInternalId) => {
-                projectActions.deleteConnection(connectionInternalId);
-            },
-            onMxGraphConnectionModified: (connection: IConnectionRecord) => any = (connection) => {
-                projectActions.modifyConnection(connection);
-            };
 
         return (
             <div>
@@ -231,39 +181,38 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
                             pages={pages}
                             agents={agents}
                             onPageClick={(page) => this.setActivePageInternalId(page.internalId)}
-                            onMxGraphPageDeleted={projectActions.deletePage}
+                            onMxGraphPageDeleted={projectBindedActions.deletePage}
                         />
                     }
                 </div>
                 <div style={{ width: '500px', float: 'left' }}>
                     <AlvisGraphPanel
-                        mx={this.mx}
                         alvisProject={alvisProject}
                         projectId={0}
                         onChangeActivePage={(newActivePageInternalId: string) => this.setActivePageInternalId(newActivePageInternalId)}
                         activePageInternalId={activePageInternalId}
-                        onMxGraphPageAdded={projectActions.addPage}
-                        onMxGraphAgentAdded={onMxGraphAgentAdded}
-                        onMxGraphAgentDeleted={onMxGraphAgentDeleted}
-                        onMxGraphAgentModified={onMxGraphAgentModified}
-                        onMxGraphPortAdded={onMxGraphPortAdded}
-                        onMxGraphPortDeleted={onMxGraphPortDeleted}
-                        onMxGraphPortModified={onMxGraphPortModified}
-                        onMxGraphConnectionAdded={onMxGraphConnectionAdded}
-                        onMxGraphConnectionDeleted={onMxGraphConnectionDeleted}
-                        onMxGraphConnectionModified={onMxGraphConnectionModified}
+                        onMxGraphPageAdded={projectBindedActions.addPage}
+                        onMxGraphAgentAdded={projectBindedActions.addAgent}
+                        onMxGraphAgentDeleted={projectBindedActions.deleteAgent}
+                        onMxGraphAgentModified={projectBindedActions.modifyAgent}
+                        onMxGraphPortAdded={projectBindedActions.addPort}
+                        onMxGraphPortDeleted={projectBindedActions.deletePort}
+                        onMxGraphPortModified={projectBindedActions.modifyPort}
+                        onMxGraphConnectionAdded={projectBindedActions.addConnection}
+                        onMxGraphConnectionDeleted={projectBindedActions.deleteConnection}
+                        onMxGraphConnectionModified={projectBindedActions.modifyConnection}
                     />
                 </div>
             </div>
         );
+
     }
 }
 
-function mapStateToProps(state: RootState): App.StateProps {
+function mapStateToProps(state: RootState): Editor.StateProps {
     return {
+        appData: state.app,
         xml: state.project.xml,
-        dims: state.dim,
-        graph: state.graph,
         alvisProject: state.project.alvisProject,
         agents: state.project.alvisProject.agents, //.filter((agent) => agent.pageInternalId === '0').toList(),
         ports: state.project.alvisProject.ports,
@@ -272,13 +221,12 @@ function mapStateToProps(state: RootState): App.StateProps {
     };
 }
 
-function mapDispatchToProps(dispatch: any): App.DispatchProps {
+function mapDispatchToProps(dispatch: any): Editor.DispatchProps {
     return {
-        actions: bindActionCreators(dimActions as any, dispatch),
-        graphActions: bindActionCreators(graphActions as any, dispatch),
-        projectActions: bindActionCreators(projectActions as any, dispatch),
+        projectBindedActions: bindActionCreators(projectActions as any, dispatch),
     }
 }
 
-export const App: React.ComponentClass<App.OwnProps>
-    = connect<App.StateProps, App.DispatchProps, App.OwnProps>(mapStateToProps, mapDispatchToProps)(AppComponent);
+// It seems that you need withRouter when using connect. 
+export const Editor: React.ComponentClass<Editor.OwnProps>
+    = withRouter(connect<Editor.StateProps, Editor.DispatchProps, Editor.OwnProps>(mapStateToProps, mapDispatchToProps)(EditorComponent));

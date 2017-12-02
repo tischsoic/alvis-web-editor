@@ -20,16 +20,19 @@ export class IndexRoute extends BaseRoute {
 
         const projectsRouter: Router = Router(),
             regirsterRouter = Router(),
-            authRouter = Router();
+            authRouter = Router(),
+            accountPublicRouter = Router();
 
         AlvisProjectRoute.create(projectsRouter);
         RegisterRoute.create(regirsterRouter);
         AuthRoute.create(authRouter);
+        AccountsRoute.createPublic(accountPublicRouter);
 
 
         router.use('/projects', projectsRouter);
         router.use('/auth', authRouter)
         router.use('/register', regirsterRouter);
+        router.use('/account', accountPublicRouter);
 
         router.use('/system', (req, res, next) => {
             passport.authenticate('jwt', { session: false }, (err, user) => {

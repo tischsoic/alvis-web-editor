@@ -11,6 +11,13 @@ const path = require('path');
 const app = express()
 app.use(cors())
 
+app.use(proxyMiddleware('/server', {
+  target: 'http://localhost:3001',
+  pathRewrite: {
+    '^/server': ''
+  }
+}))
+
 const compiler = webpack(config)
 
 app.use(history({
@@ -32,13 +39,6 @@ app.use(express.static(config[0].output.path))
 console.log(config[0].output.publicPath);
 
 app.use(require('webpack-hot-middleware')(compiler))
-
-app.use(proxyMiddleware('/server', {
-  target: 'http://localhost:3001',
-  pathRewrite: {
-    '^/server': ''
-  }
-}))
 
 app.listen(3000, '0.0.0.0', (err) => {
   if (err) {

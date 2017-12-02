@@ -3,20 +3,22 @@ import * as ReactDOM from "react-dom";
 import { Provider } from 'react-redux';
 import { configureStore } from './store';
 
-import { App } from './containers/App'
-import { Hello } from "./components/Hello";
-import { GameBoard } from "./components/GameBoard";
+import { App as oldApp } from './containers/App'
+import { AppContainer } from './containers/App';
+import { BrowserRouter } from "react-router-dom";
 
 const store = configureStore();
 
 ReactDOM.render(
     <Provider store={store}>
-        <App />
+        <BrowserRouter>
+            <AppContainer />
+        </BrowserRouter>
     </Provider>,
     document.getElementById("game-container")
 );
 
 if ((module as any).hot) {
-  (module as any).hot.accept()
+    (module as any).hot.accept()
 }
 

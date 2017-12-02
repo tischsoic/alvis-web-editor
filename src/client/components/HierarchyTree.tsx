@@ -40,7 +40,7 @@ export class HierarchyTree extends React.Component<HierarchyTreeProps, Hierarchy
 
     getSystemPage() {
         const { pages } = this.props;
-        return this.getElementByFn(pages, (page) => page.name === 'System');
+        return this.getElementByFn(pages, (page) => page.name === 'System'); // TO DO: extract "System" as constant in some config
     }
 
     getPageSupAgent(page: IPageRecord) {
