@@ -1,5 +1,5 @@
 import { handleActions, Action } from 'redux-actions';
-import * as Actions from '../constants/actions';
+import * as Actions from '../constants/projectActions';
 import {
     IAlvisProjectRecord,
     IAgentRecord, IAgent,

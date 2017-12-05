@@ -12,6 +12,7 @@ import { FormGroup, FormControl, Button, Modal } from 'react-bootstrap';
 import { Redirect } from 'react-router';
 import { AxiosPromise } from 'axios';
 
+
 export interface LoginPanelProps {
     appOpened: boolean,
     duringSigningIn: boolean,
@@ -53,7 +54,7 @@ export class LoginPanel extends React.Component<LoginPanelProps, LoginPanelState
         const email = e.target.value;
         this.setState({
             email,
-            emailValid: email && email.length > 0,
+            emailValid: !!email && email.length > 0, // ("" && "".length > 0) === "" !!!!
         });
     }
 
@@ -61,16 +62,12 @@ export class LoginPanel extends React.Component<LoginPanelProps, LoginPanelState
         const password = e.target.value;
         this.setState({
             password,
-            passwordValid: password && password.length > 0,
+            passwordValid: !!password && password.length > 0,
         });
     }
 
-    private getValidationState(state: boolean | null) {
-        if (state === null) {
-            return null;
-        }
-
-        return state ? 'success' : 'error';
+    getValidationStateForLoginPanel(state: boolean | null) {
+        return state === false ? 'error' : null;
     }
 
     private renderLoginForm() {
@@ -81,12 +78,12 @@ export class LoginPanel extends React.Component<LoginPanelProps, LoginPanelState
         return (
             <div>
                 <form>
-                    <FormGroup controlId='LoginPanelEmailInput' validationState={this.getValidationState(emailValid)} >
-                        <FormControl type='text' placeholder='Email' onChange={this.onEmailChange} />
+                    <FormGroup controlId='LoginPanelEmailInput' validationState={this.getValidationStateForLoginPanel(emailValid)} >
+                        <FormControl type='text' placeholder='Email' value={email} onChange={this.onEmailChange} />
                         <FormControl.Feedback />
                     </FormGroup>
-                    <FormGroup controlId='LoginPanelPasswordInput' validationState={this.getValidationState(passwordValid)} >
-                        <FormControl type='password' placeholder='Password' onChange={this.onPasswordChange} />
+                    <FormGroup controlId='LoginPanelPasswordInput' validationState={this.getValidationStateForLoginPanel(passwordValid)} >
+                        <FormControl type='password' placeholder='Password' value={password} onChange={this.onPasswordChange} />
                         <FormControl.Feedback />
                     </FormGroup>
                     <Button type='submit' onClick={(e) => {

@@ -1,7 +1,7 @@
 import * as redux from 'redux';
 import { createAction, Action } from 'redux-actions';
 import axios, { AxiosResponse, AxiosError, AxiosPromise } from 'axios';
-import * as Actions from '../constants/actions';
+import * as Actions from '../constants/projectActions';
 
 import {
     IAgentRecord, IPortRecord, IConnectionRecord,
@@ -88,4 +88,5 @@ export {
     addPort, deletePort, modifyPort,
     addConnection, deleteConnection, modifyConnection,
     fetchProjectXML,
+    setAlvisProject,
 };

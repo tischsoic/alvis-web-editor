@@ -10,6 +10,7 @@ import { Nav, NavItem, Grid, Row, Col, Modal, Button } from 'react-bootstrap';
 
 import { LoginPanel } from '../components/LoginPanel';
 import { RegisterPanel } from '../components/RegisterPanel';
+import { OpenProjectModal } from '../components/OpenProjectModal';
 import { Editor } from './Editor';
 
 export namespace App {
@@ -18,7 +19,7 @@ export namespace App {
     }
 
     export interface DispatchProps {
-        appBindedActions,
+        appBindedActions: typeof appActions,
     }
 
     export interface OwnProps { }
@@ -26,26 +27,58 @@ export namespace App {
     export type AllProps = StateProps & DispatchProps & OwnProps;
 
     export interface OwnState {
-        codeEditorOpened: boolean,
-        hierarchyTreeOpened: boolean,
-        activePageInternalId: string,
+        showOpenProjectModal: boolean,
     }
 }
 
 export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
     constructor(props?: App.AllProps, context?: App.OwnState) {
         super(props, context);
+
+        this.state = {
+            showOpenProjectModal: true,
+        }
+
+        this.closeOpenProjectModal = this.closeOpenProjectModal.bind(this);
+    }
+
+    private closeOpenProjectModal() {
+        this.setState({
+            showOpenProjectModal: false,
+        })
     }
 
     render() {
         const { appData, appBindedActions } = this.props;
+        const { showOpenProjectModal } = this.state;
         const appOpened = appData.appOpened;
+
+        const app = (
+            <div>
+                <OpenProjectModal
+                    showModal={showOpenProjectModal}
+
+                    projects={appData.projects}
+                    projectsDuringFetching={appData.projectsDuringFetching}
+                    projectsAlreadyFetched={appData.projectsAlreadyFetched}
+
+                    openedProjectId={appData.openedProjectId}
+
+                    onFetchProjects={appBindedActions.fetchProjects}
+                    onModalClose={this.closeOpenProjectModal}
+                    onProjectOpen={appBindedActions.openProjectFromServer}
+                    onProjectFileCreate={() => {}}
+                    onEmptyProjectCreate={() => {}}
+                />
+                <Editor />
+            </div>
+        )
 
         return (
             <Switch>
                 <Route exact path='/' render={() => {
                     return appOpened
-                        ? (<Editor />)
+                        ? app
                         : (<Redirect to='/login' />)
                 }} />
                 <Route path='/login' render={() => {

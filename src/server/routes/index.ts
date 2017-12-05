@@ -5,6 +5,7 @@ import { AuthRoute } from './AuthRoute';
 import { RegisterRoute } from './RegisterRoute';
 import { AccountsRoute } from './AccountsRoute';
 import * as passport from 'passport';
+import { ProjectRoute } from './ProjectRoute';
 
 export class IndexRoute extends BaseRoute {
     constructor() {
@@ -47,13 +48,15 @@ export class IndexRoute extends BaseRoute {
         });
 
         const systemRouter = Router(),
-            accountsRouter = Router();
+            accountsRouter = Router(),
+            projectRouter = Router();
 
         AccountsRoute.create(accountsRouter);
+        ProjectRoute.create(projectRouter);
 
-        systemRouter.use('/account', accountsRouter)
+        systemRouter.use('/account', accountsRouter);
+        systemRouter.use('/project', projectRouter);
         router.use('/system', systemRouter);
-        // router.use('/account')
     }
 
     public index(req: Request, res: Response, next: NextFunction) {

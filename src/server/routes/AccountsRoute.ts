@@ -43,7 +43,7 @@ export class AccountsRoute extends BaseRoute {
         try {
             const users = await db.models.User.findAll();
 
-            res.json({ users });
+            res.json(users);
         } catch (e) {
             next(e);
         }
