@@ -264,6 +264,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         this.instantiateOutline();
         this.restrictGraphViewToDivBoundries();
 
+        // TO DO: check why this: // because you may receive props on start, and then method componentWillReceiveProps is not called!
         this.addChanges(
             agents, List(),
             ports, List(),
@@ -290,9 +291,9 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         nextPorts: List<IPortRecord>, ports: List<IPortRecord>,
         nextConnections: List<IConnectionRecord>, connections: List<IConnectionRecord>
     ) {
-        const agentsChanges = this.getChanges(nextAgents, agents),
-            portsChanges = this.getChanges(nextPorts, ports),
-            connectionsChanges = this.getChanges(nextConnections, connections);
+        const agentsChanges = this.getAgentsChanges(nextAgents, agents),
+            portsChanges = this.getPortsChanges(nextPorts, ports),
+            connectionsChanges = this.getConnectionsChanges(nextConnections, connections);
 
         this.changesToApply.push({
             agentsChanges,
@@ -437,6 +438,12 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
 
         this.beginInternalChanges();
         this.changesToApply.forEach((changes) => {
+            // Sequence is VERY IMPORTANT!!!
+            // TO DO: write down example why sequence is very important
+            changes.connectionsChanges.deleted.forEach((deletedConnection) => this.deleteConnection(deletedConnection));
+            changes.portsChanges.deleted.forEach((deletedPort) => this.deletePort(deletedPort));
+            changes.agentsChanges.deleted.forEach((deletedAgent) => this.deleteAgent(deletedAgent));
+
             changes.agentsChanges.new.forEach((newAgent) => this.addAgent(newAgent));
             changes.portsChanges.new.forEach((newPort) => this.addPort(newPort));
             changes.connectionsChanges.new.forEach((newConnection) => this.addConnection(newConnection));
@@ -445,9 +452,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
             changes.portsChanges.modified.forEach((modifiedPort) => this.modifyPort(modifiedPort));
             // changes.connectionsChanges.modified.forEach((modifiedPort) => this.modifyPort(modifiedPort));
 
-            changes.connectionsChanges.deleted.forEach((deletedConnection) => this.deleteConnection(deletedConnection));
-            changes.portsChanges.deleted.forEach((deletedPort) => this.deletePort(deletedPort));
-            changes.agentsChanges.deleted.forEach((deletedAgent) => this.deleteAgent(deletedAgent));
+
 
         })
         this.endInternalChanges();
@@ -652,8 +657,11 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
 
             // this.graph.translateCell(cellToModify, agent.x, agent.y);
             this.graph.resizeCell(cellToModify, new mx.mxRectangle(agent.x, agent.y, agent.width, agent.height), false);
+            cellToModify.setValue(agent.name);
 
             if (agent.subPageInternalId !== null) {
+                //Remove old (if exists), add new
+                this.removeAgentHierarchyIconOverlayIfExists(cellToModify);
                 this.addAgentHierarchyIconOverlay(cellToModify);
             } else {
                 this.removeAgentHierarchyIconOverlayIfExists(cellToModify);
@@ -864,12 +872,12 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
     }
 
     // TO DO: look for optimizations
-    private getChanges<T extends IAgentRecord | IPortRecord | IConnectionRecord>(next: List<T>, current: List<T>): GraphElementsChanges<T> {
+    private getBasicChanges<T extends IAgentRecord | IPortRecord | IConnectionRecord>(next: List<T>, current: List<T>): GraphElementsChanges<T> {
         const getByInternalId = (elements: List<T>, internalId: string): T | null => {
             return elements.find((el) => el.internalId === internalId);
         };
-        const nextInternalIds = next.map((agent) => agent.internalId),
-            currentInternalIds = current.map((agent) => agent.internalId),
+        const nextInternalIds = next.map((el) => el.internalId),
+            currentInternalIds = current.map((el) => el.internalId),
             newElements = next.filter((el) => !currentInternalIds.contains(el.internalId)).toList(),
             deletedElements = current.filter((el) => !nextInternalIds.contains(el.internalId)).toList(),
             notNewNextElements = next.filter((el) => el.internalId !== null),
@@ -882,6 +890,37 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
             new: newElements,
             deleted: deletedElements,
             modified: modifiedElements,
+        }
+    }
+
+    private getAgentsChanges<T extends IAgentRecord>(next: List<T>, current: List<T>): GraphElementsChanges<T> {
+        return this.getBasicChanges(next, current);
+    }
+
+    private getConnectionsChanges<T extends IConnectionRecord>(next: List<T>, current: List<T>): GraphElementsChanges<T> {
+        return this.getBasicChanges(next, current);
+    }
+
+    // TO DO: look for optimizations
+    // TO DO: check do we need something similar for connections?
+    private getPortsChanges<T extends IPortRecord>(next: List<T>, current: List<T>): GraphElementsChanges<T> {
+        const getByInternalId = (elements: List<T>, internalId: string): T | null => {
+            return elements.find((el) => el.internalId === internalId);
+        };
+        const basicChanges = this.getBasicChanges(next, current),
+            // Ports whose agentInternalId has changed and internalId has not changed 
+            // should be removed and then readded to new agent
+            portsIdsWhoseAgentChanged = basicChanges.modified.filter((modifiedPort) => {
+                const currentPortRecord = getByInternalId(current, modifiedPort.internalId);
+                return modifiedPort.agentInternalId !== currentPortRecord.agentInternalId;
+            }).map(port => port.internalId).toList(),
+            portsWhoseAgentChangedToAdd = next.filter(port => portsIdsWhoseAgentChanged.contains(port.internalId)),
+            portsWhoseAgentChangedToDelete = current.filter(port => portsIdsWhoseAgentChanged.contains(port.internalId));
+
+        return {
+            new: basicChanges.new.concat(portsWhoseAgentChangedToAdd).toList(),
+            deleted: basicChanges.deleted.concat(portsWhoseAgentChangedToDelete).toList(),
+            modified: basicChanges.modified.filter(port => !portsIdsWhoseAgentChanged.contains(port.internalId)).toList(),
         }
     }
 
