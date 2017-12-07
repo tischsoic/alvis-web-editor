@@ -28,15 +28,15 @@ export interface OpenProjectModalProps {
     onFetchProjects: () => void,
     onModalClose: () => void,
     onProjectOpen: (projectId: number) => void,
-    onProjectFileCreate: () => void,
-    onEmptyProjectCreate: () => void,
+    onProjectFromFileCreate: (name: string, sourceCodeFile: File) => AxiosPromise,
+    onEmptyProjectCreate: (projectName: string) => AxiosPromise,
 };
 
 export interface OpenProjectModalState {
     newProjectName: string,
     newProjectNameValid: boolean | null,
 
-    newProjectFile: any,
+    newProjectFiles: FileList,
     newProjectFileValid: boolean | null,
 };
 
@@ -48,7 +48,7 @@ export class OpenProjectModal extends React.Component<OpenProjectModalProps, Ope
             newProjectName: '',
             newProjectNameValid: null,
 
-            newProjectFile: '',
+            newProjectFiles: null,
             newProjectFileValid: null,
         };
 
@@ -72,22 +72,24 @@ export class OpenProjectModal extends React.Component<OpenProjectModalProps, Ope
     }
 
     private onNewProjectFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const newProjectFile = e.target.value;
+        console.log(e);
+        console.log(e.target.files)
+        const inputFiles = e.target.files;
         this.setState({
-            newProjectFile,
+            newProjectFiles: inputFiles,
         });
     }
 
-    private strNotEmpty(str: string) {
-        return str && str.length > 0;
+    private strNotEmpty(str: string): boolean {
+        return !!str && str.length > 0;
     }
 
     private newProjectNameValid(newProjectName: string) {
         return this.strNotEmpty(newProjectName);
     }
 
-    private newProjectFileValid(newProjectFile: string) {
-        return this.strNotEmpty(newProjectFile);
+    private newProjectFileValid(newProjectFiles: FileList): boolean {
+        return !!newProjectFiles && newProjectFiles.length === 1;
     }
 
     private validateNewProjectName() {
@@ -98,9 +100,9 @@ export class OpenProjectModal extends React.Component<OpenProjectModalProps, Ope
     }
 
     private validateNewProjectFile() {
-        const { newProjectFile } = this.state;
+        const { newProjectFiles } = this.state;
         this.setState({
-            newProjectFileValid: this.newProjectFileValid(newProjectFile),
+            newProjectFileValid: this.newProjectFileValid(newProjectFiles),
         })
     }
 
@@ -121,6 +123,7 @@ export class OpenProjectModal extends React.Component<OpenProjectModalProps, Ope
 
     private renderProjectsList() {
         const { projects, projectsDuringFetching } = this.props;
+        const projectListTitle = 'Old project'
 
         if (projectsDuringFetching) {
             return '...';
@@ -130,14 +133,15 @@ export class OpenProjectModal extends React.Component<OpenProjectModalProps, Ope
 
         return (
             <ListGroup>
+                <h4>{projectListTitle}</h4>
                 {projectsListItems}
             </ListGroup>
         );
     }
 
     private renderNewProjectForm() {
-        const { } = this.props;
-        const { newProjectName, newProjectNameValid, newProjectFile, newProjectFileValid } = this.state;
+        const { onProjectFromFileCreate, onEmptyProjectCreate, onModalClose } = this.props;
+        const { newProjectName, newProjectNameValid, newProjectFiles, newProjectFileValid } = this.state;
         const formTitle = 'New project';
 
         return (
@@ -165,7 +169,6 @@ export class OpenProjectModal extends React.Component<OpenProjectModalProps, Ope
                     <FormControl
                         type='file'
                         accept='.alvis'
-                        value={newProjectFile}
                         onChange={this.onNewProjectFileChange} />
                     <FormControl.Feedback />
                 </FormGroup>
@@ -183,13 +186,19 @@ export class OpenProjectModal extends React.Component<OpenProjectModalProps, Ope
                             return;
                         }
 
+                        onEmptyProjectCreate(newProjectName)
+                            .then(() => {
+                                onModalClose();
+                                // TO DO: update projects list data
+                            });
+
                         e.preventDefault();
                     }}>
                         Empty
                     </Button>
                     <Button type='submit' onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                         const nameValid = this.newProjectNameValid(newProjectName),
-                            fileValid = this.newProjectFileValid(newProjectFile);
+                            fileValid = this.newProjectFileValid(newProjectFiles);
 
                         if (!nameValid || !fileValid) {
                             this.validateNewProjectName();
@@ -198,6 +207,11 @@ export class OpenProjectModal extends React.Component<OpenProjectModalProps, Ope
                             e.preventDefault();
                             return;
                         }
+
+                        onProjectFromFileCreate(newProjectName, newProjectFiles[0])
+                            .then(() => {
+                                onModalClose();
+                            });
 
                         e.preventDefault();
                     }}>
@@ -211,7 +225,7 @@ export class OpenProjectModal extends React.Component<OpenProjectModalProps, Ope
     render() {
         const { showModal, projects, projectsDuringFetching, projectsAlreadyFetched, openedProjectId, onModalClose } = this.props;
         const someProjectIsOpened = openedProjectId !== null,
-            modalTitle = 'Open project';
+            modalTitle = 'Open';
 
         return (
             <div>

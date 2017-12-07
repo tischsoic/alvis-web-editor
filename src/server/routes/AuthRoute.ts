@@ -20,7 +20,7 @@ export class AuthRoute extends BaseRoute {
 
     private async index(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const reqBody = req.body,
+            const reqBody: { email: string, password: string } = req.body,
                 user = await db.models.User.findOne({
                     where: {
                         email: reqBody.email,

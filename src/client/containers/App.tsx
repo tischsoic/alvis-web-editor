@@ -6,7 +6,7 @@ import { RouteComponentProps, Redirect, Switch, Route, withRouter } from 'react-
 import { RootState } from '../reducers';
 import { IAppRecord } from '../models/app';
 
-import { Nav, NavItem, Grid, Row, Col, Modal, Button } from 'react-bootstrap';
+import { Nav, NavItem, Grid, Row, Col, Modal, ButtonToolbar, ButtonGroup, Button, Glyphicon } from 'react-bootstrap';
 
 import { LoginPanel } from '../components/LoginPanel';
 import { RegisterPanel } from '../components/RegisterPanel';
@@ -40,12 +40,21 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
         }
 
         this.closeOpenProjectModal = this.closeOpenProjectModal.bind(this);
+        this.openOpenProjectModal = this.openOpenProjectModal.bind(this);
+    }
+
+    private showOpenProjectModal(show: boolean) {
+        this.setState({
+            showOpenProjectModal: show,
+        });
     }
 
     private closeOpenProjectModal() {
-        this.setState({
-            showOpenProjectModal: false,
-        })
+        this.showOpenProjectModal(false);
+    }
+
+    private openOpenProjectModal() {
+        this.showOpenProjectModal(true);
     }
 
     render() {
@@ -67,10 +76,27 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
                     onFetchProjects={appBindedActions.fetchProjects}
                     onModalClose={this.closeOpenProjectModal}
                     onProjectOpen={appBindedActions.openProjectFromServer}
-                    onProjectFileCreate={() => {}}
-                    onEmptyProjectCreate={() => {}}
+                    onProjectFromFileCreate={appBindedActions.createProjectFromFile as any}
+                    onEmptyProjectCreate={appBindedActions.createEmptyProject as any}
                 />
-                <Editor />
+                <Grid>
+                    <Row>
+                        <Col>
+                            <ButtonToolbar>
+                                <Button onClick={this.openOpenProjectModal}><Glyphicon glyph='open' />Open</Button>
+                                <ButtonGroup>
+                                    <Button onClick={appBindedActions.saveProjectToServer}><Glyphicon glyph='save' />Save</Button>
+                                    <Button><Glyphicon glyph='refresh' />Autosave</Button>
+                                </ButtonGroup>
+                            </ButtonToolbar>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col>
+                            <Editor />
+                        </Col>
+                    </Row>
+                </Grid>
             </div>
         )
 
@@ -113,6 +139,6 @@ function mapDispatchToProps(dispatch: any): App.DispatchProps {
     }
 }
 
-// It seems that you need withRouter when using connect. 
+// It seems that you need withRouter when using connect.
 export const AppContainer: React.ComponentClass<App.OwnProps>
     = withRouter(connect<App.StateProps, App.DispatchProps, App.OwnProps>(mapStateToProps, mapDispatchToProps)(AppComponent));

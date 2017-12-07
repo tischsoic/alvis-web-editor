@@ -1,35 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE alvisproject PUBLIC "alvisPublicId-v0.1" "alvisSystemId-v0.1">
-<alvisproject>
-<hierarchy>
-  <node agent="" name="System">
-  <node agent="A" name="A2"/>
-</node>
-</hierarchy>
-<page name="A2">
-  <agent active="1" color="white" height="100.0" index="1" name="A2" running="0" width="140.0" x="40.0" y="90.0">
-    <port color="white" id="1033005765" name="a2" x="0.0" y="0.2"/>
-  </agent>
-</page>
-<page name="System">
-  <agent active="1" color="white" height="100.0" index="1" name="A" running="0" width="140.0" x="20.0" y="120.0">
-    <port color="white" id="54944847" name="a" x="1.0" y="0.20000000000000004"/>
-  </agent>
-  <agent active="1" color="white" height="100.0" index="1" name="B" running="0" width="140.0" x="240.0" y="120.0">
-    <port color="white" id="624073116" name="b" x="0.0" y="0.2"/>
-  </agent>
-  <connection direction="target" source="54944847" style="straight" target="624073116"/>
-</page>
-<code>agent A {
-  loop {    -- 1
-    out a;  -- 2
-  }
+<alvisproject 
+  xmlns="http://alvis.kis.agh.edu.pl/">
+  <hierarchy>
+    <node agent="" name="System">
+      <node agent="A" name="A2">
+        <node agent="Agent_1" name="WWW"/></node>
+    </node>
+  </hierarchy>
+  <page name="System">
+    <agent active="1" color="white" width="140" height="100" index="1" name="A" running="0" x="20" y="120">
+      <port id="3" name="a" x="1" y="0.20000000000000004" color="white"/>
+    </agent>
+    <agent active="1" color="white" width="140" height="100" index="1" name="B" running="0" x="240" y="120">
+      <port id="5" name="b" x="0" y="0.2" color="white"/>
+    </agent>
+    <connection direction="target" source="3" target="5" style="straight"/>
+  </page>
+  <page name="A2">
+    <agent active="1" color="white" width="140" height="100" index="1" name="A2" running="0" x="40" y="90">
+      <port id="8" name="a2" x="0" y="0.2" color="white"/>
+    </agent>
+    <agent active="0" color="white" width="140" height="100" index="null" name="Agent_1" running="0" x="280" y="20">
+      <port id="10" name="port_1" x="1" y="1" color="white"/>
+    </agent>
+    <connection direction="target" source="10" target="8" style="straight"/>
+  </page>
+  <page name="WWW">
+    <agent active="1" color="white" width="140" height="100" index="null" name="Agent_0" running="0" x="40" y="120">
+      <port id="15" name="port_0" x="1" y="1" color="white"/>
+    </agent>
+    <agent active="0" color="white" width="140" height="100" index="null" name="Agent_1" running="0" x="289" y="124">
+      <port id="16" name="port_1" x="0.008163265306122623" y="1" color="white"/>
+    </agent>
+    <connection direction="target" source="15" target="16" style="straight"/>
+  </page>
+  <code>agent A {  loop {    -- 1    out a;  -- 2  }
 }
 
-agent B {
-  loop {    -- 1
-    in b;   -- 2
-  }
+agent B {  loop {    -- 1    in b;   -- 2  }
 }</code>
 </alvisproject>
-

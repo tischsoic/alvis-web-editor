@@ -122,11 +122,10 @@ function getListElementIndexWithFn<T>(elements: List<T>) {
     }
 }
 
-export function getListElementByInternalId<T extends IInternalRecord>(elements: List<T>, internalId: string) {
-    const elementIndex = getListElementIndexWithInternalId(elements)(internalId),
-        element = elements.get(elementIndex);
+export function getListElementByInternalId<T extends IInternalRecord>(elements: List<T>, internalId: string): T | null {
+    const elementIndex = getListElementIndexWithInternalId(elements)(internalId);
 
-    return element;
+    return elementIndex === -1 ? null : elements.get(elementIndex);
 }
 
 // PAGE --------------------------------------------
@@ -456,4 +455,19 @@ export default {
         modify: modifyConnectionInAlvisProject,
         delete: deleteConnectionInAlvisProject,
     },
+}
+
+
+
+// ----------------------------------------------
+
+export function getElementByFn<T>(elements: List<T>, fn: (element: T) => boolean): T | null {
+    const elementIndex = elements.findIndex(fn),
+        element = elementIndex !== -1 ? elements.get(elementIndex) : null;
+
+    return element;
+}
+
+export function getSystemPage(pages: List<IPageRecord>): IPageRecord | null {
+    return this.getElementByFn(pages, (page) => page.name === 'System'); // TO DO: extract "System" as constant in some config
 }

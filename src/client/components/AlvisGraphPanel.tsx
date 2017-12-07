@@ -96,7 +96,7 @@ export class AlvisGraphPanel extends React.Component<AlvisGraphPanelProps, Alvis
             connections = alvisProject.connections.filter((connection) => portsInternalIds.contains(connection.sourcePortInternalId));
 
         return {
-            page,
+            page, // TO DO: page is not page element
             agents,
             ports,
             connections,

@@ -8,6 +8,9 @@ import { List } from 'immutable';
 import { mx } from '../utils/mx';
 import * as projectActions from './project';
 import parseAlvisProjectXML from '../utils/alvisXmlParser';
+import { parseAlvisProjectToXml } from '../utils/toXml';
+import { getValidEmptyAlvisProject } from '../utils/alvisProject';
+import { IAlvisProjectRecord } from '../models/alvisProject';
 
 const openApp = createAction<boolean, boolean>(
     Actions.APP_OPEN_APP,
@@ -152,6 +155,13 @@ const fetchProjects = (): ((dispatch: redux.Dispatch<any>, getState: () => RootS
     }
 }
 
+const openProject = (projectId: number, alvisProject: [IAlvisProjectRecord, number]): ((dispatch: redux.Dispatch<any>, getState: () => RootState) => void) => {
+    return (dispatch, getState): void => {
+        dispatch(projectActions.setAlvisProject(alvisProject));
+        dispatch(setOpenedProjectId(projectId));
+    }
+}
+
 const openProjectFromServer = (projectId: number): ((dispatch: redux.Dispatch<any>, getState: () => RootState) => AxiosPromise) => {
     return (dispatch, getState): AxiosPromise => {
         // dispatch(setProjectsDuringFetching(true));
@@ -165,14 +175,11 @@ const openProjectFromServer = (projectId: number): ((dispatch: redux.Dispatch<an
 
         promise
             .then((response: AxiosResponse) => {
-                const responseData: { sourcecode: string } = response.data;
-
-                const sourcecode = response.data.sourcecode, // TO DO: better name would be 'code' or 'sources', probably 'code' 
+                const responseData: { sourcecode: string } = response.data,
+                    { sourcecode } = responseData, // TO DO: better name would be 'code' or 'sources', probably 'code' 
                     xmlDocument = mx.mxUtils.parseXml(sourcecode);
 
-                dispatch(projectActions.setProjectXML(sourcecode));
-                dispatch(projectActions.setAlvisProject(parseAlvisProjectXML(xmlDocument)));
-                dispatch(setOpenedProjectId(projectId));
+                dispatch(openProject(projectId, parseAlvisProjectXML(xmlDocument)));
                 // dispatch(setProjectsDuringFetching(false));
             })
             .catch((error: AxiosError) => {
@@ -185,11 +192,126 @@ const openProjectFromServer = (projectId: number): ((dispatch: redux.Dispatch<an
     }
 }
 
+const saveProjectToServer = (): ((dispatch: redux.Dispatch<any>, getState: () => RootState) => AxiosPromise) => {
+    return (dispatch, getState): AxiosPromise => {
+        const alvisProject = getState().project.alvisProject,
+            alvisProjectXml = parseAlvisProjectToXml(alvisProject);
+
+        const token = getState().app.bearerToken,
+            projectId = getState().app.openedProjectId,
+            promise = axios.post(
+                'http://localhost:3000/server/system/project/' + projectId + '/sourcecode',
+                {
+                    sourcecode: alvisProjectXml,
+                },
+                {
+                    headers: {
+                        Authorization: 'Bearer ' + token,
+                    }
+                });
+
+        promise
+            .then((response: AxiosResponse) => {
+                const responseData: { success: boolean } = response.data,
+                    { success } = responseData;
+
+                console.log('saving project, success:', success); // TO DO: maybe better would be sending some response like 404, 
+                // which would be then catched as error?
+            })
+            .catch((error: AxiosError) => {
+                console.log(error);
+
+            });
+
+        return promise;
+    }
+}
+
+const createProjectFromFile = (projectName: string, sourceCodeFile: File): ((dispatch: redux.Dispatch<any>, getState: () => RootState) => AxiosPromise) => {
+    return (dispatch, getState): AxiosPromise => {
+        const newProjectData = new FormData();
+
+        newProjectData.append('name', projectName);
+        newProjectData.append('alvisProjectFile', sourceCodeFile);
+
+        const token = getState().app.bearerToken,
+            promise = axios.post(
+                'http://localhost:3000/server/system/project/sourcecodefile',
+                newProjectData,
+                {
+                    headers: {
+                        Authorization: 'Bearer ' + token,
+                    },
+                    onUploadProgress: (progressEvent: ProgressEvent) => {
+                        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                        console.log(percentCompleted);
+                    }
+                });
+
+        promise
+            .then((response: AxiosResponse) => {
+                const responseData: { id: number, name: string, sourcecode: string } = response.data,
+                    { id, name, sourcecode } = responseData,
+                    xmlDocument = mx.mxUtils.parseXml(sourcecode);
+
+                dispatch(openProject(id, parseAlvisProjectXML(xmlDocument)));
+                dispatch(fetchProjects());
+
+                console.log(responseData);
+            })
+            .catch((error: AxiosError) => {
+                console.log(error);
+
+            });
+
+        return promise;
+    }
+}
+
+const createEmptyProject = (projectName: string): ((dispatch: redux.Dispatch<any>, getState: () => RootState) => AxiosPromise) => {
+    return (dispatch, getState): AxiosPromise => {
+        const emptyAlvisProject = getValidEmptyAlvisProject(),
+            emptyAlvisProjectXml = parseAlvisProjectToXml(emptyAlvisProject);
+
+        const token = getState().app.bearerToken,
+            promise = axios.post(
+                'http://localhost:3000/server/system/project/sourcecode',
+                {
+                    name: projectName,
+                    sourceCode: emptyAlvisProjectXml,
+                },
+                {
+                    headers: {
+                        Authorization: 'Bearer ' + token,
+                    }
+                });
+
+        promise
+            .then((response: AxiosResponse) => {
+                const responseData: { projectId: number, projectName: string, projectSourceCode: string } = response.data,
+                    { projectId, projectName, projectSourceCode } = responseData,
+                    xmlDocument = mx.mxUtils.parseXml(projectSourceCode);
+
+                dispatch(openProject(projectId, parseAlvisProjectXML(xmlDocument)));
+                dispatch(fetchProjects());
+
+                console.log(responseData);
+            })
+            .catch((error: AxiosError) => {
+                console.log(error);
+
+            });
+
+        return promise;
+    }
+}
+
+
 export {
     openApp,
     setBearerToken, setDuringSigningIn, setDuringRegistration,
     signIn,
     fetchProjects, setProjects, setProjectsDuringFetching,
     fetchUsers, setUsers, setUsersDuringFetching,
-    openProjectFromServer,
+    openProjectFromServer, saveProjectToServer, createProjectFromFile, createEmptyProject,
 };

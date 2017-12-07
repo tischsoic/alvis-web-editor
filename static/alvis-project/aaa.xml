@@ -1,0 +1,39 @@
+{,…}
+sourcecode
+:
+"<?xml version="1.0" encoding="UTF-8"?>
+↵<!DOCTYPE alvisproject PUBLIC "alvisPublicId-v0.1" "alvisSystemId-v0.1">
+↵<alvisproject>
+↵<hierarchy>
+↵  <node agent="" name="System">
+↵  <node agent="A" name="A2"/>
+↵</node>
+↵</hierarchy>
+↵<page name="A2">
+↵  <agent active="1" color="white" height="100.0" index="1" name="A2" running="0" width="140.0" x="40.0" y="90.0">
+↵    <port color="white" id="1033005765" name="a2" x="0.0" y="0.2"/>
+↵  </agent>
+↵</page>
+↵<page name="System">
+↵  <agent active="1" color="white" height="100.0" index="1" name="A" running="0" width="140.0" x="20.0" y="120.0">
+↵    <port color="white" id="54944847" name="a" x="1.0" y="0.20000000000000004"/>
+↵  </agent>
+↵  <agent active="1" color="white" height="100.0" index="1" name="B" running="0" width="140.0" x="240.0" y="120.0">
+↵    <port color="white" id="624073116" name="b" x="0.0" y="0.2"/>
+↵  </agent>
+↵  <connection direction="target" source="54944847" style="straight" target="624073116"/>
+↵</page>
+↵<code>agent A {
+↵  loop {    -- 1
+↵    out a;  -- 2
+↵  }
+↵}
+↵
+↵agent B {
+↵  loop {    -- 1
+↵    in b;   -- 2
+↵  }
+↵}</code>
+↵</alvisproject>
+↵
+↵"

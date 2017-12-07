@@ -57,7 +57,7 @@ export class AccountsRoute extends BaseRoute {
                 }
             });
 
-            return emailCount === 0;
+            return emailCount === 0; // TO DO: should return Promise!
         } catch (e) {
             throw { message: 'Failed during checking if Email was taken' }
         }

@@ -1,6 +1,8 @@
 export const dbPasswordSalt = 'asw';
 export const jwtSalt = 'asdf';
 
+export const alvisProjectsFilesDir = './static/alvis-project/';
+
 export const dbConfig = {
     development: {
         username: 'postgres',

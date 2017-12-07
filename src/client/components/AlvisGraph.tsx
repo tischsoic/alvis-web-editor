@@ -768,11 +768,24 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         try {
             const mxGraphPortId = this.getMxGraphIdByInternalId(port.internalId),
                 cellToModify = this.graph.getModel().getCell(mxGraphPortId),
+                cellToModifyState = this.graph.view.getState(cellToModify),
+                cellToModifyParent = cellToModify.getParent(),
+                cellToModifyParentState = this.graph.view.getState(cellToModifyParent),
                 cellToModifyGeometry = cellToModify.geometry,
-                dx = (port.x - cellToModifyGeometry.x) * 100,
-                dy = (port.y - cellToModifyGeometry.y) * 100;
+                scale = this.graph.view.scale,
+                offsetNormalizedX = cellToModifyGeometry.offset.x * scale,
+                offsetNormalizedY = cellToModifyGeometry.offset.y * scale,
+                // relativeDx = port.x - cellToModifyGeometry.x,
+                // relativeDy = port.y - cellToModifyGeometry.y,
+                previousX = cellToModifyState.x - offsetNormalizedX,
+                previousY = cellToModifyState.y - offsetNormalizedY,
+                nextX = cellToModifyParentState.x + port.x * cellToModifyParentState.width,
+                nextY = cellToModifyParentState.y + port.y * cellToModifyParentState.height,
+                dx = nextX - previousX,
+                dy = nextY - previousY;
 
             this.graph.moveCells([cellToModify], dx, dy);
+            cellToModify.setValue(port.name);
             // this.graph.translateCell(cellToModify, port.x, port.y);
             // this.graph.resizeCell(cellToModify, new mx.mxRectangle(port.x, port.y, 20, 20), false);
         }
