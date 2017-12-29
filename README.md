@@ -1,9 +1,9 @@
-#Alvis Web Editor
+# Alvis Web Editor
 Alvis Web Editor is application for managing Alvis projects. Alvis is programming language, which syntax consists of two layers:
 - graphical - graphs
 - normal code   
 
-##Installation
+## Installation
 
 Application needed to be installed before you can run app: Node.js, npm, webpack, typescript (can it be in dependencies?).
 
@@ -37,4 +37,3 @@ $> node dist/server.js
 
 To Do:
 - do we need to call "git submodule init" ???
-    
