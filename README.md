@@ -1,20 +1,40 @@
-Stages of creating this application:
-1) Istall dependencies:
-    - express
-    - body-parser
-    - 
+#Alvis Web Editor
+Alvis Web Editor is application for managing Alvis projects. Alvis is programming language, which syntax consists of two layers:
+- graphical - graphs
+- normal code   
 
+##Installation
 
-TODO
-- in package.json move @types to dependencies from devDependencies
+Application needed to be installed before you can run app: Node.js, npm, webpack, typescript (can it be in dependencies?).
 
-
-
-To run app, just run
+To run app after cloning repository execute:
 ```
-webpack
+$> npm install
 ```
-in console, only webpack, it should be installed globally
+to get npm packages.
+
+```
+$> git submodule update --recursive
+```
+in order to get git submodule with TypeScript types declarations for mxGraph library.
+**Be careful! These declaration files in order to work (mxGraph exports function as module) were placed in _node\_modules_ so if you delete this directory you have to again execute this command to get mxGraph Typescript types.**
+
+To compile code and create bundle execute:
+```
+$> webpack
+```
+
+In Order to run fronend dev server execute:
+```
+$> node dev-server.js
+```
+
+In Order to run backend server execute:
+```
+$> node dist/server.js
+```
 
 
-05.08.2017: Files: dist/bundle.js and server.js are generated only whene there are no errors;
+To Do:
+- do we need to call "git submodule init" ???
+    
