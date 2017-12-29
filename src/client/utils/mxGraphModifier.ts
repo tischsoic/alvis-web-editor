@@ -183,7 +183,7 @@ function preparePortsSettings(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) 
                         x = (x - pstate.x) / pstate.width;
                         y = (y - pstate.y) / pstate.height;
 
-                        if (Math.abs(y - 0.5) <= Math.abs((x - 0.5) / 1)) {
+                        if (Math.abs(y - 0.5) <= Math.abs((x - 0.5) * scale)) {
                             x = (x > 0.5) ? 1 : 0;
                             y = Math.min(1, Math.max(0, y));
                         }

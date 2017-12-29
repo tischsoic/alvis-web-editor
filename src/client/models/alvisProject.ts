@@ -8,7 +8,6 @@ export interface IInternalRecord {
 export type IAlvisPageElement = IAgentRecord | IPortRecord | IConnectionRecord;
 
 export interface IPort extends IInternalRecord {
-    readonly internalId: string,
     readonly agentInternalId: string,
     readonly name: string,
     readonly x: number,
@@ -18,7 +17,7 @@ export interface IPort extends IInternalRecord {
 };
 export interface IPortRecord
     extends TypedRecord<IPortRecord>, IPort { };
-const defaultPortRecord = {
+const defaultPortRecord: IPort = {
     internalId: null,
     agentInternalId: null,
     name: null,
@@ -32,7 +31,7 @@ export const portRecordFactory
 
 
 export interface IAgent extends IInternalRecord {
-    readonly internalId: string,
+    readonly internalId: string, // TO DO: if it extends IInternalRecord it is not necessary to redefne internalId field here.
     readonly pageInternalId: string,
     readonly subPageInternalId: string,
     readonly name: string,

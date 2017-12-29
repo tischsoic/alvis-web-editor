@@ -1,3 +1,3 @@
 [submodule "mxGraph-typescript-types"]
-	path = mxGraph-typescript-types
+	path = typings/globals/mxGraph
 	url = https://github.com/tischsoic/mxGraph-typescript-types.git
