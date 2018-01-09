@@ -8,7 +8,7 @@ export function configureStore(initialState?: RootState): Store<RootState> {
         ? (window as any).devToolsExtension()(createStore)
         : createStore;
 
-    const createStoreWithMiddleware = applyMiddleware(thunk, logger)(create);
+    const createStoreWithMiddleware = applyMiddleware(thunk)(create);
 
     const store = createStoreWithMiddleware(rootReducer, initialState) as Store<RootState>;
 

@@ -1,12 +1,34 @@
-import {Server} from './src/server/server';
+import { Server } from './src/server/server';
 var debug = require("debug")("express:server");
 var http = require("http");
+const path = require('path');
+import * as express from 'express';
 
 var httpPort = normalizePort(process.env.PORT || 3001);
 
-console.log(Server) 
+const CLIENT_DIST_DIR = path.join(__dirname, "../client"),
+  STATIC_DIR = path.join(__dirname, "../../static"),
+  HTML_FILE = path.join(CLIENT_DIST_DIR, "index.html"),
+  isDevelopment = process.env.NODE_ENV !== "production";
+
 var app = Server.bootstrap().app;
 app.set("port", httpPort);
+
+if (!isDevelopment) {
+  const history = require('connect-history-api-fallback')
+
+  app.use(express.static(CLIENT_DIST_DIR));
+  app.use('/public', express.static(STATIC_DIR));
+
+  app.get('/client/*', (req, res) => res.sendFile(HTML_FILE));
+
+  app.use(history({
+    index: '/client/index.html'
+  }))
+}
+
+
+
 var httpServer = http.createServer(app);
 
 httpServer.listen(httpPort);

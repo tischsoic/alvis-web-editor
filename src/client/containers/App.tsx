@@ -140,5 +140,5 @@ function mapDispatchToProps(dispatch: any): App.DispatchProps {
 }
 
 // It seems that you need withRouter when using connect.
-export const AppContainer: React.ComponentClass<App.OwnProps>
-    = withRouter(connect<App.StateProps, App.DispatchProps, App.OwnProps>(mapStateToProps, mapDispatchToProps)(AppComponent));
+export const AppContainer: React.ComponentClass
+    = withRouter(connect<App.StateProps, App.DispatchProps, App.OwnProps>(mapStateToProps, mapDispatchToProps)(AppComponent) as any)

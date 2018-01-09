@@ -11,6 +11,7 @@ import parseAlvisProjectXML from '../utils/alvisXmlParser';
 import { parseAlvisProjectToXml } from '../utils/toXml';
 import { getValidEmptyAlvisProject } from '../utils/alvisProject';
 import { IAlvisProjectRecord } from '../models/alvisProject';
+import { urlBase } from '../serverApi';
 
 const openApp = createAction<boolean, boolean>(
     Actions.APP_OPEN_APP,
@@ -61,7 +62,7 @@ const signIn = (email: string, password: string): ((dispatch: redux.Dispatch<any
     return (dispatch: redux.Dispatch<any>): AxiosPromise => {
         dispatch(setDuringSigningIn(true));
 
-        const promise = axios.post('http://localhost:3000/server/auth', {
+        const promise = axios.post(urlBase + '/auth', {
             email, password
         });
 
@@ -97,7 +98,7 @@ const fetchUsers = (): ((dispatch: redux.Dispatch<any>, getState: () => RootStat
         dispatch(setUsersDuringFetching(true));
 
         const token = getState().app.bearerToken,
-            promise = axios.get('http://localhost:3000/server/asystem/account', {
+            promise = axios.get(urlBase + '/asystem/account', {
                 headers: {
                     Authorization: 'Bearer ' + token,
                 }
@@ -127,7 +128,7 @@ const fetchProjects = (): ((dispatch: redux.Dispatch<any>, getState: () => RootS
         dispatch(setProjectsDuringFetching(true));
 
         const token = getState().app.bearerToken,
-            promise = axios.get('http://localhost:3000/server/system/project', {
+            promise = axios.get(urlBase + '/system/project', {
                 headers: {
                     Authorization: 'Bearer ' + token,
                 }
@@ -167,7 +168,7 @@ const openProjectFromServer = (projectId: number): ((dispatch: redux.Dispatch<an
         // dispatch(setProjectsDuringFetching(true));
 
         const token = getState().app.bearerToken,
-            promise = axios.get('http://localhost:3000/server/system/project/' + projectId + '/sourcecode', {
+            promise = axios.get(urlBase + '/system/project/' + projectId + '/sourcecode', {
                 headers: {
                     Authorization: 'Bearer ' + token,
                 }
@@ -200,7 +201,7 @@ const saveProjectToServer = (): ((dispatch: redux.Dispatch<any>, getState: () =>
         const token = getState().app.bearerToken,
             projectId = getState().app.openedProjectId,
             promise = axios.post(
-                'http://localhost:3000/server/system/project/' + projectId + '/sourcecode',
+                urlBase + '/system/project/' + projectId + '/sourcecode',
                 {
                     sourcecode: alvisProjectXml,
                 },
@@ -236,7 +237,7 @@ const createProjectFromFile = (projectName: string, sourceCodeFile: File): ((dis
 
         const token = getState().app.bearerToken,
             promise = axios.post(
-                'http://localhost:3000/server/system/project/sourcecodefile',
+                urlBase + '/system/project/sourcecodefile',
                 newProjectData,
                 {
                     headers: {
@@ -275,7 +276,7 @@ const createEmptyProject = (projectName: string): ((dispatch: redux.Dispatch<any
 
         const token = getState().app.bearerToken,
             promise = axios.post(
-                'http://localhost:3000/server/system/project/sourcecode',
+                urlBase + '/system/project/sourcecode',
                 {
                     name: projectName,
                     sourceCode: emptyAlvisProjectXml,

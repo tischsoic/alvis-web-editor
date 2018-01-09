@@ -113,6 +113,6 @@ export class Server {
 
         IndexRoute.create(router);
 
-        this.app.use(router);
+        this.app.use('/server', router);
     }
 }

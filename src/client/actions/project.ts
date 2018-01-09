@@ -2,6 +2,7 @@ import * as redux from 'redux';
 import { createAction, Action } from 'redux-actions';
 import axios, { AxiosResponse, AxiosError, AxiosPromise } from 'axios';
 import * as Actions from '../constants/projectActions';
+import { urlBase } from '../serverApi';
 
 import {
     IAgentRecord, IPortRecord, IConnectionRecord,
@@ -61,7 +62,7 @@ const modifyConnection = createModifyElementAction<IConnectionRecord>(Actions.PR
 
 const fetchProjectXML = (parseXml: (xml: string) => XMLDocument): ((dispatch: redux.Dispatch<any>) => AxiosPromise) => {
     return (dispatch: redux.Dispatch<any>): AxiosPromise => {
-        const promise = axios.get('http://localhost:3000/server/projects');
+        const promise = axios.get(urlBase + '/projects');
 
         promise
             .then((response: AxiosResponse) => {

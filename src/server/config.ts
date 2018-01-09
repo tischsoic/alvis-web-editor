@@ -5,11 +5,12 @@ export const alvisProjectsFilesDir = './static/alvis-project/';
 
 export const dbConfig = {
     development: {
-        username: 'postgres',
-        password: 'haslo',
-        database: 'alvis1',
+        username: 'alviseditor',
+        password: 'alviseditor',
+        database: 'alviswebeditor',
         options: {
-            host: 'localhost',
+            host: '/var/run/postgresql',
+            // host: 'localhost',
             dialect: 'postgres',
             pool: {
                 max: 5,
@@ -24,7 +25,7 @@ export const dbConfig = {
         database: '',
         options: {
             host: null,
-            dialect: 'postgres',
+            dialect: 'alviswebeditor',
             pool: {
                 max: 5,
                 min: 0,

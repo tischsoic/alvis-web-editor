@@ -11,11 +11,11 @@ const store = configureStore();
 
 ReactDOM.render(
     <Provider store={store}>
-        <BrowserRouter>
+        <BrowserRouter basename='/client'>
             <AppContainer />
         </BrowserRouter>
     </Provider>,
-    document.getElementById("game-container")
+    document.getElementById("root")
 );
 
 if ((module as any).hot) {

@@ -228,5 +228,5 @@ function mapDispatchToProps(dispatch: any): Editor.DispatchProps {
 }
 
 // It seems that you need withRouter when using connect. 
-export const Editor: React.ComponentClass<Editor.OwnProps>
-    = withRouter(connect<Editor.StateProps, Editor.DispatchProps, Editor.OwnProps>(mapStateToProps, mapDispatchToProps)(EditorComponent));
+export const Editor: React.ComponentClass
+    = withRouter(connect<Editor.StateProps, Editor.DispatchProps, Editor.OwnProps>(mapStateToProps, mapDispatchToProps)(EditorComponent) as any);

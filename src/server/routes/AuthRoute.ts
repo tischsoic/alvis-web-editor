@@ -32,6 +32,7 @@ export class AuthRoute extends BaseRoute {
                 return; // TO DO: check:  Can i return void?
             }
 
+            console.log(sha512(reqBody.password, dbPasswordSalt));
             if (user.password != sha512(reqBody.password, dbPasswordSalt)) {
                 res.status(401).json({ success: false, message: 'Authentication failed. Wrong password.' });
                 return;

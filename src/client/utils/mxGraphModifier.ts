@@ -288,7 +288,7 @@ function disableDirectConnectingAgents(mx: mxgraph.allClasses, graph: mxClasses.
 }
 
 function enableRubberbandSelection(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
-    new mx.mxRubberband(graph);
+        new (mx as any).mxRubberband(graph); // TO DO: change every (mx as any) to mx after missing TS Types will be added
 }
 
 function enableDelete(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
@@ -302,7 +302,7 @@ function enableDelete(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
 
 function addPopupMenu(mx: mxgraph.allClasses, graph: mxClasses.mxGraph, alvisGraph: AlvisGraph) {
     // Disables built-in context menu
-    mx.mxEvent.disableContextMenu(document.body);
+    (mx as any).mxEvent.disableContextMenu(document.body);
 
     // Configures automatic expand on mouseover
     graph.popupMenuHandler.autoExpand = true;

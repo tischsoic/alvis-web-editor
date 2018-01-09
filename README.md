@@ -1,11 +1,11 @@
 # Alvis Web Editor
 Alvis Web Editor is application for managing Alvis projects. Alvis is programming language, which syntax consists of two layers:
-- graphical - graphs
+- graphical - diagrams
 - normal code   
 
 ## Installation
 
-Application needed to be installed before you can run app: Node.js, npm, webpack, typescript (can it be in dependencies?).
+Application needed to be installed before you can run app: **Node.js, npm, webpack, typescript** (can it be in dependencies?).
 
 To run app after cloning repository execute:
 ```
@@ -19,21 +19,54 @@ $> git submodule update --recursive
 in order to get git submodule with TypeScript types declarations for mxGraph library.
 **Be careful! These declaration files in order to work (mxGraph exports function as module) were placed in _node\_modules_ so if you delete this directory you have to again execute this command to get mxGraph Typescript types.**
 
-To compile code and create bundle execute:
+### Database
+
+To create database:
+- open terminal in folder: _./src/server_
+- open Postgres termianl
+- run in postgres' terminal command: 
 ```
-$> webpack
+postgres=# \i db.sql
 ```
 
-In Order to run fronend dev server execute:
-```
-$> node dev-server.js
-```
+If you are using Ubuntu and you will ecounter authentication error check this topic:
+https://stackoverflow.com/questions/18664074/getting-error-peer-authentication-failed-for-user-postgres-when-trying-to-ge
+Also, remember to check host property in application's database config file.
 
-In Order to run backend server execute:
+Database's config file for server applications is ./src/server/db.ts
+
+# Running the app
+
+There are few npm commands and you run them by executing:
 ```
-$> node dist/server.js
+$> npm run <command\_name>
 ```
+Commands are:
+- client:build - builds production client
+- client:builddev - builds dev client
+- server:build - builds production server
+- server:builddev - builds dev server
+- client:server - builds and runs dev client
+- server:server - runs servers, dev or production depending on build
+
+To run set up app in **developement** environment run:
+- client:devserver
+- server:builddev
+- server:server
+Now the app should be available at: http://localhost:3000
+
+To run set up app in **production** environment run:
+- client:build (execution of this command may take a while)
+- server:build
+- server:server
+
+Default user, which is insertred into database during creation is:
+- email: admin@agh.edu.pl
+- password: admin (if you change salt for SHA-512 algorithm it will stop woriking)
+Now the app should be available at: http://localhost:3001/client/ (**remember about slash on the end**)
 
 
-To Do:
+
+
+TO DO:
 - do we need to call "git submodule init" ???

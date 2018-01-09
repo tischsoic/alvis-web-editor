@@ -235,7 +235,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         };
         this.parent = this.graph.getDefaultParent();
 
-        this.graph.addListener(mx.mxEvent.CELLS_ADDED, function (sender, evt) {
+        this.graph.addListener((mx as any).mxEvent.CELLS_ADDED, function (sender, evt) {
             if (alvisGraph.isDuringInternalChanges()) {
                 return;
             }
@@ -729,7 +729,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
 
         const agentVertexId = agentVertex.getId();
 
-        overlay.addListener(mx.mxEvent.CLICK, (sender, event) => {
+        overlay.addListener((mx as any).mxEvent.CLICK, (sender, event) => {
             this.changeActivePageToAgentSubPage(agentVertexId);
         });
 
