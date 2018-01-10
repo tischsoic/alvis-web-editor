@@ -54,17 +54,25 @@ Commands are:
 - client:server - builds and runs dev client
 - server:server - runs servers, dev or production depending on build
 
+--------------------------------------
+
 To run set up app in **developement** environment run (e.g. npm run client:devserver):
 - client:devserver
 - server:builddev
 - server:server
+
 Now the app should be available at: http://localhost:3000 (**wihtout slash at the end**)
+
+--------------------------------------
 
 To run set up app in **production** environment run (e.g. npm run client:build):
 - client:build (execution of this command may take a while)
 - server:build
 - server:server
+
 Now the app should be available at: http://localhost:3001/client/ (**remember about slash at the end**)
+
+--------------------------------------
 
 Default user, which is insertred into database during creation is:
 - email: admin@agh.edu.pl
