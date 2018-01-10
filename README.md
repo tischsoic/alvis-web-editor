@@ -37,8 +37,10 @@ postgres=# \i db.sql
 If you are using Ubuntu and you will ecounter authentication error during **server startup** (npm run server:server) check this topic:
 https://stackoverflow.com/questions/18664074/getting-error-peer-authentication-failed-for-user-postgres-when-trying-to-ge
 
-Also, remember to check host property in application's database config file.
+Also, remember to check host, username, password etc. properties in application's database config file.
 Database's config file for server application is ./src/server/db.ts
+
+**!!! Currently only developement config is being used from ./src/server/db.ts**
 
 ## Running the app
 
@@ -56,7 +58,7 @@ Commands are:
 
 --------------------------------------
 
-To run set up app in **developement** environment run (e.g. npm run client:devserver):
+To set up app in **developement** environment run (e.g. npm run client:devserver):
 - client:devserver
 - server:builddev
 - server:server
@@ -65,7 +67,7 @@ Now the app should be available at: http://localhost:3000 (**wihtout slash at th
 
 --------------------------------------
 
-To run set up app in **production** environment run (e.g. npm run client:build):
+To set up app in **production** environment run (e.g. npm run client:build):
 - client:build (execution of this command may take a while)
 - server:build
 - server:server
