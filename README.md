@@ -5,9 +5,11 @@ Alvis Web Editor is application for managing Alvis projects. Alvis is programmin
 
 ## Installation
 
-Application needed to be installed before you can run app: **Node.js, npm, webpack, typescript** (can it be in dependencies?).
+Applications needed to be installed before you can run the app: **Node.js, npm, webpack, typescript, PortgreSQL**. 
 
-To install required dependencies execute:
+After you installed required software you can go to main app folder and...
+
+In order to install required npm dependencies execute:
 ```
 $> npm install
 ```
@@ -24,16 +26,18 @@ in order to get git submodule with TypeScript types declarations for mxGraph lib
 
 To create database:
 - open terminal in folder: _./src/server_
-- open Postgres termianl
+- open Postgres terminal
 - run in postgres' terminal command: 
 ```
 postgres=# \i db.sql
 ```
 
-If you are using Ubuntu and you will ecounter authentication error check this topic:
-https://stackoverflow.com/questions/18664074/getting-error-peer-authentication-failed-for-user-postgres-when-trying-to-ge
-Also, remember to check host property in application's database config file.
+------------------------------------
 
+If you are using Ubuntu and you will ecounter authentication error during **server startup** (npm run server:server) check this topic:
+https://stackoverflow.com/questions/18664074/getting-error-peer-authentication-failed-for-user-postgres-when-trying-to-ge
+
+Also, remember to check host property in application's database config file.
 Database's config file for server application is ./src/server/db.ts
 
 ## Running the app
