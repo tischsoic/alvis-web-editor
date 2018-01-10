@@ -38,9 +38,9 @@ If you are using Ubuntu and you will ecounter authentication error during **serv
 https://stackoverflow.com/questions/18664074/getting-error-peer-authentication-failed-for-user-postgres-when-trying-to-ge
 
 Also, remember to check host, username, password etc. properties in application's database config file.
-Database's config file for server application is ./src/server/db.ts
+Database's config file for server application is ./src/server/config.ts
 
-**!!! Currently only developement config is being used from ./src/server/db.ts**
+**!!! Currently only developement config is being used from ./src/server/config.ts**
 
 ## Running the app
 
