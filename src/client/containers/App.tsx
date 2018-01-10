@@ -119,7 +119,11 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
                 }} />
                 <Route path='/register' render={() => {
                     return (
-                        <RegisterPanel appOpened={appData.appOpened} duringRegistration={appData.duringRegistration} />
+                        <RegisterPanel 
+                        appOpened={appData.appOpened} 
+                        duringRegistration={appData.duringRegistration} 
+                        onRegistration={appBindedActions.register as any}
+                        />
                     );
                 }} />
             </Switch>

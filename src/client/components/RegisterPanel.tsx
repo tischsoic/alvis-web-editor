@@ -1,14 +1,17 @@
 import * as React from 'react';
 import { List } from 'immutable';
-import { FormGroup, FormControl, Button, HelpBlock, Modal } from 'react-bootstrap';
+import { FormGroup, FormControl, Button, HelpBlock, Modal, Alert } from 'react-bootstrap';
 import * as isEmail from 'isemail';
 import * as Rx from 'rxjs';
 import axios, { AxiosResponse, AxiosError, AxiosPromise } from 'axios';
 import { Redirect } from 'react-router';
+import { urlBase } from '../serverApi';
 
 export interface RegisterPanelProps {
     appOpened: boolean,
     duringRegistration: boolean,
+
+    onRegistration: (email: string, firstname: string, lastname: string, password: string) => AxiosPromise,
 };
 
 export interface RegisterPanelState {
@@ -20,13 +23,14 @@ export interface RegisterPanelState {
 
     emailUnique: boolean | null,
 
-    emailValid: boolean | null,
     firstnameValid: boolean | null,
     lastnameValid: boolean | null,
     passwordValid: boolean | null,
     passwordRepeatValid: boolean | null,
 
     redirectToLogin: boolean,
+
+    registered: boolean,
 };
 
 export class RegisterPanel extends React.Component<RegisterPanelProps, RegisterPanelState> {
@@ -35,20 +39,21 @@ export class RegisterPanel extends React.Component<RegisterPanelProps, RegisterP
 
         this.state = {
             email: '',
-            firstname: null,
-            lastname: null,
-            password: null,
-            passwordRepeat: null,
+            firstname: '',
+            lastname: '',
+            password: '',
+            passwordRepeat: '',
 
             emailUnique: null,
 
-            emailValid: null,
             firstnameValid: null,
             lastnameValid: null,
             passwordValid: null,
             passwordRepeatValid: null,
 
             redirectToLogin: false,
+
+            registered: false,
         }
 
         this.emailSubject = new Rx.Subject<string>();
@@ -92,7 +97,7 @@ export class RegisterPanel extends React.Component<RegisterPanelProps, RegisterP
                 return;
             }
 
-            const afterAccountEmail = axios.head('http://localhost:3000/server/account/' + email),
+            const afterAccountEmail = axios.head(urlBase + '/account/' + email),
                 emailUniqueByResponseStatus = (responseStatus: number): boolean | null => {
                     let emailUnique = null;
 
@@ -198,27 +203,33 @@ export class RegisterPanel extends React.Component<RegisterPanelProps, RegisterP
 
         return state ? 'success' : 'error';
     }
-    
+
     private messageOnNotValid(valid: boolean, message: string) {
-        return valid || valid === null ?  null : message;
+        return valid || valid === null ? null : message;
     }
 
     private renderRegisterForm() {
         const {
             email, firstname, lastname, password, passwordRepeat,
-            emailValid, firstnameValid, lastnameValid, passwordValid, passwordRepeatValid,
+            firstnameValid, lastnameValid, passwordValid, passwordRepeatValid,
             emailUnique,
+            registered,
         } = this.state;
-        const { duringRegistration } = this.props;
-        const allInputsValid = emailValid && firstnameValid && lastnameValid && passwordValid && passwordRepeatValid;
+        const { duringRegistration, onRegistration } = this.props;
+        const allInputsValid = emailUnique && firstnameValid && lastnameValid && passwordValid && passwordRepeatValid;
 
         return (
             <div>
-                <form>
+                {registered
+                ? <Alert bsStyle='success'>
+                    <h4>You have been registered!</h4>
+                    <p>Now you must wait for administrator to activate your account.</p>
+                </Alert>
+                : <form>
                     <FormGroup controlId='RegisterPanelEmailInput' validationState={this.getValidationState(emailUnique)} >
                         <FormControl type='text' placeholder='Email' value={email} onChange={this.onEmailChange} />
                         <FormControl.Feedback />
-                        <HelpBlock>{this.messageOnNotValid(emailValid, 'It is not valid email or another user has already this email.')}</HelpBlock>
+                        <HelpBlock>{this.messageOnNotValid(emailUnique, 'It is not valid email or another user has already this email.')}</HelpBlock>
                     </FormGroup>
                     <FormGroup controlId='RegisterPanelFirstnameIntpu' validationState={this.getValidationState(firstnameValid)} >
                         <FormControl type='text' placeholder='Firstname' value={firstname} onChange={this.onFirstnameChange} />
@@ -240,10 +251,33 @@ export class RegisterPanel extends React.Component<RegisterPanelProps, RegisterP
                         <FormControl.Feedback />
                         <HelpBlock>{this.messageOnNotValid(passwordRepeatValid, 'Password and repeated password must be the same.')}</HelpBlock>
                     </FormGroup>
-                    <Button type='submit' onClick={() => console.log('Sub reg')} disabled={!allInputsValid || duringRegistration}>
+                    <Button type='submit' onClick={(e) => {
+                        console.log('Sub reg')
+                        console.log(e);
+                        console.log(onRegistration)
+                        const afterRegistered = onRegistration(email, firstname, lastname, password);
+                        afterRegistered
+                            .then((response: AxiosResponse) => {
+                                console.log(response);
+                                const responseData = response.data,
+                                    success = responseData.success;
+
+                                this.setState({
+                                    registered: success,
+                                });
+                            })
+                            .catch((error: AxiosError) => {
+                                console.log(error);
+                                this.setState({
+                                    registered: false,
+                                });
+
+                            });
+                        e.preventDefault();
+                    }} disabled={!allInputsValid || duringRegistration}>
                         Submit
                     </Button>
-                </form>
+                </form>}
             </div>
         )
     }

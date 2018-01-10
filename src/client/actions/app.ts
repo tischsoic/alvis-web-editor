@@ -93,6 +93,33 @@ const signIn = (email: string, password: string): ((dispatch: redux.Dispatch<any
     }
 }
 
+const register = (email: string, firstname: string, lastname: string, password: string): ((dispatch: redux.Dispatch<any>) => AxiosPromise) => {
+    return (dispatch: redux.Dispatch<any>): AxiosPromise => {
+        dispatch(setDuringRegistration(true));
+
+        const promise = axios.post(urlBase + '/register', {
+            email, firstname, lastname, password
+        });
+
+        promise
+            .then((response: AxiosResponse) => {
+                console.log(response);
+
+                const responseData = response.data,
+                    success = responseData.success;
+
+                dispatch(setDuringRegistration(false));
+            })
+            .catch((error: AxiosError) => {
+                console.log(error);
+
+                dispatch(setDuringRegistration(false));
+            });
+
+        return promise;
+    }
+}
+
 const fetchUsers = (): ((dispatch: redux.Dispatch<any>, getState: () => RootState) => AxiosPromise) => {
     return (dispatch: redux.Dispatch<any>, getState: () => RootState): AxiosPromise => {
         dispatch(setUsersDuringFetching(true));
@@ -311,7 +338,7 @@ const createEmptyProject = (projectName: string): ((dispatch: redux.Dispatch<any
 export {
     openApp,
     setBearerToken, setDuringSigningIn, setDuringRegistration,
-    signIn,
+    signIn, register,
     fetchProjects, setProjects, setProjectsDuringFetching,
     fetchUsers, setUsers, setUsersDuringFetching,
     openProjectFromServer, saveProjectToServer, createProjectFromFile, createEmptyProject,
