@@ -64,8 +64,8 @@ To run set up app in **production** environment run (e.g. npm run client:build):
 - client:build (execution of this command may take a while)
 - server:build
 - server:server
+Now the app should be available at: http://localhost:3001/client/ (**remember about slash at the end**)
 
 Default user, which is insertred into database during creation is:
 - email: admin@agh.edu.pl
 - password: admin (if you change salt for SHA-512 algorithm it will stop woriking)
-Now the app should be available at: http://localhost:3001/client/ (**remember about slash at the end**)
