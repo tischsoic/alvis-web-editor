@@ -6,7 +6,7 @@ import { IAppRecord, appRecordFactory, IUserRecord, IProjectRecord } from '../mo
 
 const initialState: IAppRecord = appRecordFactory();
 
-export default handleActions<IAppRecord, string | number | boolean | List<IUserRecord> | List<IProjectRecord>>({
+export default handleActions<IAppRecord, string | number | boolean | IUserRecord | List<IUserRecord> | List<IProjectRecord>>({
     [appActions.APP_SET_BEARER_TOKEN]: (state: IAppRecord, action: Action<string>) => {
         return state.set('bearerToken', action.payload);
     },
@@ -27,6 +27,14 @@ export default handleActions<IAppRecord, string | number | boolean | List<IUserR
     },
     [appActions.APP_SET_USERS]: (state: IAppRecord, action: Action<List<IUserRecord>>) => {
         return state.set('users', action.payload).set('usersAlreadyFetched', true);
+    },
+    [appActions.APP_SET_USER_DATA]: (state: IAppRecord, action: Action<IUserRecord>) => {
+        return state.update('users', (users: List<IUserRecord>) => {
+            return users.update(
+                users.findIndex((el) => el.id == action.payload.id),
+                () => action.payload
+            );
+        })
     },
     [appActions.APP_SET_USERS_DURING_FETCHING]: (state: IAppRecord, action: Action<boolean>) => {
         return state.set('usersDuringFetching', action.payload);

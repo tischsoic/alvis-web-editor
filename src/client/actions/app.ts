@@ -2,7 +2,7 @@ import * as redux from 'redux';
 import { createAction, Action } from 'redux-actions';
 import axios, { AxiosResponse, AxiosError, AxiosPromise } from 'axios';
 import * as Actions from '../constants/appActions';
-import { IUserRecord, IProjectRecord, projectRecordFactory } from '../models/app';
+import { IUserRecord, IProjectRecord, projectRecordFactory, userRecordFactory } from '../models/app';
 import { RootState } from '../reducers/index';
 import { List } from 'immutable';
 import { mx } from '../utils/mx';
@@ -51,6 +51,11 @@ const setProjects = createAction<List<IProjectRecord>, List<IProjectRecord>>(
 const setUsers = createAction<List<IUserRecord>, List<IUserRecord>>(
     Actions.APP_SET_USERS,
     (value: List<IUserRecord>) => value
+);
+
+const setUserData = createAction<IUserRecord, IUserRecord>(
+    Actions.APP_SET_USER_DATA,
+    (value: IUserRecord) => value
 );
 
 const setOpenedProjectId = createAction<number, number>(
@@ -120,12 +125,45 @@ const register = (email: string, firstname: string, lastname: string, password: 
     }
 }
 
+const activateUser = (user: IUserRecord, activated: boolean): ((dispatch: redux.Dispatch<any>, getState: () => RootState) => AxiosPromise) => {
+    return (dispatch: redux.Dispatch<any>, getState: () => RootState): AxiosPromise => {
+        const token = getState().app.bearerToken,
+            promise = axios.post(urlBase + '/system/account/' + user.id + '/activated',
+                {
+                    activated
+                },
+                {
+                    headers: {
+                        Authorization: 'Bearer ' + token,
+                    }
+                }
+            );
+
+        promise
+            .then((response: AxiosResponse) => {
+                console.log(response);
+
+                const responseData: { success: boolean, activated: boolean } = response.data,
+                    { success, activated } = responseData;
+
+                if (success) {
+                    dispatch(setUserData(user.set('activated', activated)));
+                }
+            })
+            .catch((error: AxiosError) => {
+                console.log(error);
+            });
+
+        return promise;
+    }
+}
+
 const fetchUsers = (): ((dispatch: redux.Dispatch<any>, getState: () => RootState) => AxiosPromise) => {
     return (dispatch: redux.Dispatch<any>, getState: () => RootState): AxiosPromise => {
         dispatch(setUsersDuringFetching(true));
 
         const token = getState().app.bearerToken,
-            promise = axios.get(urlBase + '/asystem/account', {
+            promise = axios.get(urlBase + '/system/account', {
                 headers: {
                     Authorization: 'Bearer ' + token,
                 }
@@ -135,8 +173,10 @@ const fetchUsers = (): ((dispatch: redux.Dispatch<any>, getState: () => RootStat
             .then((response: AxiosResponse) => {
                 console.log(response);
 
-                const responseData = response.data;
+                const responseData = response.data,
+                    users: List<IUserRecord> = List(responseData.map(userData => userRecordFactory(userData)));
 
+                dispatch(setUsers(users));
                 dispatch(setUsersDuringFetching(false));
             })
             .catch((error: AxiosError) => {
@@ -341,5 +381,6 @@ export {
     signIn, register,
     fetchProjects, setProjects, setProjectsDuringFetching,
     fetchUsers, setUsers, setUsersDuringFetching,
+    activateUser,
     openProjectFromServer, saveProjectToServer, createProjectFromFile, createEmptyProject,
 };

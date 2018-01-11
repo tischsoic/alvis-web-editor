@@ -25,6 +25,9 @@ export class AccountsRoute extends BaseRoute {
         router.get('/', (req: Request, res: Response, next: NextFunction) => {
             new AccountsRoute().index(req, res, next);
         });
+        router.post('/:id/activated', (req: Request, res: Response, next: NextFunction) => {
+            new AccountsRoute().setActivated(req, res, next);
+        });
     }
 
     private async email(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -44,6 +47,36 @@ export class AccountsRoute extends BaseRoute {
             const users = await db.models.User.findAll();
 
             res.json(users);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    private async setActivated(req: Request, res: Response, next: NextFunction) {
+        try {
+            const id: number = req.params.id,
+                { activated }: { activated: boolean, id: number } = req.body;
+
+            console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+
+            db.models.User.update({
+                activated,
+            }, {
+                    where: {
+                        id,
+                    }
+                })
+                .then(update => {
+                    console.log(JSON.stringify(update));
+                    res.json({
+                        success: true,
+                        activated,
+                    })
+                })
+                .catch(error => {
+                    console.log(error)
+                    res.status(500).send('Activation failed.')
+                });
         } catch (e) {
             next(e);
         }

@@ -11,6 +11,7 @@ import { Nav, NavItem, Grid, Row, Col, Modal, ButtonToolbar, ButtonGroup, Button
 import { LoginPanel } from '../components/LoginPanel';
 import { RegisterPanel } from '../components/RegisterPanel';
 import { OpenProjectModal } from '../components/OpenProjectModal';
+import { AdministrationPanel } from '../components/AdministrationPanel';
 import { Editor } from './Editor';
 
 export namespace App {
@@ -27,6 +28,7 @@ export namespace App {
     export type AllProps = StateProps & DispatchProps & OwnProps;
 
     export interface OwnState {
+        showAdministrationPanel: boolean,
         showOpenProjectModal: boolean,
     }
 }
@@ -36,16 +38,25 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
         super(props, context);
 
         this.state = {
+            showAdministrationPanel: false,
             showOpenProjectModal: true,
         }
 
         this.closeOpenProjectModal = this.closeOpenProjectModal.bind(this);
         this.openOpenProjectModal = this.openOpenProjectModal.bind(this);
+        this.closeAdministrationPanel = this.closeAdministrationPanel.bind(this);
+        this.openAdministrationPanel = this.openAdministrationPanel.bind(this);
     }
 
     private showOpenProjectModal(show: boolean) {
         this.setState({
             showOpenProjectModal: show,
+        });
+    }
+
+    private showAdministrationPanel(show: boolean) {
+        this.setState({
+            showAdministrationPanel: show,
         });
     }
 
@@ -57,13 +68,42 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
         this.showOpenProjectModal(true);
     }
 
+    private closeAdministrationPanel() {
+        this.showAdministrationPanel(false);
+    }
+
+    private openAdministrationPanel() {
+        this.showAdministrationPanel(true);
+    }
+
     render() {
         const { appData, appBindedActions } = this.props;
-        const { showOpenProjectModal } = this.state;
+        const { showOpenProjectModal, showAdministrationPanel } = this.state;
         const appOpened = appData.appOpened;
 
         const app = (
             <div>
+                <Modal
+                    bsSize="large"
+                    aria-labelledby="contained-modal-title-lg"
+                    show={showAdministrationPanel}
+                >
+                    <Modal.Header closeButton>
+                        <Modal.Title id="contained-modal-title-lg">Administration</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <AdministrationPanel
+                            users={appData.users}
+                            usersAlreadyFetched={appData.usersAlreadyFetched}
+                            usersDuringFetching={appData.usersAlreadyFetched}
+                            fetchUsers={appBindedActions.fetchUsers as any}
+                            onUserSetActivated={appBindedActions.activateUser as any}
+                        />
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button onClick={this.closeAdministrationPanel}>Close</Button>
+                    </Modal.Footer>
+                </Modal>
                 <OpenProjectModal
                     showModal={showOpenProjectModal}
 
@@ -83,10 +123,11 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
                     <Row>
                         <Col>
                             <ButtonToolbar>
+                                <Button onClick={this.openAdministrationPanel}>Administration</Button>
                                 <Button onClick={this.openOpenProjectModal}><Glyphicon glyph='open' />Open</Button>
                                 <ButtonGroup>
                                     <Button onClick={appBindedActions.saveProjectToServer}><Glyphicon glyph='save' />Save</Button>
-                                    <Button><Glyphicon glyph='refresh' />Autosave</Button>
+                                    {/* <Button><Glyphicon glyph='refresh' />Autosave</Button> */}
                                 </ButtonGroup>
                             </ButtonToolbar>
                         </Col>
@@ -119,10 +160,10 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
                 }} />
                 <Route path='/register' render={() => {
                     return (
-                        <RegisterPanel 
-                        appOpened={appData.appOpened} 
-                        duringRegistration={appData.duringRegistration} 
-                        onRegistration={appBindedActions.register as any}
+                        <RegisterPanel
+                            appOpened={appData.appOpened}
+                            duringRegistration={appData.duringRegistration}
+                            onRegistration={appBindedActions.register as any}
                         />
                     );
                 }} />

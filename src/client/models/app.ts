@@ -66,7 +66,7 @@ export interface IUser {
     readonly email: string,
     readonly firstname: string,
     readonly lastname: string,
-    readonly active: boolean,
+    readonly activated: boolean,
 };
 
 export interface IUserRecord
@@ -77,7 +77,7 @@ const defaultUserRecord: IUser = {
     email: null,
     firstname: null,
     lastname: null,
-    active: null,
+    activated: null,
 };
 
 export const userRecordFactory
