@@ -21,18 +21,21 @@ import * as brace from 'brace';
 import AceEditor from 'react-ace';
 import 'brace/mode/jsx';
 
-const languages = [
-    'java',
-]
+// const languages = [
+//     'java',
+// ]
 
 const themes = [
-    'github',
+    // 'github',
+    'xcode',
 ]
 
-languages.forEach((lang) => {
-    require(`brace/mode/${lang}`)
-    require(`brace/snippets/${lang}`)
-})
+// languages.forEach((lang) => {
+//     require(`brace/mode/${lang}`)
+//     require(`brace/snippets/${lang}`)
+// })
+
+require('./alvisMode');
 
 themes.forEach((theme) => {
     require(`brace/theme/${theme}`)
@@ -165,8 +168,8 @@ export class EditorComponent extends React.Component<Editor.AllProps, Editor.Own
                     </Nav>
                     {codeEditorOpened
                         ? <AceEditor
-                            mode="java"
-                            theme="github"
+                            mode="alvis"
+                            theme="xcode"
                             onChange={onEditorChange}
                             name="alvisCode_1"
                             value={alvisProject.code.text}

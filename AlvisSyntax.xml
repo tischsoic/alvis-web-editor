@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<TokenMakerDefinition>
+  <general>
+    <package>pl.edu.agh.alvis.textual.jflex</package>
+    <className>AlvisSyntax</className>
+    <extendedClass>AbstractJFlexCTokenMaker</extendedClass>
+    <classComment/>
+    <ignoreCase>false</ignoreCase>
+    <booleanLiterals>false</booleanLiterals>
+  </general>
+  <comments>
+    <lineComments enabled="true" start="--"/>
+    <multiLineComments enabled="false" end="" start=""/>
+    <docComments enabled="false" end="" start=""/>
+  </comments>
+  <keywords>
+    <keyword>False</keyword>
+    <keyword>True</keyword>
+    <keyword>agent</keyword>
+    <keyword>alt</keyword>
+    <keyword>cli</keyword>
+    <keyword>critical</keyword>
+    <keyword>data</keyword>
+    <keyword>delay</keyword>
+    <keyword>durable</keyword>
+    <keyword>else</keyword>
+    <keyword>environment</keyword>
+    <keyword>every</keyword>
+    <keyword>exec</keyword>
+    <keyword>exit</keyword>
+    <keyword>fail</keyword>
+    <keyword>far</keyword>
+    <keyword>if</keyword>
+    <keyword>ifelse</keyword>
+    <keyword>in</keyword>
+    <keyword>jump</keyword>
+    <keyword>label</keyword>
+    <keyword>loop</keyword>
+    <keyword>null</keyword>
+    <keyword>out</keyword>
+    <keyword>proc</keyword>
+    <keyword>queue</keyword>
+    <keyword>ready</keyword>
+    <keyword>select</keyword>
+    <keyword>signal </keyword>
+    <keyword>start</keyword>
+    <keyword>sti</keyword>
+    <keyword>success</keyword>
+    <keyword>type</keyword>
+  </keywords>
+  <keywords2/>
+  <dataTypes>
+    <dataType>Bool</dataType>
+    <dataType>Char</dataType>
+    <dataType>Double</dataType>
+    <dataType>Int</dataType>
+  </dataTypes>
+  <functions/>
+  <numbers>
+    <hexLiteral>0x{HexDigit}+</hexLiteral>
+    <intLiteral>{Digit}+</intLiteral>
+    <floatLiteral>({Digit}+)("."{Digit}+)?(e[+-]?{Digit}+)? | ({Digit}+)?("."{Digit}+)(e[+-]?{Digit}+)?</floatLiteral>
+  </numbers>
+  <stringLiterals enabled="true" multiLine="false"/>
+  <charLiterals enabled="true" multiLine="false"/>
+  <backtickLiterals enabled="false"/>
+  <operators>
+    <operator>*</operator>
+    <operator>+</operator>
+    <operator>+=</operator>
+    <operator>,</operator>
+    <operator>-</operator>
+    <operator>/</operator>
+    <operator>&lt;</operator>
+    <operator>=</operator>
+    <operator>==</operator>
+  </operators>
+</TokenMakerDefinition>
