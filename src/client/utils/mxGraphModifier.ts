@@ -131,7 +131,7 @@ function addCellStyles(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
     portStyle[mx.mxConstants.STYLE_FONTCOLOR] = 'black';
     portStyle[mx.mxConstants.STYLE_ROUNDED] = '1'
     portStyle[mx.mxConstants.STYLE_RESIZABLE] = '0'
-    portStyle[mx.mxConstants.STYLE_LABEL_POSITION] = 'left'
+    // portStyle[mx.mxConstants.STYLE_LABEL_POSITION] = 'left'
     portStyle[mx.mxConstants.STYLE_ALIGN] = 'right'
     graph.getStylesheet().putCellStyle('PORT_STYLE', portStyle);
 

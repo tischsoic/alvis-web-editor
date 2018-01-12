@@ -658,6 +658,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
             // this.graph.translateCell(cellToModify, agent.x, agent.y);
             this.graph.resizeCell(cellToModify, new mx.mxRectangle(agent.x, agent.y, agent.width, agent.height), false);
             cellToModify.setValue(agent.name);
+            this.setAgentSpecificStyle(cellToModify, agent);
 
             if (agent.subPageInternalId !== null) {
                 //Remove old (if exists), add new
@@ -721,7 +722,8 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
     // TO DO: add removing cell overlays from agents
     private addAgentHierarchyIconOverlay(agentVertex: mxClasses.mxCell) {
         const imgWidth = 23, imgHeight = 12,
-            overlay = new mx.mxCellOverlay(new mx.mxImage('images/hierarchy_agent_arrow.png', 23, 12), 'Go to subpage');
+            // TO DO: string url to some variable etc.
+            overlay = new mx.mxCellOverlay(new mx.mxImage('../public/images/hierarchy_agent_arrow.png', 23, 12), 'Go to subpage');
         overlay.cursor = 'hand';
         overlay.offset = new mx.mxPoint(- imgWidth, - imgHeight);
         overlay.align = mx.mxConstants.ALIGN_RIGHT;
@@ -737,17 +739,29 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         this.setAgentHierarchicalIconOverlay(agentVertexId, overlay);
     }
 
+    private getAgentMainStyle(agent: IAgentRecord): string {
+        let agentStyle = agent.active === 1 ? 'ACTIVE_AGENT;' : 'PASSIVE_AGENT;';
+        agentStyle += agent.running === 1 ? 'RUNNING;' : '';
+
+        return agentStyle;
+    }
+
+    private setAgentSpecificStyle(agentVertex: mxClasses.mxCell, agentRecord: IAgentRecord): void {
+        const agentFillColorStyle = 'fillColor=' + agentRecord.color + ';';  // TO DO: this.props.mx.mxConstants.STYLE_FILLCOLOR
+        // this.graph.setCellStyles
+        this.graph.setCellStyles('fillColor', agentRecord.color, [agentVertex]);
+    }
+
     private addAgent(agent: IAgentRecord): IAgentRecord {
         this.graph.getModel().beginUpdate();
         try {
-            let agentStyle = agent.active === 1 ? 'ACTIVE_AGENT;' : 'PASSIVE_AGENT;';
-            agentStyle += agent.running === 1 ? 'RUNNING;' : '';
-            agentStyle += 'fillColor=' + agent.color + ';';  // TO DO: this.props.mx.mxConstants.STYLE_FILLCOLOR
+            let agentMainStyle = this.getAgentMainStyle(agent);
             const agentVertex = this.graph.insertVertex(
                 this.parent, null, agent.name,
                 agent.x, agent.y, agent.width, agent.height,
-                agentStyle);
+                agentMainStyle);
             agentVertex.setConnectable(false);
+            this.setAgentSpecificStyle(agentVertex, agent);
 
             if (agent.subPageInternalId !== null) {
                 this.addAgentHierarchyIconOverlay(agentVertex);
@@ -784,8 +798,10 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
                 dx = nextX - previousX,
                 dy = nextY - previousY;
 
+
             this.graph.moveCells([cellToModify], dx, dy);
             cellToModify.setValue(port.name);
+            this.setPortSpecificStyle(cellToModify, port);
             // this.graph.translateCell(cellToModify, port.x, port.y);
             // this.graph.resizeCell(cellToModify, new mx.mxRectangle(port.x, port.y, 20, 20), false);
         }
@@ -811,15 +827,57 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         return port;
     }
 
+    private getPortMainStyle(port: IPortRecord): string {
+        return 'PORT_STYLE;';
+    }
+
+    private setPortSpecificStyle(portVertex: mxClasses.mxCell, portRecord: IPortRecord): void {
+        let labelPosition = 'center',
+            verticalLabelPosition = 'middle',
+            align = 'center',
+            vertivalAlign = 'middle';
+
+        switch (portRecord.x) {
+            case 0:
+                labelPosition = 'left';
+                align = 'right';
+                break;
+            case 1:
+                labelPosition = 'right';
+                align = 'left';
+                break;
+            default:
+                switch (portRecord.y) {
+                    case 0:
+                        verticalLabelPosition = 'top';
+                        vertivalAlign = 'bottom';
+                        break;
+                    case 1:
+                        verticalLabelPosition = 'bottom';
+                        vertivalAlign = 'top';
+                }
+        }
+
+        // TO DO: change labelPosition etc. to mxConstants
+        this.graph.setCellStyles('labelPosition', labelPosition, [portVertex]);
+        this.graph.setCellStyles('verticalLabelPosition', verticalLabelPosition, [portVertex]);
+        this.graph.setCellStyles('align', align, [portVertex]);
+        this.graph.setCellStyles('verticalAlign', vertivalAlign, [portVertex]);
+
+    }
+
     private addPort(port: IPortRecord): IPortRecord {
         this.graph.getModel().beginUpdate();
         try {
             const portAgentMxGraphId = this.getMxGraphIdByInternalId(port.agentInternalId),
-                portAgentVertex = this.graph.getModel().getCell(portAgentMxGraphId);
+                portAgentVertex = this.graph.getModel().getCell(portAgentMxGraphId),
+                portMainStyle = this.getPortMainStyle(port);
 
-            var portVertex = this.graph.insertVertex(portAgentVertex, null, port.name, port.x, port.y, 20, 20, 'PORT_STYLE');
+            var portVertex = this.graph.insertVertex(portAgentVertex, null, port.name, port.x, port.y, 20, 20, portMainStyle);
             portVertex.geometry.offset = new mx.mxPoint(-10, -10);
             portVertex.geometry.relative = true;
+
+            this.setPortSpecificStyle(portVertex, port);
 
             this.mxGraphIdsToInternalIds[portVertex.getId()] = port.internalId;
             this.internalIdsToMxGraphIds[port.internalId] = portVertex.getId();
