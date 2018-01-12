@@ -34,6 +34,13 @@ postgres=# \i db.sql
 
 ------------------------------------
 
+To open Posgres terminal on Ubuntu run:
+```
+sudo -u postgres psql
+```
+
+------------------------------------
+
 If you are using Ubuntu and you will ecounter authentication error during **server startup** (npm run server:server) check this topic:
 https://stackoverflow.com/questions/18664074/getting-error-peer-authentication-failed-for-user-postgres-when-trying-to-ge
 
@@ -79,3 +86,6 @@ Now the app should be available at: http://localhost:3001/client/ (**remember ab
 Default user, which is insertred into database during creation is:
 - email: admin@agh.edu.pl
 - password: admin (if you change salt for SHA-512 algorithm it will stop woriking)
+
+
+--------------------------------------
