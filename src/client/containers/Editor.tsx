@@ -161,7 +161,7 @@ export class EditorComponent extends React.Component<Editor.AllProps, Editor.Own
 
         return (
             <div>
-                <div style={{ width: '250px', float: 'left' }}>
+                <div style={{ width: '33%', float: 'left' }}>
                     <Nav bsStyle="tabs" activeKey={codeEditorOpened ? '1' : '2'}>
                         <NavItem eventKey="1" onClick={() => { this.showCodeEditor(); }}>Editor</NavItem>
                         <NavItem eventKey="2" onClick={() => { this.showHierarchyTree(); }}>Hierarchy</NavItem>
@@ -178,7 +178,7 @@ export class EditorComponent extends React.Component<Editor.AllProps, Editor.Own
                                 enableBasicAutocompletion: true,
                                 enableLiveAutocompletion: true,
                             }}
-                            width='250px'
+                            width='100%'
                         />
                         : <HierarchyTree
                             pages={pages}
@@ -188,7 +188,7 @@ export class EditorComponent extends React.Component<Editor.AllProps, Editor.Own
                         />
                     }
                 </div>
-                <div style={{ width: '500px', float: 'left' }}>
+                <div style={{ width: '67%', float: 'left' }}>
                     <AlvisGraphPanel
                         alvisProject={alvisProject}
                         projectId={0}

@@ -119,7 +119,7 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
                     onProjectFromFileCreate={appBindedActions.createProjectFromFile as any}
                     onEmptyProjectCreate={appBindedActions.createEmptyProject as any}
                 />
-                <Grid>
+                <Grid fluid={true}>
                     <Row>
                         <Col>
                             <ButtonToolbar>
