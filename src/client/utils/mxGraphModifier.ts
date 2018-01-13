@@ -138,6 +138,10 @@ function addCellStyles(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
     const runningStyle = new Object();
     runningStyle[mx.mxConstants.STYLE_FONTSTYLE] = mx.mxConstants.FONT_UNDERLINE;
     graph.getStylesheet().putCellStyle('RUNNING', runningStyle);
+
+    const connectionStyle = new Object();
+    connectionStyle[mx.mxConstants.STYLE_STROKECOLOR] = 'black';
+    graph.getStylesheet().putCellStyle('CONNECTION', connectionStyle);
 }
 
 function removeFoldingIcon(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {

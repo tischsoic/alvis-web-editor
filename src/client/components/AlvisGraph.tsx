@@ -838,21 +838,21 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
             vertivalAlign = 'middle';
 
         switch (portRecord.x) {
-            case 0:
+            case 1:
                 labelPosition = 'left';
                 align = 'right';
                 break;
-            case 1:
+            case 0:
                 labelPosition = 'right';
                 align = 'left';
                 break;
             default:
                 switch (portRecord.y) {
-                    case 0:
+                    case 1:
                         verticalLabelPosition = 'top';
                         vertivalAlign = 'bottom';
                         break;
-                    case 1:
+                    case 0:
                         verticalLabelPosition = 'bottom';
                         vertivalAlign = 'top';
                 }
@@ -898,7 +898,7 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
                 sourcePortRecord = this.getElementByInternalId(ports, connection.sourcePortInternalId), // TO DO: think over it
                 // can it be whatever port recordafter change? Maybe we should rather provide port from state of this change
                 targetPortRecord = this.getElementByInternalId(ports, connection.targetPortInternalId),
-                edgePortsStyle = `sourcePort=${sourcePortMxGraphId};targetPort=${targetPortMxGraphId};`;
+                edgePortsStyle = `CONNECTION;sourcePort=${sourcePortMxGraphId};targetPort=${targetPortMxGraphId};`;
             let directionStyle = '';
 
             switch (connection.direction) {
