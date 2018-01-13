@@ -52,6 +52,10 @@ export class ProjectRoute extends BaseRoute {
         router.post('/sourcecode', (req: Request, res: Response, next: NextFunction) => {
             new ProjectRoute().postCreateProject(req, res, next);
         });
+
+        router.delete('/:id', (req: Request, res: Response, next: NextFunction) => {
+            new ProjectRoute().deleteProject(req, res, next);
+        });
     }
 
     private async index(req: Request, res: Response, next: NextFunction) {
@@ -145,9 +149,9 @@ export class ProjectRoute extends BaseRoute {
                 } // TO DO: handle more exceptions
 
                 const fileData: IFileAttribute = {
-                        name: reqBody.name,
-                        realtive_path: filename,
-                    },
+                    name: reqBody.name,
+                    realtive_path: filename,
+                },
                     newFileEntity = db.models.File.build(fileData),
                     savedFileEntity = await newFileEntity.save();
 
@@ -155,6 +159,24 @@ export class ProjectRoute extends BaseRoute {
                     projectId: savedFileEntity.id,
                     projectName: savedFileEntity.name,
                     projectSourceCode: sourceCode,
+                });
+            });
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    private async deleteProject(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const projectId: number = req.params.id;
+
+            db.models.File.destroy({
+                where: {
+                    id: projectId,
+                }
+            }).then(affectedRows => {
+                res.json({
+                    success: true,
                 });
             });
         } catch (e) {

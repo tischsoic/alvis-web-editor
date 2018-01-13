@@ -10,11 +10,29 @@ import {
 import { List } from 'immutable';
 import {
     Modal, Button, ButtonGroup, Grid, Row, Col, ListGroup, ListGroupItem,
-    FormGroup, FormControl, ControlLabel,
+    FormGroup, FormControl, ControlLabel, Glyphicon,
 } from 'react-bootstrap';
 import { AxiosPromise } from 'axios';
 import { IProjectRecord } from '../models/app';
 import { getValidationState } from '../utils/reactBootstrapUtils';
+
+function CustomListGroupItem({ projectName, onOpen, onDelete }) {
+    return (
+        <li className="list-group-item clearfix" onClick={() => {
+            onOpen()
+        }}>
+            {projectName}
+            <span className="pull-right">
+                <Button bsStyle='danger' bsSize='xs' onClick={(e: Event) => {
+                    onDelete()
+                    e.stopPropagation();
+                }}>
+                    <Glyphicon glyph='trash' />
+                </Button>
+            </span>
+        </li>
+    );
+}
 
 export interface OpenProjectModalProps {
     showModal: boolean,
@@ -30,6 +48,7 @@ export interface OpenProjectModalProps {
     onProjectOpen: (projectId: number) => void,
     onProjectFromFileCreate: (name: string, sourceCodeFile: File) => AxiosPromise,
     onEmptyProjectCreate: (projectName: string) => AxiosPromise,
+    onProjectDelete: (projectId: number) => AxiosPromise,
 };
 
 export interface OpenProjectModalState {
@@ -40,6 +59,7 @@ export interface OpenProjectModalState {
     newProjectFileValid: boolean | null,
 };
 
+// TO DO: rename to ProjectManagerModal etc.
 export class OpenProjectModal extends React.Component<OpenProjectModalProps, OpenProjectModalState> {
     constructor(props: OpenProjectModalProps) {
         super(props);
@@ -107,17 +127,31 @@ export class OpenProjectModal extends React.Component<OpenProjectModalProps, Ope
     }
 
     private renderProjectListItem(project: IProjectRecord) {
-        const { onProjectOpen, onModalClose } = this.props;
+        const { onProjectOpen, onModalClose, onProjectDelete } = this.props;
 
         return (
-            <ListGroupItem
-                onClick={() => {
+            <CustomListGroupItem
+                key={project.id}
+                projectName={project.name}
+                onOpen={() => {
                     onProjectOpen(project.id);
                     onModalClose();
                 }}
-                key={project.id} >
-                {project.name}
-            </ListGroupItem>
+                onDelete={() => { onProjectDelete(project.id) }} />
+            // <ListGroupItem
+            //     onClick={() => {
+            //         onProjectOpen(project.id);
+            //         onModalClose();
+            //     }}
+            //     key={project.id} >
+            //     {project.name}
+            //     <span className="pull-right">
+            //         <Button bsStyle='danger' bsSize='xs' 
+            //         onClick={() => { onProjectDelete(project.id) }}>
+            //             <Glyphicon glyph='trash' />
+            //         </Button>
+            //     </span>
+            // </ListGroupItem>
         );
     }
 

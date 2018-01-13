@@ -118,13 +118,14 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
                     onProjectOpen={appBindedActions.openProjectFromServer}
                     onProjectFromFileCreate={appBindedActions.createProjectFromFile as any}
                     onEmptyProjectCreate={appBindedActions.createEmptyProject as any}
+                    onProjectDelete={appBindedActions.deleteProject as any}
                 />
                 <Grid fluid={true}>
                     <Row>
                         <Col>
                             <ButtonToolbar>
                                 <Button onClick={this.openAdministrationPanel}>Administration</Button>
-                                <Button onClick={this.openOpenProjectModal}><Glyphicon glyph='open' />Open</Button>
+                                <Button onClick={this.openOpenProjectModal}><Glyphicon glyph='open' />Projects Manager</Button>
                                 <ButtonGroup>
                                     <Button onClick={appBindedActions.saveProjectToServer}><Glyphicon glyph='save' />Save</Button>
                                     {/* <Button><Glyphicon glyph='refresh' />Autosave</Button> */}

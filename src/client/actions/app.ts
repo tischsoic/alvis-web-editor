@@ -230,6 +230,14 @@ const openProject = (projectId: number, alvisProject: [IAlvisProjectRecord, numb
     }
 }
 
+const closeProject = (projectId: number): ((dispatch: redux.Dispatch<any>, getState: () => RootState) => void) => {
+    return (dispatch, getState): void => {
+        const emptyAlvisProject = getValidEmptyAlvisProject();
+        dispatch(projectActions.setAlvisProject([emptyAlvisProject, 0]));
+        dispatch(setOpenedProjectId(null));
+    }
+}
+
 const openProjectFromServer = (projectId: number): ((dispatch: redux.Dispatch<any>, getState: () => RootState) => AxiosPromise) => {
     return (dispatch, getState): AxiosPromise => {
         // dispatch(setProjectsDuringFetching(true));
@@ -374,6 +382,48 @@ const createEmptyProject = (projectName: string): ((dispatch: redux.Dispatch<any
     }
 }
 
+const deleteProject = (projectId: number): ((dispatch: redux.Dispatch<any>, getState: () => RootState) => AxiosPromise) => {
+    return (dispatch, getState): AxiosPromise => {
+        const currentProjectId = getState().app.openedProjectId;
+        const token = getState().app.bearerToken,
+            promise = axios.delete(
+                urlBase + '/system/project/' + projectId,
+                {
+                    headers: {
+                        Authorization: 'Bearer ' + token,
+                    }
+                });
+
+        promise
+            .then((response: AxiosResponse) => {
+                const responseData: { success: boolean } = response.data,
+                    { success } = responseData;
+
+                if (success) {
+                    const allProjects = getState().app.projects,
+                        allProjectsWithoutDeleted = allProjects.delete(
+                            allProjects.findIndex(el => el.id === projectId)
+                        );
+
+                    dispatch(setProjects(allProjectsWithoutDeleted));
+                    if (projectId == currentProjectId) {
+                        dispatch(closeProject(projectId));
+                    }
+                } else {
+                    // TO DO
+                }
+
+
+                console.log(responseData);
+            })
+            .catch((error: AxiosError) => {
+                console.log(error);
+
+            });
+
+        return promise;
+    }
+}
 
 export {
     openApp,
@@ -383,4 +433,5 @@ export {
     fetchUsers, setUsers, setUsersDuringFetching,
     activateUser,
     openProjectFromServer, saveProjectToServer, createProjectFromFile, createEmptyProject,
+    deleteProject,
 };
