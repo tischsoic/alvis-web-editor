@@ -1,6 +1,7 @@
 import mxgraph = require('mxgraph');
 import * as mxClasses from "mxgraphAllClasses";
 import { AlvisGraph } from '../components/AlvisGraph';
+import { ConnectionDirection } from '../models/alvisProject';
 
 export function modifyMx(mx: mxgraph.allClasses) {
 }
@@ -292,7 +293,7 @@ function disableDirectConnectingAgents(mx: mxgraph.allClasses, graph: mxClasses.
 }
 
 function enableRubberbandSelection(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
-        new (mx as any).mxRubberband(graph); // TO DO: change every (mx as any) to mx after missing TS Types will be added
+    new (mx as any).mxRubberband(graph); // TO DO: change every (mx as any) to mx after missing TS Types will be added
 }
 
 function enableDelete(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
@@ -314,11 +315,13 @@ function addPopupMenu(mx: mxgraph.allClasses, graph: mxClasses.mxGraph, alvisGra
     // Installs context menu
     graph.popupMenuHandler.factoryMethod = function (menu, cell, evt: PointerEvent) {
         console.log(cell);
+        const { onMxGraphAgentAdded, 
+            onMxGraphConnectionModified, 
+            onMxGraphPortDeleted,
+            agents } = alvisGraph.props;
 
         if (cell == null) {
             const addAgent = (active: boolean) => {
-                const { onMxGraphAgentAdded, agents } = alvisGraph.props;
-
                 onMxGraphAgentAdded(alvisGraph.createAgent({
                     x: evt.offsetX, y: evt.offsetY,
                     name: 'Agent_' + agents.size,
@@ -331,16 +334,23 @@ function addPopupMenu(mx: mxgraph.allClasses, graph: mxClasses.mxGraph, alvisGra
         }
 
         if (cell.isEdge()) {
-            menu.addItem('Direct to source', null, () => { });
-            menu.addItem('Ditect to target', null, () => { });
-            menu.addItem('Undirect', null, () => { });
+            const modifyConnection = (direction: ConnectionDirection) => {
+                onMxGraphConnectionModified(alvisGraph.createConnection({
+                    mxGraphId: cell.getId(),
+                    direction,
+                }));
+            };
+            menu.addItem('Direct to source', null, () => { modifyConnection('source') });
+            menu.addItem('Ditect to target', null, () => { modifyConnection('target') });
+            menu.addItem('Undirect', null, () => { modifyConnection('none') });
             return;
         }
 
         if (graph.isPort(cell)) {
-            menu.addItem('Delete', null, () => { });
-            menu.addItem('Edit', null, () => { });
-            menu.addItem('Color', null, () => { });
+            const portInternalId = alvisGraph.getInternalIdByMxGrpahId(cell.getId());
+            menu.addItem('Delete', null, () => { onMxGraphPortDeleted(portInternalId) });
+            // menu.addItem('Edit', null, () => { });
+            // menu.addItem('Color', null, () => { });
             return;
         }
 

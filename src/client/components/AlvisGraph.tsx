@@ -49,7 +49,7 @@ export interface AlvisGraphProps {
 import {
     getPortAgent
 } from '../utils/alvisProject';
-import { modifyConnection } from '../actions/project';
+// import { modifyConnection } from '../actions/project';
 
 
 export interface AlvisGraphState {
@@ -450,11 +450,8 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
 
             changes.agentsChanges.modified.forEach((modifiedAgent) => this.modifyAgent(modifiedAgent));
             changes.portsChanges.modified.forEach((modifiedPort) => this.modifyPort(modifiedPort));
-            // changes.connectionsChanges.modified.forEach((modifiedPort) => this.modifyPort(modifiedPort));
-
-
-
-        })
+            changes.connectionsChanges.modified.forEach((modifiedConnection) => this.modifyConnection(modifiedConnection));
+        });
         this.endInternalChanges();
 
         this.outline.refresh(); // TO DO: This is because outline was not properly instantiated/refresh after new page was opened, 
@@ -889,33 +886,52 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         }
     }
 
+    private getConnectionMainStyle(connection: IConnectionRecord): string {
+        const sourcePortMxGraphId = this.getMxGraphIdByInternalId(connection.sourcePortInternalId),
+            targetPortMxGraphId = this.getMxGraphIdByInternalId(connection.targetPortInternalId),
+            connectionMainStyle = `CONNECTION;sourcePort=${sourcePortMxGraphId};targetPort=${targetPortMxGraphId};`;
+
+        return connectionMainStyle;
+    }
+
+    private setConnectionSpecificStyle(connectionVertex: mxClasses.mxCell, connectionRecord: IConnectionRecord): void {
+        let startArrow,
+            endArrow;
+
+        switch (connectionRecord.direction) {
+            case 'target':
+                startArrow = 'none';
+                endArrow = 'block';
+                break;
+            case 'source':
+                startArrow = 'block';
+                endArrow = 'none';
+                break;
+            case 'none':
+                startArrow = 'none';
+                endArrow = 'none';
+        }
+
+        this.graph.setCellStyles(mx.mxConstants.STYLE_STARTARROW, startArrow, [connectionVertex]);
+        this.graph.setCellStyles(mx.mxConstants.STYLE_ENDARROW, endArrow, [connectionVertex]);
+    }
+
     private addConnection(connection: IConnectionRecord): IConnectionRecord {
         const { ports } = this.props;
         this.graph.getModel().beginUpdate();
         try {
             const sourcePortMxGraphId = this.getMxGraphIdByInternalId(connection.sourcePortInternalId),
                 targetPortMxGraphId = this.getMxGraphIdByInternalId(connection.targetPortInternalId),
-                sourcePortRecord = this.getElementByInternalId(ports, connection.sourcePortInternalId), // TO DO: think over it
                 // can it be whatever port recordafter change? Maybe we should rather provide port from state of this change
-                targetPortRecord = this.getElementByInternalId(ports, connection.targetPortInternalId),
-                edgePortsStyle = `CONNECTION;sourcePort=${sourcePortMxGraphId};targetPort=${targetPortMxGraphId};`;
-            let directionStyle = '';
-
-            switch (connection.direction) {
-                case 'target':
-                    directionStyle = 'startArrow=none;endArrow=block;';
-                    break;
-                case 'source':
-                    directionStyle = 'startArrow=block;endArrow=none;'; // TO DO: Check if 'none' is valid
-                    break;
-                case 'none':
-                    directionStyle = 'startArrow=none;endArrow=none;';
-            }
+                // targetPortRecord = this.getElementByInternalId(ports, connection.targetPortInternalId),
+                connectionMainStyle = this.getConnectionMainStyle(connection);
 
             const edgeCell = this.graph.insertEdge(this.parent, null, '',
                 this.graph.getModel().getCell(sourcePortMxGraphId),
                 this.graph.getModel().getCell(targetPortMxGraphId),
-                edgePortsStyle + directionStyle);
+                connectionMainStyle);
+
+            this.setConnectionSpecificStyle(edgeCell, connection);
 
             this.mxGraphIdsToInternalIds[edgeCell.getId()] = connection.internalId;
             this.internalIdsToMxGraphIds[connection.internalId] = edgeCell.getId();
@@ -925,6 +941,21 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         finally {
             this.graph.getModel().endUpdate();
         }
+    }
+
+    private modifyConnection(connection: IConnectionRecord): IConnectionRecord {
+        this.graph.getModel().beginUpdate();
+        try {
+            const mxGraphConnectionId = this.getMxGraphIdByInternalId(connection.internalId),
+                cellToModify = this.graph.getModel().getCell(mxGraphConnectionId);
+
+            this.setConnectionSpecificStyle(cellToModify, connection);
+        }
+        finally {
+            this.graph.getModel().endUpdate();
+        }
+
+        return connection;
     }
 
     private deleteConnection(connection: IConnectionRecord): IConnectionRecord {
