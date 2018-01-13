@@ -87,6 +87,7 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
                     bsSize="large"
                     aria-labelledby="contained-modal-title-lg"
                     show={showAdministrationPanel}
+                    onHide={this.closeAdministrationPanel}
                 >
                     <Modal.Header closeButton>
                         <Modal.Title id="contained-modal-title-lg">Administration</Modal.Title>
