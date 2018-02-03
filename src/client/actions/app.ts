@@ -11,7 +11,8 @@ import parseAlvisProjectXML from '../utils/alvisXmlParser';
 import { parseAlvisProjectToXml } from '../utils/toXml';
 import { getValidEmptyAlvisProject } from '../utils/alvisProject';
 import { IAlvisProjectRecord } from '../models/alvisProject';
-import { urlBase } from '../serverApi';
+import { urlBase, getServerApi } from '../serverApi';
+
 
 const openApp = createAction<boolean, boolean>(
     Actions.APP_OPEN_APP,
@@ -127,24 +128,13 @@ const register = (email: string, firstname: string, lastname: string, password: 
 
 const activateUser = (user: IUserRecord, activated: boolean): ((dispatch: redux.Dispatch<any>, getState: () => RootState) => AxiosPromise) => {
     return (dispatch: redux.Dispatch<any>, getState: () => RootState): AxiosPromise => {
-        const token = getState().app.bearerToken,
-            promise = axios.post(urlBase + '/system/account/' + user.id + '/activated',
-                {
-                    activated
-                },
-                {
-                    headers: {
-                        Authorization: 'Bearer ' + token,
-                    }
-                }
-            );
+        const promise = getServerApi(getState()).accounts.activate(activated, user.id);
 
         promise
-            .then((response: AxiosResponse) => {
+            .then((response) => {
                 console.log(response);
 
-                const responseData: { success: boolean, activated: boolean } = response.data,
-                    { success, activated } = responseData;
+                const { success, activated } = response.data;
 
                 if (success) {
                     dispatch(setUserData(user.set('activated', activated)));
@@ -162,19 +152,13 @@ const fetchUsers = (): ((dispatch: redux.Dispatch<any>, getState: () => RootStat
     return (dispatch: redux.Dispatch<any>, getState: () => RootState): AxiosPromise => {
         dispatch(setUsersDuringFetching(true));
 
-        const token = getState().app.bearerToken,
-            promise = axios.get(urlBase + '/system/account', {
-                headers: {
-                    Authorization: 'Bearer ' + token,
-                }
-            });
+        const promise = getServerApi(getState()).accounts.index();
 
         promise
-            .then((response: AxiosResponse) => {
+            .then((response) => {
                 console.log(response);
 
-                const responseData = response.data,
-                    users: List<IUserRecord> = List(responseData.map(userData => userRecordFactory(userData)));
+                const users = List(response.data.map(userData => userRecordFactory(userData)));
 
                 dispatch(setUsers(users));
                 dispatch(setUsersDuringFetching(false));

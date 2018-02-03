@@ -1,5 +1,6 @@
 import { Record, List } from 'immutable';
 import { TypedRecord, makeTypedFactory } from 'typed-immutable-record';
+import { IUserAttribute } from '../../server/models/User';
 
 export interface IApp {
     readonly appOpened: boolean,
@@ -61,7 +62,7 @@ export const projectRecordFactory
     = makeTypedFactory<IProject, IProjectRecord>(defaultProjectRecord);
 
 
-export interface IUser {
+export interface IUser extends IUserAttribute {
     readonly id: number,
     readonly email: string,
     readonly firstname: string,

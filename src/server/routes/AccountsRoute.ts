@@ -75,7 +75,7 @@ export class AccountsRoute extends BaseRoute {
                 })
                 .catch(error => {
                     console.log(error)
-                    res.status(500).send('Activation failed.')
+                    res.status(500).send('Activation failed.') //TO DO: shouldn't it be {success: false, activated;: false}
                 });
         } catch (e) {
             next(e);
