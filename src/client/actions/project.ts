@@ -60,34 +60,11 @@ const addConnection = createAddElementAction<IConnectionRecord>(Actions.PROJECT_
 const deleteConnection = createDeleteElementAction(Actions.PROJECT_DELETE_CONNECTION);
 const modifyConnection = createModifyElementAction<IConnectionRecord>(Actions.PROJECT_MODIFY_CONNECTION);
 
-const fetchProjectXML = (parseXml: (xml: string) => XMLDocument): ((dispatch: redux.Dispatch<any>) => AxiosPromise) => {
-    return (dispatch: redux.Dispatch<any>): AxiosPromise => {
-        const promise = axios.get(urlBase + '/projects');
-
-        promise
-            .then((response: AxiosResponse) => {
-                console.log(response);
-
-                const xml = response.data.projectXML,
-                    xmlDocument = parseXml(xml);
-
-                dispatch(setProjectXML(xml));
-                dispatch(setAlvisProject(parseAlvisProjectXML(xmlDocument)));
-            })
-            .catch((error: AxiosError) => {
-                console.log(error);
-            });
-
-        return promise;
-    }
-}
-
 export {
     setProjectXML,
     addPage, deletePage, modifyPage,
     addAgent, deleteAgent, modifyAgent,
     addPort, deletePort, modifyPort,
     addConnection, deleteConnection, modifyConnection,
-    fetchProjectXML,
     setAlvisProject,
 };

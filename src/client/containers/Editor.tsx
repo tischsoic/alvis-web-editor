@@ -97,10 +97,6 @@ export class EditorComponent extends React.Component<Editor.AllProps, Editor.Own
         };
     }
 
-    componentWillMount() {
-        // this.props.projectBindedActions.fetchProjectXML(mx.mxUtils.parseXml);
-    }
-
     componentWillReceiveProps(nextProps: Editor.AllProps) {
         const { activePageInternalId } = this.state,
             nextPages = nextProps.alvisProject.pages,
