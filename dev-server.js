@@ -1,3 +1,4 @@
+const _ = require('lodash')
 const express = require('express')
 const history = require('connect-history-api-fallback')
 const cors = require('cors')
@@ -11,6 +12,10 @@ const webpackHotMiddleware = require('webpack-hot-middleware')
 const app = express()
 const config = require('./webpack.client.dev')
 const compiler = webpack(config)
+
+app.use(history({
+  // logger: console.log.bind(console)
+}))
 
 
 app.use(webpackDevMiddleware(compiler, {
@@ -28,9 +33,7 @@ app.use(proxyMiddleware('/server', {
   }
 }))
 
-// app.use(history({
-//   index: '/index.html'
-// }))
+
 
 app.use('/public', express.static('static'))
 // app.use(express.static('dist'))
@@ -45,6 +48,21 @@ app.use('/public', express.static('static'))
 
 // app.use(express.static(config[0].output.path))
 // console.log(config[0].output.publicPath);
+
+
+// app.use(function (req, res, next) {
+//   const reqPath = req.url
+//   // find the file that the browser is looking for
+//   const file = _.last(reqPath.split('/').last)
+//   if (['bundle.js', 'index.html'].indexOf(file) !== -1) {
+//     res.end(devMiddleware.fileSystem.readFileSync(path.join(config.output.path, file)))
+//   } else if (!file || file.indexOf('.') === -1) {
+//     // if the url does not have an extension, assume they've navigated to something like /home and want index.html
+//     res.end(devMiddleware.fileSystem.readFileSync(path.join(config.output.path, 'index.html')))
+//   } else {
+//     next()
+//   }
+// })
 
 app.listen(3000, '0.0.0.0', (err) => {
   if (err) {
