@@ -44,6 +44,8 @@ export interface AlvisGraphProps {
     onMxGraphConnectionAdded: (connection: IConnectionRecord) => any,
     onMxGraphConnectionDeleted: (connectionInternalId: string) => any,
     onMxGraphConnectionModified: (connection: IConnectionRecord) => any,
+
+    getNameFromUser: (callback: (chosenName: string) => void) => void,
 };
 
 import {
@@ -53,9 +55,6 @@ import {
 
 
 export interface AlvisGraphState {
-    showChooseNameModal: boolean,
-    chooseNameModalName: string,
-    chooseNameCallback: (chosenName: string) => void,
 };
 
 export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState> {
@@ -65,12 +64,6 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         this.onProcessChange = this.onProcessChange.bind(this);
         this.changeActivePageToAgentSubPage = this.changeActivePageToAgentSubPage.bind(this);
         this.randomNumber = Math.floor((Math.random() * 100000) + 1); // TO DO: set unique ID based on alvis Page ID
-
-        this.state = {
-            showChooseNameModal: false,
-            chooseNameModalName: '',
-            chooseNameCallback: null,
-        }
     }
 
     private graph: mxClasses.mxGraph;
@@ -317,18 +310,9 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
         this.applyChanges();
     }
 
-    private stateRelatedToChooseNameModalHasChanged(nextState: AlvisGraphState): boolean {
-        const { showChooseNameModal, chooseNameModalName } = this.state;
-        const showChooseNameModalNew = nextState.showChooseNameModal,
-            chooseNameModalNameNew = nextState.chooseNameModalName;
-
-        return showChooseNameModal !== showChooseNameModalNew
-            || chooseNameModalName !== chooseNameModalNameNew;
-    }
-
     shouldComponentUpdate(nextProps, nextState: AlvisGraphState, nextContext: any) {
         console.log("ATTENTION!!! shouldComponentUpdate");
-        return this.stateRelatedToChooseNameModalHasChanged(nextState);
+        return false;
     }
 
     // componentWillUpdate?(nextProps: P, nextState: S, nextContext: any): void;
@@ -338,85 +322,13 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
     render() {
         console.log(this.props)
         console.log('rendering AlivGraph COmponent')
-        const { showChooseNameModal } = this.state;
-        const onModalNameChange = (e) => {
-            this.setState({
-                chooseNameModalName: e.target.value,
-            })
-        };
 
         return (
             <div className="modal-container">
-                <Modal
-                    show={showChooseNameModal}
-                    onHide={() => this.onChooseNameModalClose(false)}
-                    container={this}
-                    bsSize="small"
-                    aria-labelledby="contained-modal-title-sm"
-                >
-                    <Modal.Header closeButton>
-                        <Modal.Title id="contained-modal-title-sm">Choose name</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <form>
-                            <FormGroup
-                                controlId="chooseNameFormGroup"
-                            >
-                                <FormControl
-                                    type="text"
-                                    value={this.state.chooseNameModalName}
-                                    placeholder="Enter name"
-                                    onChange={onModalNameChange}
-                                />
-                                <FormControl.Feedback />
-                            </FormGroup>
-                        </form>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button onClick={() => this.onChooseNameModalClose(true)}>OK</Button>
-                        <Button onClick={() => this.onChooseNameModalClose(false)}>Cancel</Button>
-                    </Modal.Footer>
-                </Modal>
-                <ButtonToolbar>
-                    <ButtonGroup>
-                        <Button onClick={() => this.graph.zoomOut()}><Glyphicon glyph='zoom-out' /></Button>
-                        <Button onClick={() => this.graph.zoomIn()}><Glyphicon glyph='zoom-in' /></Button>
-                    </ButtonGroup>
-                </ButtonToolbar>
                 <div id={"alvis-graph-container-" + this.randomNumber} style={{ overflow: 'hidden', height: '400px' }}></div>
                 <div id={"alvis-graph-outline-container-" + this.randomNumber} style={{ height: '200px' }}></div>
             </div>
         )
-    }
-
-    private onChooseNameModalClose(success: boolean) {
-        const { chooseNameModalName, chooseNameCallback } = this.state;
-        const finalChosenName = success ? chooseNameModalName : null;
-
-        if (chooseNameCallback !== null) {
-            chooseNameCallback(finalChosenName);
-        }
-
-        this.setState({
-            showChooseNameModal: false,
-            chooseNameModalName: '',
-            chooseNameCallback: null,
-        });
-    }
-
-    public getNameFromUser(callback: (name: string) => void) {
-        const { showChooseNameModal } = this.state;
-        if (showChooseNameModal) {
-            throw {
-                message: 'Choose name modal was already opened!',
-            };
-        }
-
-        this.setState({
-            showChooseNameModal: true,
-            chooseNameModalName: '',
-            chooseNameCallback: callback,
-        });
     }
 
     private beginInternalChanges() {
@@ -1024,6 +936,14 @@ export class AlvisGraph extends React.Component<AlvisGraphProps, AlvisGraphState
             deleted: basicChanges.deleted.concat(portsWhoseAgentChangedToDelete).toList(),
             modified: basicChanges.modified.filter(port => !portsIdsWhoseAgentChanged.contains(port.internalId)).toList(),
         }
+    }
+
+    public zoomIn(): void {
+        this.graph.zoomIn()
+    }
+
+    public zoomOut(): void {
+        this.graph.zoomOut()
     }
 
 }

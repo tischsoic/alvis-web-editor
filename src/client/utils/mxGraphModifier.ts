@@ -370,10 +370,10 @@ function addPopupMenu(mx: mxgraph.allClasses, graph: mxClasses.mxGraph, alvisGra
         });
 
         menu.addItem('Add page', null, () => {
-            const { onMxGraphPageAdded } = alvisGraph.props;
+            const { onMxGraphPageAdded, getNameFromUser } = alvisGraph.props;
             const agentInternalId = alvisGraph.getInternalIdByMxGrpahId(cell.getId());
 
-            alvisGraph.getNameFromUser((chosenName: string) => {
+            getNameFromUser((chosenName: string) => {
                 if (chosenName === null) {
                     return;
                 }

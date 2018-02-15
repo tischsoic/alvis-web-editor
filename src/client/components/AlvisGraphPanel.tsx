@@ -9,9 +9,14 @@ import {
     IAlvisProjectRecord,
 } from "../models/alvisProject";
 import { List } from 'immutable';
-import { Nav, NavItem, Grid, Row, Col, Tab, Tabs } from 'react-bootstrap';
+import {
+    Nav, NavItem, Grid, Row, Col, Tab, Tabs,
+    Glyphicon,
+    Button, ButtonGroup, ButtonToolbar,
+} from 'react-bootstrap';
 
 import { AlvisGraph } from './AlvisGraph';
+import { NamePicker } from './NamePicker';
 
 export interface AlvisGraphPanelProps {
     alvisProject: IAlvisProjectRecord,
@@ -47,7 +52,12 @@ export class AlvisGraphPanel extends React.Component<AlvisGraphPanelProps, Alvis
         this.state = { // TO DO: Check how initial state should be set - getInitialState() function overwriting
             openedPagesInternalIds: List(openedPagesInternalIds),
         };
+
+        this.getNameFromUser = this.getNameFromUser.bind(this);
     }
+
+    activeAlvisGraph: AlvisGraph | null = null;
+    namePicker: NamePicker | null = null;
 
     componentWillReceiveProps(nextProps: AlvisGraphPanelProps) {
         const { projectId } = this.props,
@@ -104,7 +114,7 @@ export class AlvisGraphPanel extends React.Component<AlvisGraphPanelProps, Alvis
     }
 
     render() {
-        const { activePageInternalId, onChangeActivePage, 
+        const { activePageInternalId, onChangeActivePage,
             onMxGraphPageAdded,
             onMxGraphAgentAdded, onMxGraphAgentDeleted, onMxGraphAgentModified,
             onMxGraphPortAdded, onMxGraphPortDeleted, onMxGraphPortModified,
@@ -123,6 +133,11 @@ export class AlvisGraphPanel extends React.Component<AlvisGraphPanelProps, Alvis
                 return (
                     <Tab eventKey={pageInternalId} title={page.name} key={pageInternalId}>
                         <AlvisGraph
+                            ref={(alvisGraph) => {
+                                if (pageInternalId == activePageInternalId) {
+                                    this.activeAlvisGraph = alvisGraph;
+                                }
+                            }}
                             agents={agents}
                             ports={ports}
                             connections={connections}
@@ -138,18 +153,38 @@ export class AlvisGraphPanel extends React.Component<AlvisGraphPanelProps, Alvis
                             onMxGraphConnectionAdded={onMxGraphConnectionAdded}
                             onMxGraphConnectionDeleted={onMxGraphConnectionDeleted}
                             onMxGraphConnectionModified={onMxGraphConnectionModified}
+
+                            getNameFromUser={this.getNameFromUser}
                         />
                     </Tab>
                 );
             });
 
         return (
-            <div>
-                <Tabs activeKey={activePageInternalId} onSelect={onChangeActivePage} id='alvis-graph-panel'>
-                    {pagesTabs}
-                </Tabs>
+            <div className="modal-container">
+                <NamePicker
+                    container={this}
+                    ref={(namePicker) => {
+                        this.namePicker = namePicker;
+                    }}
+                />
+                <ButtonToolbar>
+                    <ButtonGroup>
+                        <Button onClick={() => this.activeAlvisGraph.zoomOut()}><Glyphicon glyph='zoom-out' /></Button>
+                        <Button onClick={() => this.activeAlvisGraph.zoomIn()}><Glyphicon glyph='zoom-in' /></Button>
+                    </ButtonGroup>
+                </ButtonToolbar>
+                <div>
+                    <Tabs activeKey={activePageInternalId} onSelect={onChangeActivePage} id='alvis-graph-panel'>
+                        {pagesTabs}
+                    </Tabs>
+                </div>
             </div>
         );
+    }
+
+    public getNameFromUser(callback: (chosenName: string) => void): void {
+        this.namePicker.getName(callback);
     }
 
 }
