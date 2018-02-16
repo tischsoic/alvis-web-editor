@@ -15,6 +15,7 @@ import {
     Button, ButtonGroup, ButtonToolbar,
 } from 'react-bootstrap';
 
+import { ColorPicker } from './ColorPicker';
 import { AlvisGraph } from './AlvisGraph';
 import { NamePicker } from './NamePicker';
 
@@ -41,6 +42,8 @@ export interface AlvisGraphPanelProps {
 
 export interface AlvisGraphPanelState {
     openedPagesInternalIds: List<string>,
+
+    selectedColor: string,
 };
 
 export class AlvisGraphPanel extends React.Component<AlvisGraphPanelProps, AlvisGraphPanelState> {
@@ -51,9 +54,12 @@ export class AlvisGraphPanel extends React.Component<AlvisGraphPanelProps, Alvis
         const openedPagesInternalIds = activePageInternalId !== null ? [activePageInternalId] : [];
         this.state = { // TO DO: Check how initial state should be set - getInitialState() function overwriting
             openedPagesInternalIds: List(openedPagesInternalIds),
+
+            selectedColor: '#000'
         };
 
         this.getNameFromUser = this.getNameFromUser.bind(this);
+        this.onColorSelect = this.onColorSelect.bind(this);
     }
 
     activeAlvisGraph: AlvisGraph | null = null;
@@ -114,13 +120,14 @@ export class AlvisGraphPanel extends React.Component<AlvisGraphPanelProps, Alvis
     }
 
     render() {
-        const { activePageInternalId, onChangeActivePage,
+        const {
+            activePageInternalId, onChangeActivePage,
             onMxGraphPageAdded,
             onMxGraphAgentAdded, onMxGraphAgentDeleted, onMxGraphAgentModified,
             onMxGraphPortAdded, onMxGraphPortDeleted, onMxGraphPortModified,
             onMxGraphConnectionAdded, onMxGraphConnectionDeleted, onMxGraphConnectionModified,
-         } = this.props,
-            { openedPagesInternalIds } = this.state;
+         } = this.props;
+        const { openedPagesInternalIds, selectedColor } = this.state;
 
         const pagesElements = openedPagesInternalIds.map((pageInternalId) => this.getPageElements(pageInternalId)),
             pagesTabs = pagesElements.map((pageElements) => {
@@ -162,6 +169,7 @@ export class AlvisGraphPanel extends React.Component<AlvisGraphPanelProps, Alvis
 
         return (
             <div className="modal-container">
+
                 <NamePicker
                     container={this}
                     ref={(namePicker) => {
@@ -173,6 +181,10 @@ export class AlvisGraphPanel extends React.Component<AlvisGraphPanelProps, Alvis
                         <Button onClick={() => this.activeAlvisGraph.zoomOut()}><Glyphicon glyph='zoom-out' /></Button>
                         <Button onClick={() => this.activeAlvisGraph.zoomIn()}><Glyphicon glyph='zoom-in' /></Button>
                     </ButtonGroup>
+                    <ColorPicker
+                        color={selectedColor}
+                        onColorSelect={this.onColorSelect}
+                    />
                 </ButtonToolbar>
                 <div>
                     <Tabs activeKey={activePageInternalId} onSelect={onChangeActivePage} id='alvis-graph-panel'>
@@ -185,6 +197,12 @@ export class AlvisGraphPanel extends React.Component<AlvisGraphPanelProps, Alvis
 
     public getNameFromUser(callback: (chosenName: string) => void): void {
         this.namePicker.getName(callback);
+    }
+
+    private onColorSelect(selectedColor: string) {
+        this.setState({
+            selectedColor
+        });
     }
 
 }

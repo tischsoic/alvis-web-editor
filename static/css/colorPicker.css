@@ -1,0 +1,15 @@
+.color-picker-dialog {
+    width: 222px;
+    margin: 0px;
+}
+
+.color-picker-dialog .modal-header {
+    padding: 0px;
+    padding-right: 10px;
+}
+
+.color-picker-dialog .modal-footer {
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-right: 10px;
+}
