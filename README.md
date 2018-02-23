@@ -34,9 +34,13 @@ postgres=# \i db.sql
 
 ------------------------------------
 
-To open Posgres terminal on Ubuntu run:
+To open Postgres terminal on Ubuntu run:
 ```
-sudo -u postgres psql
+$> sudo -u postgres psql
+```
+or in Windows:
+```
+$> psql -h localhost -p 5432 -U postgres
 ```
 
 ------------------------------------
