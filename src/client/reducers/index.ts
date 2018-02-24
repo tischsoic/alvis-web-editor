@@ -5,13 +5,13 @@ import { IProjectRecord } from '../models/project';
 import { IAppRecord } from '../models/app';
 
 export interface RootState {
-    app: IAppRecord,
-    project: IProjectRecord,
+  app: IAppRecord;
+  project: IProjectRecord;
 }
 
 const rootReducer = combineReducers<RootState>({
-    app,
-    project,
+  app,
+  project,
 });
 
 export default rootReducer;

@@ -6,8 +6,13 @@
   "scripts": {
     "precommit": "lint-staged",
 
+"tslint-check": "tslint-config-prettier-check ./tslint.json",
+
     "test": "echo \"Error: no test specified\" && exit 1",
-    "format": "prettier --write 'src/**/*.{ts,tsx}'",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+
+    "a": "tslint --fix src\\client\\reducers\\app.ts",
+
 
     "start_dev": "nodemon ./dist/server.js",
     "client:build": "webpack --config webpack.client.prod.js",

@@ -1,5 +1,5 @@
 interface IDefaultAttributes {
-  createdAt?: string,
-  updatedAd?: string,
-  deletedAt?: string,
+  createdAt?: string;
+  updatedAd?: string;
+  deletedAt?: string;
 }

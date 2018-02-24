@@ -1,10 +1,7 @@
-
-
-
 export function getValidationState(state: boolean | null) {
-    if (state === null) {
-        return null;
-    }
+  if (state === null) {
+    return null;
+  }
 
-    return state ? 'success' : 'error';
+  return state ? 'success' : 'error';
 }

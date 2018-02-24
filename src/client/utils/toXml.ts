@@ -1,6 +1,13 @@
-import { IAlvisProjectRecord, IAlvisCodeRecord, IPageRecord, IAgentRecord, IPortRecord, IConnectionRecord } from "../models/alvisProject";
-import { List, Iterable } from "immutable";
-import { getSystemPage, getListElementByInternalId } from "./alvisProject";
+import {
+  IAlvisProjectRecord,
+  IAlvisCodeRecord,
+  IPageRecord,
+  IAgentRecord,
+  IPortRecord,
+  IConnectionRecord,
+} from '../models/alvisProject';
+import { List, Iterable } from 'immutable';
+import { getSystemPage, getListElementByInternalId } from './alvisProject';
 
 // <?xml version="1.0" encoding="UTF-8"?>
 // <!DOCTYPE alvisproject PUBLIC "alvisPublicId-v0.1" "alvisSystemId-v0.1">
@@ -46,192 +53,257 @@ import { getSystemPage, getListElementByInternalId } from "./alvisProject";
 export const alvisNSUri = 'http://alvis.kis.agh.edu.pl/';
 
 function appendCode(alvisprojectDoc: Document, code: IAlvisCodeRecord) {
-    const codeElement: Element = document.createElementNS(alvisNSUri, 'code'),
-        textNodeWithCode = document.createTextNode(code.text);
+  const codeElement: Element = document.createElementNS(alvisNSUri, 'code'),
+    textNodeWithCode = document.createTextNode(code.text);
 
-    codeElement.appendChild(textNodeWithCode);
-    alvisprojectDoc.documentElement.appendChild(codeElement);
+  codeElement.appendChild(textNodeWithCode);
+  alvisprojectDoc.documentElement.appendChild(codeElement);
 }
 
-function appendHierarchy(alvisprojectDoc: Document, pages: List<IPageRecord>, agents: List<IAgentRecord>) {
-    const systemPage = getSystemPage(pages),
-        hierarchy: Element = document.createElementNS(alvisNSUri, 'hierarchy');
+function appendHierarchy(
+  alvisprojectDoc: Document,
+  pages: List<IPageRecord>,
+  agents: List<IAgentRecord>,
+) {
+  const systemPage = getSystemPage(pages),
+    hierarchy: Element = document.createElementNS(alvisNSUri, 'hierarchy');
 
-    appendHierarchyNode(hierarchy, systemPage, pages, agents);
+  appendHierarchyNode(hierarchy, systemPage, pages, agents);
 
-    alvisprojectDoc.documentElement.appendChild(hierarchy);
+  alvisprojectDoc.documentElement.appendChild(hierarchy);
 }
 
-function appendHierarchyNode(supElement: Element, page: IPageRecord, pages: List<IPageRecord>, agents: List<IAgentRecord>) {
-    const hierarchyNode: Element = createHierarchyNodeElement(page, agents),
-        subHierarchyNodes = page.subPagesInternalIds
-            .map(subPageInternalId => getListElementByInternalId(pages, subPageInternalId)) // TO DO: should we check for null?
-            .map(subPage => {
-                const subPageHierarchyNodeElement = createHierarchyNodeElement(subPage, agents),
-                    subPageSubPages = subPage.subPagesInternalIds
-                        .map(subPageInternalId => getListElementByInternalId(pages, subPageInternalId));
+function appendHierarchyNode(
+  supElement: Element,
+  page: IPageRecord,
+  pages: List<IPageRecord>,
+  agents: List<IAgentRecord>,
+) {
+  const hierarchyNode: Element = createHierarchyNodeElement(page, agents),
+    subHierarchyNodes = page.subPagesInternalIds
+      .map((subPageInternalId) =>
+        getListElementByInternalId(pages, subPageInternalId),
+      ) // TO DO: should we check for null?
+      .map((subPage) => {
+        const subPageHierarchyNodeElement = createHierarchyNodeElement(
+            subPage,
+            agents,
+          ),
+          subPageSubPages = subPage.subPagesInternalIds.map(
+            (subPageInternalId) =>
+              getListElementByInternalId(pages, subPageInternalId),
+          );
 
-                subPageSubPages.forEach(subPageSubPage => {
-                    appendHierarchyNode(subPageHierarchyNodeElement, subPageSubPage, pages, agents);
-                });
+        subPageSubPages.forEach((subPageSubPage) => {
+          appendHierarchyNode(
+            subPageHierarchyNodeElement,
+            subPageSubPage,
+            pages,
+            agents,
+          );
+        });
 
-                return subPageHierarchyNodeElement;
-            });
+        return subPageHierarchyNodeElement;
+      });
 
-    subHierarchyNodes.forEach(subHierarchyNode => {
-        hierarchyNode.appendChild(subHierarchyNode);
-    });
+  subHierarchyNodes.forEach((subHierarchyNode) => {
+    hierarchyNode.appendChild(subHierarchyNode);
+  });
 
-    supElement.appendChild(hierarchyNode);
+  supElement.appendChild(hierarchyNode);
 }
 
-function createHierarchyNodeElement(page: IPageRecord, agents: List<IAgentRecord>): Element {
-    const hierarchyNodeElement: Element = document.createElementNS(alvisNSUri, 'node'),
-        supAgent = getListElementByInternalId(agents, page.supAgentInternalId);
+function createHierarchyNodeElement(
+  page: IPageRecord,
+  agents: List<IAgentRecord>,
+): Element {
+  const hierarchyNodeElement: Element = document.createElementNS(
+      alvisNSUri,
+      'node',
+    ),
+    supAgent = getListElementByInternalId(agents, page.supAgentInternalId);
 
-    hierarchyNodeElement.setAttribute('agent', supAgent ? supAgent.name : '');
-    hierarchyNodeElement.setAttribute('name', page.name);
+  hierarchyNodeElement.setAttribute('agent', supAgent ? supAgent.name : '');
+  hierarchyNodeElement.setAttribute('name', page.name);
 
-    return hierarchyNodeElement;
+  return hierarchyNodeElement;
 }
 
 function appendPages(
-    alvisprojectDoc: Document, pages: List<IPageRecord>,
-    agents: List<IAgentRecord>, ports: List<IPortRecord>, connections: List<IConnectionRecord>
+  alvisprojectDoc: Document,
+  pages: List<IPageRecord>,
+  agents: List<IAgentRecord>,
+  ports: List<IPortRecord>,
+  connections: List<IConnectionRecord>,
 ) {
-    pages.forEach(page => {
-        appendPage(alvisprojectDoc, page, agents, ports, connections);
-    });
+  pages.forEach((page) => {
+    appendPage(alvisprojectDoc, page, agents, ports, connections);
+  });
 }
 
 function appendPage(
-    alvisprojectDoc: Document, page: IPageRecord,
-    agents: List<IAgentRecord>, ports: List<IPortRecord>, connections: List<IConnectionRecord>
+  alvisprojectDoc: Document,
+  page: IPageRecord,
+  agents: List<IAgentRecord>,
+  ports: List<IPortRecord>,
+  connections: List<IConnectionRecord>,
 ) {
-    const pageElement = createPageElement(page),
-        pageAgents = page.agentsInternalIds
-            .map(agentInternalId => getListElementByInternalId(agents, agentInternalId))
-            .toList(),
-        pagePortsInternalIds = ports
-            .filter((port) => page.agentsInternalIds.contains(port.agentInternalId))
-            .map((port) => port.internalId),
-        pageConnections = connections
-            .filter((connection) => pagePortsInternalIds.contains(connection.sourcePortInternalId))
-            .toList();
+  const pageElement = createPageElement(page),
+    pageAgents = page.agentsInternalIds
+      .map((agentInternalId) =>
+        getListElementByInternalId(agents, agentInternalId),
+      )
+      .toList(),
+    pagePortsInternalIds = ports
+      .filter((port) => page.agentsInternalIds.contains(port.agentInternalId))
+      .map((port) => port.internalId),
+    pageConnections = connections
+      .filter((connection) =>
+        pagePortsInternalIds.contains(connection.sourcePortInternalId),
+      )
+      .toList();
 
-    appendAgents(pageElement, pageAgents, ports);
-    appendConnections(pageElement, pageConnections);
-    alvisprojectDoc.documentElement.appendChild(pageElement);
+  appendAgents(pageElement, pageAgents, ports);
+  appendConnections(pageElement, pageConnections);
+  alvisprojectDoc.documentElement.appendChild(pageElement);
 }
 
 function createPageElement(page: IPageRecord) {
-    const pageElement: Element = document.createElementNS(alvisNSUri, 'page');
+  const pageElement: Element = document.createElementNS(alvisNSUri, 'page');
 
-    pageElement.setAttribute('name', page.name);
+  pageElement.setAttribute('name', page.name);
 
-    return pageElement;
+  return pageElement;
 }
 
-function appendAgents(pageElement: Element, pageAgents: List<IAgentRecord>, ports: List<IPortRecord>) {
-    pageAgents.forEach(agent => {
-        appendAgent(pageElement, agent, ports);
-    })
+function appendAgents(
+  pageElement: Element,
+  pageAgents: List<IAgentRecord>,
+  ports: List<IPortRecord>,
+) {
+  pageAgents.forEach((agent) => {
+    appendAgent(pageElement, agent, ports);
+  });
 }
 
-function appendAgent(pageElement: Element, agent: IAgentRecord, ports: List<IPortRecord>) {
-    const agentElement = createAgentElement(agent),
-        agentPorts: List<IPortRecord> = agent.portsInternalIds
-            .map(portInetrnalId => getListElementByInternalId(ports, portInetrnalId))
-            .toList();
+function appendAgent(
+  pageElement: Element,
+  agent: IAgentRecord,
+  ports: List<IPortRecord>,
+) {
+  const agentElement = createAgentElement(agent),
+    agentPorts: List<IPortRecord> = agent.portsInternalIds
+      .map((portInetrnalId) =>
+        getListElementByInternalId(ports, portInetrnalId),
+      )
+      .toList();
 
-    appendPorts(agentElement, agentPorts);
-    pageElement.appendChild(agentElement);
+  appendPorts(agentElement, agentPorts);
+  pageElement.appendChild(agentElement);
 }
 
 //  <agent active="1" color="white" height="100.0" index="1" name="pag 3 agent" running="0" width="140.0" x="80.0" y="70.0"/>
 function createAgentElement(agent: IAgentRecord): Element {
-    const agentElement: Element = document.createElementNS(alvisNSUri, 'agent');
+  const agentElement: Element = document.createElementNS(alvisNSUri, 'agent');
 
-    agentElement.setAttribute('active', agent.active.toString());
-    agentElement.setAttribute('color', agent.color);
-    agentElement.setAttribute('width', agent.width.toString());
-    agentElement.setAttribute('height', agent.height.toString());
-    agentElement.setAttribute('index', agent.index);
-    agentElement.setAttribute('name', agent.name);
-    agentElement.setAttribute('running', agent.running.toString());
-    agentElement.setAttribute('x', agent.x.toString());
-    agentElement.setAttribute('y', agent.y.toString());
+  agentElement.setAttribute('active', agent.active.toString());
+  agentElement.setAttribute('color', agent.color);
+  agentElement.setAttribute('width', agent.width.toString());
+  agentElement.setAttribute('height', agent.height.toString());
+  agentElement.setAttribute('index', agent.index);
+  agentElement.setAttribute('name', agent.name);
+  agentElement.setAttribute('running', agent.running.toString());
+  agentElement.setAttribute('x', agent.x.toString());
+  agentElement.setAttribute('y', agent.y.toString());
 
-    return agentElement;
+  return agentElement;
 }
 
 function appendPorts(agentElement: Element, agentPorts: List<IPortRecord>) {
-    agentPorts.forEach(agentPort => {
-        appendPort(agentElement, agentPort);
-    });
+  agentPorts.forEach((agentPort) => {
+    appendPort(agentElement, agentPort);
+  });
 }
 
 function appendPort(agentElement: Element, agentPort: IPortRecord) {
-    const portElement = createPortElement(agentPort);
+  const portElement = createPortElement(agentPort);
 
-    agentElement.appendChild(portElement);
+  agentElement.appendChild(portElement);
 }
 
 // <port color="white" id="722064955" name="port_0" x="0.0" y="0.2"/>
 function createPortElement(port: IPortRecord): Element {
-    const portElement: Element = document.createElementNS(alvisNSUri, 'port');
+  const portElement: Element = document.createElementNS(alvisNSUri, 'port');
 
-    portElement.setAttribute('id', port.internalId.toString());
-    portElement.setAttribute('name', port.name);
-    portElement.setAttribute('x', port.x.toString());
-    portElement.setAttribute('y', port.y.toString());
-    portElement.setAttribute('color', port.color);
+  portElement.setAttribute('id', port.internalId.toString());
+  portElement.setAttribute('name', port.name);
+  portElement.setAttribute('x', port.x.toString());
+  portElement.setAttribute('y', port.y.toString());
+  portElement.setAttribute('color', port.color);
 
-    return portElement;
+  return portElement;
 }
 
-function appendConnections(pageElement: Element, pageConnections: List<IConnectionRecord>) {
-    pageConnections.forEach(pageConnection => {
-        appendConnection(pageElement, pageConnection);
-    });
+function appendConnections(
+  pageElement: Element,
+  pageConnections: List<IConnectionRecord>,
+) {
+  pageConnections.forEach((pageConnection) => {
+    appendConnection(pageElement, pageConnection);
+  });
 }
 
-function appendConnection(pageElement: Element, pageConnection: IConnectionRecord) {
-    const connectionElement = createConnectionElement(pageConnection);
+function appendConnection(
+  pageElement: Element,
+  pageConnection: IConnectionRecord,
+) {
+  const connectionElement = createConnectionElement(pageConnection);
 
-    pageElement.appendChild(connectionElement);
+  pageElement.appendChild(connectionElement);
 }
 
 // <connection direction="target" source="1336330071" style="straight" target="1637408149"/>
 function createConnectionElement(connection: IConnectionRecord): Element {
-    const connectionElement: Element = document.createElementNS(alvisNSUri, 'connection');
+  const connectionElement: Element = document.createElementNS(
+    alvisNSUri,
+    'connection',
+  );
 
-    connectionElement.setAttribute('direction', connection.direction);
-    connectionElement.setAttribute('source', connection.sourcePortInternalId);
-    connectionElement.setAttribute('target', connection.targetPortInternalId);
-    connectionElement.setAttribute('style', connection.style);
+  connectionElement.setAttribute('direction', connection.direction);
+  connectionElement.setAttribute('source', connection.sourcePortInternalId);
+  connectionElement.setAttribute('target', connection.targetPortInternalId);
+  connectionElement.setAttribute('style', connection.style);
 
-    return connectionElement;
+  return connectionElement;
 }
 
-
 export function parseAlvisProjectToXml(alvisProject: IAlvisProjectRecord) {
-    const alvisDocumentType: DocumentType = document.implementation.createDocumentType('alvisproject', 'alvisPublicId-v0.1', 'alvisSystemId-v0.1'),
-        alvisprojectDoc: Document = document.implementation.createDocument(alvisNSUri, 'alvisproject', alvisDocumentType);
+  const alvisDocumentType: DocumentType = document.implementation.createDocumentType(
+      'alvisproject',
+      'alvisPublicId-v0.1',
+      'alvisSystemId-v0.1',
+    ),
+    alvisprojectDoc: Document = document.implementation.createDocument(
+      alvisNSUri,
+      'alvisproject',
+      alvisDocumentType,
+    );
 
-    const pages = alvisProject.pages,
-        agents = alvisProject.agents,
-        ports = alvisProject.ports,
-        connections = alvisProject.connections,
-        code = alvisProject.code;
+  const pages = alvisProject.pages,
+    agents = alvisProject.agents,
+    ports = alvisProject.ports,
+    connections = alvisProject.connections,
+    code = alvisProject.code;
 
-    appendHierarchy(alvisprojectDoc, pages, agents);
-    appendPages(alvisprojectDoc, pages, agents, ports, connections);
-    appendCode(alvisprojectDoc, code)
+  appendHierarchy(alvisprojectDoc, pages, agents);
+  appendPages(alvisprojectDoc, pages, agents, ports, connections);
+  appendCode(alvisprojectDoc, code);
 
-    const alvisProjectXml = new XMLSerializer().serializeToString(alvisprojectDoc),
-        prolog = '<?xml version="1.0" encoding="UTF-8"?>',
-        alvisProjectXmlWithProlog = prolog + alvisProjectXml;
+  const alvisProjectXml = new XMLSerializer().serializeToString(
+      alvisprojectDoc,
+    ),
+    prolog = '<?xml version="1.0" encoding="UTF-8"?>',
+    alvisProjectXmlWithProlog = prolog + alvisProjectXml;
 
-    return alvisProjectXmlWithProlog;
+  return alvisProjectXmlWithProlog;
 }

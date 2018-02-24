@@ -3,30 +3,35 @@ import { BaseRoute } from './route';
 import * as fs from 'fs';
 
 export class AlvisProjectRoute extends BaseRoute {
-    constructor() {
-        super();
-    }
+  constructor() {
+    super();
+  }
 
-    public static create(router: Router) {
-        console.log('[AlvisProjectRoute::create] asdf');
+  public static create(router: Router) {
+    console.log('[AlvisProjectRoute::create] asdf');
 
-        router.get('/', (req: Request, res: Response, next: NextFunction) => {
-            new AlvisProjectRoute().index(req, res, next);
+    router.get('/', (req: Request, res: Response, next: NextFunction) => {
+      new AlvisProjectRoute().index(req, res, next);
+    });
+  }
+
+  public index(req: Request, res: Response, next: NextFunction) {
+    fs.readFile(
+      './static/alvis-project/fst_project.alvis',
+      'utf-8',
+      (err, data: string) => {
+        // TO DO: check data type?? previous BUffer
+        if (err) {
+          return console.log(err);
+        }
+
+        // console.log(data);
+        res.json({
+          projectXML: data,
         });
-    }
-
-    public index(req: Request, res: Response, next: NextFunction) {
-        fs.readFile('./static/alvis-project/fst_project.alvis', 'utf-8', (err, data: string) => { // TO DO: check data type?? previous BUffer
-            if (err) {
-                return console.log(err);
-            }
-
-            // console.log(data);
-            res.json({
-                projectXML: data
-            });
-        });
-        // console.log(__filename);
-        // console.log(__dirname);
-    }
+      },
+    );
+    // console.log(__filename);
+    // console.log(__dirname);
+  }
 }

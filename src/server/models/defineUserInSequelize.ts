@@ -3,7 +3,8 @@ import * as tableOptions from './tableOptions.json';
 import { IUserInstance, IUserAttribute } from './User';
 
 export const defineUserInSequelize = (sequelize: Sequelize.Sequelize) =>
-  sequelize.define<IUserInstance, IUserAttribute>('user',
+  sequelize.define<IUserInstance, IUserAttribute>(
+    'user',
     {
       id: {
         field: 'id',
@@ -17,7 +18,7 @@ export const defineUserInSequelize = (sequelize: Sequelize.Sequelize) =>
         allowNull: false,
         validate: {
           isEmail: true,
-        }
+        },
       },
       password: {
         field: 'password',
@@ -39,6 +40,8 @@ export const defineUserInSequelize = (sequelize: Sequelize.Sequelize) =>
         type: Sequelize.BOOLEAN,
         allowNull: false,
       },
-    }, <any>tableOptions);
+    },
+    <any>tableOptions,
+  );
 
 export default defineUserInSequelize;

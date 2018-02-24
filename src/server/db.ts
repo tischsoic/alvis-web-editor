@@ -6,12 +6,17 @@ import { IDbModels } from './models/dbModels';
 export let sqlz: Sequelize.Sequelize = null;
 export let models: IDbModels = null;
 
-export function initializeSequelize(database: string, username: string, password: string, options: Sequelize.Options) {
-    console.log(password);
-    sqlz = new Sequelize(database, username, password, options);
+export function initializeSequelize(
+  database: string,
+  username: string,
+  password: string,
+  options: Sequelize.Options,
+) {
+  console.log(password);
+  sqlz = new Sequelize(database, username, password, options);
 
-    models = {
-        File: defineFileInSequelize(sqlz),
-        User: defineUserInSequelize(sqlz),
-    }
+  models = {
+    File: defineFileInSequelize(sqlz),
+    User: defineUserInSequelize(sqlz),
+  };
 }

@@ -3,7 +3,13 @@ import axios, { AxiosResponse, AxiosError, AxiosPromise } from 'axios';
 import * as projectActions from '../actions/project';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
-import { RouteComponentProps, Redirect, Switch, Route, withRouter } from 'react-router';
+import {
+  RouteComponentProps,
+  Redirect,
+  Switch,
+  Route,
+  withRouter,
+} from 'react-router';
 import { RootState } from '../reducers';
 import parseAlvisProjectXML from '../utils/alvisXmlParser';
 import { IAppRecord } from '../models/app';
@@ -26,9 +32,9 @@ import 'brace/mode/jsx';
 // ]
 
 const themes = [
-    // 'github',
-    'xcode',
-]
+  // 'github',
+  'xcode',
+];
 
 // languages.forEach((lang) => {
 //     require(`brace/mode/${lang}`)
@@ -38,194 +44,234 @@ const themes = [
 require('./alvisMode');
 
 themes.forEach((theme) => {
-    require(`brace/theme/${theme}`)
-})
+  require(`brace/theme/${theme}`);
+});
 /*eslint-disable no-alert, no-console */
 import 'brace/ext/language_tools';
 import 'brace/ext/searchbox';
 
 import {
-    IAgentRecord,
-    IPortRecord,
-    IConnectionRecord,
-    IPageRecord,
-    agentRecordFactory,
-    IAlvisProjectRecord,
-} from "../models/alvisProject";
+  IAgentRecord,
+  IPortRecord,
+  IConnectionRecord,
+  IPageRecord,
+  agentRecordFactory,
+  IAlvisProjectRecord,
+} from '../models/alvisProject';
 import { List } from 'immutable';
 import { LoginPanel } from '../components/LoginPanel';
 import { RegisterPanel } from '../components/RegisterPanel';
 
 export namespace Editor {
-    export interface StateProps { // extends RouteComponentProps<void> {
-        appData: IAppRecord,
-        xml: string,
-        alvisProject: IAlvisProjectRecord,
-        agents: List<IAgentRecord>,
-        ports: List<IPortRecord>,
-        pages: List<IPageRecord>,
-        connections: List<IConnectionRecord>,
-    }
+  export interface StateProps {
+    // extends RouteComponentProps<void> {
+    appData: IAppRecord;
+    xml: string;
+    alvisProject: IAlvisProjectRecord;
+    agents: List<IAgentRecord>;
+    ports: List<IPortRecord>;
+    pages: List<IPageRecord>;
+    connections: List<IConnectionRecord>;
+  }
 
-    export interface DispatchProps {
-        projectBindedActions: typeof projectActions, // TO DO thunk actions types are wrong
-    }
+  export interface DispatchProps {
+    projectBindedActions: typeof projectActions; // TO DO thunk actions types are wrong
+  }
 
-    export interface OwnProps { }
+  export interface OwnProps {}
 
-    export type AllProps = StateProps & DispatchProps & OwnProps;
+  export type AllProps = StateProps & DispatchProps & OwnProps;
 
-    export interface OwnState {
-        codeEditorOpened: boolean,
-        hierarchyTreeOpened: boolean,
-        activePageInternalId: string,
-    }
+  export interface OwnState {
+    codeEditorOpened: boolean;
+    hierarchyTreeOpened: boolean;
+    activePageInternalId: string;
+  }
 }
 
 // @connect<Editor.StateProps, Editor.DispatchProps, Editor.State>(mapStateToProps, mapDispatchToProps)
 // @connect<Editor.StateProps, Editor.DispatchProps, Editor.AllProps>(mapStateToProps, mapDispatchToProps)
-export class EditorComponent extends React.Component<Editor.AllProps, Editor.OwnState> {
-    constructor(props?: Editor.AllProps, context?: Editor.OwnState) {
-        super(props, context);
+export class EditorComponent extends React.Component<
+  Editor.AllProps,
+  Editor.OwnState
+> {
+  constructor(props?: Editor.AllProps, context?: Editor.OwnState) {
+    super(props, context);
 
-        const systemPage = this.getSystemPage(this.props.alvisProject.pages);
+    const systemPage = this.getSystemPage(this.props.alvisProject.pages);
 
-        this.state = {
-            codeEditorOpened: true,
-            hierarchyTreeOpened: false,
-            activePageInternalId: systemPage ? systemPage.internalId : null,
-        };
+    this.state = {
+      codeEditorOpened: true,
+      hierarchyTreeOpened: false,
+      activePageInternalId: systemPage ? systemPage.internalId : null,
+    };
+  }
+
+  componentWillReceiveProps(nextProps: Editor.AllProps) {
+    const { activePageInternalId } = this.state,
+      nextPages = nextProps.alvisProject.pages,
+      nextPagesInternalIds = nextPages.map((page) => page.internalId);
+
+    let nextActivePageInternalId: string = null;
+    if (nextPagesInternalIds.contains(activePageInternalId)) {
+      nextActivePageInternalId = activePageInternalId;
+    } else if (
+      !nextPagesInternalIds.contains(activePageInternalId) &&
+      nextPagesInternalIds.size !== 0
+    ) {
+      const systemPage = this.getSystemPage(nextPages);
+      nextActivePageInternalId = systemPage.internalId;
     }
 
-    componentWillReceiveProps(nextProps: Editor.AllProps) {
-        const { activePageInternalId } = this.state,
-            nextPages = nextProps.alvisProject.pages,
-            nextPagesInternalIds = nextPages.map((page) => page.internalId);
+    this.setState({
+      activePageInternalId: nextActivePageInternalId,
+    });
+  }
 
-        let nextActivePageInternalId: string = null;
-        if (nextPagesInternalIds.contains(activePageInternalId)) {
-            nextActivePageInternalId = activePageInternalId;
-        } else if (!nextPagesInternalIds.contains(activePageInternalId) && nextPagesInternalIds.size !== 0) {
-            const systemPage = this.getSystemPage(nextPages);
-            nextActivePageInternalId = systemPage.internalId;
-        }
+  showHierarchyTree() {
+    this.setState({
+      codeEditorOpened: false,
+      hierarchyTreeOpened: true,
+    });
+  }
 
-        this.setState({
-            activePageInternalId: nextActivePageInternalId,
-        });
-    }
+  showCodeEditor() {
+    this.setState({
+      codeEditorOpened: true,
+      hierarchyTreeOpened: false,
+    });
+  }
 
-    showHierarchyTree() {
-        this.setState({
-            codeEditorOpened: false,
-            hierarchyTreeOpened: true,
-        });
-    }
+  setActivePageInternalId(pageInternalId: string) {
+    this.setState({
+      activePageInternalId: pageInternalId,
+    });
+  }
 
-    showCodeEditor() {
-        this.setState({
-            codeEditorOpened: true,
-            hierarchyTreeOpened: false,
-        });
-    }
+  getElementByFn<T>(elements: List<T>, fn: (element: T) => boolean) {
+    const elementIndex = elements.findIndex(fn),
+      element = elementIndex !== -1 ? elements.get(elementIndex) : null;
 
-    setActivePageInternalId(pageInternalId: string) {
-        this.setState({
-            activePageInternalId: pageInternalId,
-        })
-    }
+    return element;
+  }
 
-    getElementByFn<T>(elements: List<T>, fn: (element: T) => boolean) {
-        const elementIndex = elements.findIndex(fn),
-            element = elementIndex !== -1 ? elements.get(elementIndex) : null;
+  getSystemPage(pages: List<IPageRecord>) {
+    return this.getElementByFn(pages, (page) => page.name === 'System');
+  }
 
-        return element;
-    }
+  render() {
+    const {
+      xml,
+      pages,
+      agents,
+      ports,
+      connections,
+      projectBindedActions,
+      alvisProject,
+    } = this.props;
+    const {
+      codeEditorOpened,
+      hierarchyTreeOpened,
+      activePageInternalId,
+    } = this.state;
+    const { appData } = this.props;
 
-    getSystemPage(pages: List<IPageRecord>) {
-        return this.getElementByFn(pages, (page) => page.name === 'System');
-    }
+    const onEditorChange = function(value: string, event?: any): void {
+      console.log(arguments);
+    };
 
-    render() {
-        const { xml, pages, agents, ports, connections, projectBindedActions, alvisProject } = this.props;
-        const { codeEditorOpened, hierarchyTreeOpened, activePageInternalId } = this.state;
-        const { appData } = this.props;
-
-        const onEditorChange = function (value: string, event?: any): void {
-            console.log(arguments)
-        }
-
-        return (
-            <div>
-                <div style={{ width: '33%', float: 'left' }}>
-                    <Nav bsStyle="tabs" activeKey={codeEditorOpened ? '1' : '2'}>
-                        <NavItem eventKey="1" onClick={() => { this.showCodeEditor(); }}>Editor</NavItem>
-                        <NavItem eventKey="2" onClick={() => { this.showHierarchyTree(); }}>Hierarchy</NavItem>
-                    </Nav>
-                    {codeEditorOpened
-                        ? <AceEditor
-                            mode="alvis"
-                            theme="xcode"
-                            onChange={onEditorChange}
-                            name="alvisCode_1"
-                            value={alvisProject.code.text}
-                            editorProps={{ $blockScrolling: true }}
-                            setOptions={{
-                                enableBasicAutocompletion: true,
-                                enableLiveAutocompletion: true,
-                            }}
-                            width='100%'
-                        />
-                        : <HierarchyTree
-                            pages={pages}
-                            agents={agents}
-                            onPageClick={(page) => this.setActivePageInternalId(page.internalId)}
-                            onMxGraphPageDeleted={projectBindedActions.deletePage}
-                        />
-                    }
-                </div>
-                <div style={{ width: '67%', float: 'left' }}>
-                    <AlvisGraphPanel
-                        alvisProject={alvisProject}
-                        projectId={0}
-                        onChangeActivePage={(newActivePageInternalId: string) => this.setActivePageInternalId(newActivePageInternalId)}
-                        activePageInternalId={activePageInternalId}
-                        onMxGraphPageAdded={projectBindedActions.addPage}
-                        onMxGraphAgentAdded={projectBindedActions.addAgent}
-                        onMxGraphAgentDeleted={projectBindedActions.deleteAgent}
-                        onMxGraphAgentModified={projectBindedActions.modifyAgent}
-                        onMxGraphPortAdded={projectBindedActions.addPort}
-                        onMxGraphPortDeleted={projectBindedActions.deletePort}
-                        onMxGraphPortModified={projectBindedActions.modifyPort}
-                        onMxGraphConnectionAdded={projectBindedActions.addConnection}
-                        onMxGraphConnectionDeleted={projectBindedActions.deleteConnection}
-                        onMxGraphConnectionModified={projectBindedActions.modifyConnection}
-                    />
-                </div>
-            </div>
-        );
-
-    }
+    return (
+      <div>
+        <div style={{ width: '33%', float: 'left' }}>
+          <Nav bsStyle="tabs" activeKey={codeEditorOpened ? '1' : '2'}>
+            <NavItem
+              eventKey="1"
+              onClick={() => {
+                this.showCodeEditor();
+              }}
+            >
+              Editor
+            </NavItem>
+            <NavItem
+              eventKey="2"
+              onClick={() => {
+                this.showHierarchyTree();
+              }}
+            >
+              Hierarchy
+            </NavItem>
+          </Nav>
+          {codeEditorOpened ? (
+            <AceEditor
+              mode="alvis"
+              theme="xcode"
+              onChange={onEditorChange}
+              name="alvisCode_1"
+              value={alvisProject.code.text}
+              editorProps={{ $blockScrolling: true }}
+              setOptions={{
+                enableBasicAutocompletion: true,
+                enableLiveAutocompletion: true,
+              }}
+              width="100%"
+            />
+          ) : (
+            <HierarchyTree
+              pages={pages}
+              agents={agents}
+              onPageClick={(page) =>
+                this.setActivePageInternalId(page.internalId)
+              }
+              onMxGraphPageDeleted={projectBindedActions.deletePage}
+            />
+          )}
+        </div>
+        <div style={{ width: '67%', float: 'left' }}>
+          <AlvisGraphPanel
+            alvisProject={alvisProject}
+            projectId={0}
+            onChangeActivePage={(newActivePageInternalId: string) =>
+              this.setActivePageInternalId(newActivePageInternalId)
+            }
+            activePageInternalId={activePageInternalId}
+            onMxGraphPageAdded={projectBindedActions.addPage}
+            onMxGraphAgentAdded={projectBindedActions.addAgent}
+            onMxGraphAgentDeleted={projectBindedActions.deleteAgent}
+            onMxGraphAgentModified={projectBindedActions.modifyAgent}
+            onMxGraphPortAdded={projectBindedActions.addPort}
+            onMxGraphPortDeleted={projectBindedActions.deletePort}
+            onMxGraphPortModified={projectBindedActions.modifyPort}
+            onMxGraphConnectionAdded={projectBindedActions.addConnection}
+            onMxGraphConnectionDeleted={projectBindedActions.deleteConnection}
+            onMxGraphConnectionModified={projectBindedActions.modifyConnection}
+          />
+        </div>
+      </div>
+    );
+  }
 }
 
 function mapStateToProps(state: RootState): Editor.StateProps {
-    return {
-        appData: state.app,
-        xml: state.project.xml,
-        alvisProject: state.project.alvisProject,
-        agents: state.project.alvisProject.agents, //.filter((agent) => agent.pageInternalId === '0').toList(),
-        ports: state.project.alvisProject.ports,
-        connections: state.project.alvisProject.connections,
-        pages: state.project.alvisProject.pages,
-    };
+  return {
+    appData: state.app,
+    xml: state.project.xml,
+    alvisProject: state.project.alvisProject,
+    agents: state.project.alvisProject.agents, //.filter((agent) => agent.pageInternalId === '0').toList(),
+    ports: state.project.alvisProject.ports,
+    connections: state.project.alvisProject.connections,
+    pages: state.project.alvisProject.pages,
+  };
 }
 
 function mapDispatchToProps(dispatch: any): Editor.DispatchProps {
-    return {
-        projectBindedActions: bindActionCreators(projectActions as any, dispatch),
-    }
+  return {
+    projectBindedActions: bindActionCreators(projectActions as any, dispatch),
+  };
 }
 
-// It seems that you need withRouter when using connect. 
-export const Editor: React.ComponentClass
-    = withRouter(connect<Editor.StateProps, Editor.DispatchProps, Editor.OwnProps>(mapStateToProps, mapDispatchToProps)(EditorComponent) as any);
+// It seems that you need withRouter when using connect.
+export const Editor: React.ComponentClass = withRouter(connect<
+  Editor.StateProps,
+  Editor.DispatchProps,
+  Editor.OwnProps
+>(mapStateToProps, mapDispatchToProps)(EditorComponent) as any);
