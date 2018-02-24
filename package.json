@@ -4,7 +4,11 @@
   "description": "Alvis Web Editor",
   "main": "index.js",
   "scripts": {
+    "precommit": "lint-staged",
+
     "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier --write 'src/**/*.{ts,tsx}'",
+
     "start_dev": "nodemon ./dist/server.js",
     "client:build": "webpack --config webpack.client.prod.js",
     "client:builddev": "webpack --config webpack.client.dev.js",
@@ -13,6 +17,9 @@
     "build": "webpack --config webpack.client.config.js",
     "client:devserver": "node dev-server.js",
     "server:server": "node ./dist/server/bundle.js"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": ["prettier --write", "git add"]
   },
   "repository": {
     "type": "git",
@@ -102,10 +109,14 @@
     "connect-history-api-fallback": "^1.5.0",
     "html-webpack-plugin": "^2.30.1",
     "http-proxy-middleware": "^0.17.4",
+    "husky": "^0.14.3",
+    "lint-staged": "^7.0.0",
     "nodemon": "^1.11.0",
+    "prettier": "1.10.2",
     "source-map-loader": "^0.2.1",
     "tslint": "^5.9.1",
     "tslint-config-airbnb": "^5.7.0",
+    "tslint-config-prettier": "^1.8.0",
     "typescript": "^2.5.2",
     "uglifyjs-webpack-plugin": "^1.1.6",
     "webpack": "^2.3.3",
