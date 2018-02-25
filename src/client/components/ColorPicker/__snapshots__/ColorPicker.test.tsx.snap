@@ -1,0 +1,24 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ColorPicker renders correctly 1`] = `
+<button
+  className="btn btn-default"
+  disabled={false}
+  onClick={[Function]}
+  style={
+    Object {
+      "backgroundColor": "black",
+    }
+  }
+  type="button"
+>
+  <span
+    className="glyphicon glyphicon-pencil"
+    style={
+      Object {
+        "color": "white",
+      }
+    }
+  />
+</button>
+`;

@@ -27,7 +27,7 @@ import {
   ButtonToolbar,
 } from 'react-bootstrap';
 
-import { ColorPicker } from './ColorPicker';
+import { ColorPicker } from './ColorPicker/ColorPicker';
 import { AlvisGraph } from './AlvisGraph';
 import { NamePicker } from './NamePicker';
 
