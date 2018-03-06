@@ -4,9 +4,9 @@ export const jwtSalt = 'asdf';
 export const alvisProjectsFilesDir = './static/alvis-project/';
 
 export const dbConfig = {
-  developmentLinux: {
-    username: 'alviseditor',
-    password: 'alviseditor',
+  development: {
+    username: 'postgres',
+    password: 'password',
     database: 'alviswebeditor',
     options: {
       host: '/var/run/postgresql',
@@ -18,7 +18,7 @@ export const dbConfig = {
       },
     },
   },
-  development: {
+  developmentWindows: {
     username: 'postgres',
     password: 'password',
     database: 'alviswebeditor',

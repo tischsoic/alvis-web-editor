@@ -20,6 +20,7 @@ app.use(history({
 
 app.use(webpackDevMiddleware(compiler, {
   publicPath: config.output.publicPath,
+  watchOptions: config.watchOptions
 }))
 
 app.use(webpackHotMiddleware(compiler))
@@ -27,7 +28,7 @@ app.use(webpackHotMiddleware(compiler))
 // app.use(cors()) // TO DO: Do We need this
 
 app.use(proxyMiddleware('/server', {
-  target: 'http://localhost:3001',
+  target: 'http://backend:3001',
   pathRewrite: {
     '^/server': '/server'
   }

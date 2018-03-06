@@ -14,6 +14,7 @@ export function initializeSequelize(
 ) {
   console.log(password);
   sqlz = new Sequelize(database, username, password, options);
+  // sqlz = new Sequelize("postgres://postgres:password@db:5432/alviswebeditor", options);
 
   models = {
     File: defineFileInSequelize(sqlz),

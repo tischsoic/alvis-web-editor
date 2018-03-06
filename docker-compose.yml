@@ -1,0 +1,44 @@
+version: '3'
+services:
+  database:
+    build:
+      context: .
+      dockerfile: docker/database/Dockerfile
+    image: tischsoic/alvis-editor-database
+    environment:
+      POSTGRES_PASSWORD: password
+  
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    image: tischsoic/alvis-editor-backend
+    environment:
+      NODE_ENV: developement
+      DATABASE_HOST: database
+    ports:
+      - "3001:3001"
+    links:
+      - database
+    depends_on:
+      - database
+    volumes:
+      - .:/home/alvis-editor
+      - /home/alvis-editor/node_modules
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+    image: tischsoic/alvis-editor-frontend
+    tty: true
+    environment:
+      NODE_ENV: developement
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+      - database
+    volumes:
+      - .:/home/alvis-editor
+      - /home/alvis-editor/node_modules

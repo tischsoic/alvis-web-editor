@@ -11,6 +11,12 @@ module.exports = merge.strategy({
         'webpack-hot-middleware/client?path=/__webpack_hmr&timeout=20000'
     ],
 
+    watchOptions: {
+        aggregateTimeout: 300,
+        poll: 1000,
+        ignored: /node_modules/
+    },
+
     devtool: "source-map",
 
     plugins: [

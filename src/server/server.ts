@@ -82,6 +82,7 @@ export class Server {
 
   private async setupSequelize() {
     const { username, password, database, options } = dbConfig.development;
+    options.host = process.env.DATABASE_HOST;
 
     db.initializeSequelize(database, username, password, options);
 
