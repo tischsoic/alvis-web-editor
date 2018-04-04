@@ -27,6 +27,7 @@ import {
   IInternalRecord,
   IAlvisPageElement,
   ConnectionDirection,
+  IAlvisPageElementRecord,
 } from '../models/alvisProject';
 import { List } from 'immutable';
 
@@ -277,6 +278,14 @@ export class AlvisGraph extends React.Component<
     };
     this.parent = this.graph.getDefaultParent();
 
+    this.graph.addListener((mx as any).mxEvent.CELLS_MOVED, function() {
+      console.log(arguments);
+    });
+
+    this.graph.addListener((mx as any).mxEvent.CELLS_REMOVED, function() {
+      console.log(arguments);
+    });
+
     this.graph.addListener((mx as any).mxEvent.CELLS_ADDED, function(
       sender,
       evt,
@@ -478,7 +487,7 @@ export class AlvisGraph extends React.Component<
     }
   }
 
-  private setIfNotUndefined<T extends IAlvisPageElement>(
+  private setIfNotUndefined<T extends IAlvisPageElementRecord>(
     element: T,
     key: string,
     value: any,

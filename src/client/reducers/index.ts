@@ -1,6 +1,6 @@
 import { combineReducers } from 'redux';
 import app from './app';
-import project from './project';
+import project from './project/project';
 import { IProjectRecord } from '../models/project';
 import { IAppRecord } from '../models/app';
 

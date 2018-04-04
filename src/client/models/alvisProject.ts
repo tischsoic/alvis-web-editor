@@ -1,12 +1,22 @@
 import { Record, List } from 'immutable';
 import { TypedRecord, makeTypedFactory } from 'typed-immutable-record';
 
+export type IInternalId = string;
+
 export interface IInternalRecord {
-  readonly internalId: string;
+  readonly internalId: IInternalId;
 }
 
-export type IAlvisPageElement = IAgentRecord | IPortRecord | IConnectionRecord;
+export type IAlvisPageElement = IAgent | IPort | IConnection;
+export type IAlvisPageElementRecord =
+  | IAgentRecord
+  | IPortRecord
+  | IConnectionRecord;
 
+export type IAlvisElement = IPage | IAlvisPageElement;
+export type IAlvisElementRecord = IPageRecord | IAlvisPageElementRecord;
+
+// TO DO: what about creating another interface with properties which can be modified? -> e.g. agentInternalId should not be changed in port modification.
 export interface IPort extends IInternalRecord {
   readonly agentInternalId: string;
   readonly name: string;

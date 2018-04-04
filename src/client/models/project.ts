@@ -1,18 +1,136 @@
 import { Record, List } from 'immutable';
 import { TypedRecord, makeTypedFactory } from 'typed-immutable-record';
-import { IAlvisProjectRecord } from './alvisProject';
+import {
+  IAlvisProjectRecord,
+  IAlvisElement,
+  IInternalRecord,
+  IConnection,
+  IPort,
+  IAgent,
+  IPage,
+} from './alvisProject';
+
+export interface IOppositeModifications {
+  readonly modification: IProjectModification;
+  readonly antiModification: IProjectModification;
+}
+
+export interface IOppositeModificationsRecord
+  extends TypedRecord<IOppositeModificationsRecord>,
+    IOppositeModifications {}
+
+const defaultOppositeModificationsRecord: IOppositeModifications = {
+  modification: projectModificationRecordFactoryPartial({}),
+  antiModification: projectModificationRecordFactoryPartial({}),
+};
+
+export const oppositeModificationsFactory = makeTypedFactory<
+  IOppositeModifications,
+  IOppositeModificationsRecord
+>(defaultOppositeModificationsRecord);
 
 export interface IProject {
   readonly xml: string | null;
   readonly alvisProject: IAlvisProjectRecord | null;
   readonly lastInternalId: number;
+  readonly oppositeModifications: List<IOppositeModificationsRecord>;
+  readonly oppositeModificationCurrentIdx: number | null;
 }
+
 export interface IProjectRecord extends TypedRecord<IProjectRecord>, IProject {}
-const defaultPortRecord = {
+
+const defaultPorjectRecord = {
   xml: null,
   alvisProject: null,
   lastInternalId: -1,
+  oppositeModifications: List<IOppositeModificationsRecord>(),
+  oppositeModificationCurrentIdx: 0,
 };
+
 export const projectRecordFactory = makeTypedFactory<IProject, IProjectRecord>(
-  defaultPortRecord,
+  defaultPorjectRecord,
 );
+
+type PartialPartial<T> = { [P in keyof T]?: Partial<T[P]> };
+
+export interface IProjectElementModification<Element> {
+  readonly added: List<Element>;
+  readonly modified: List<Element>;
+  readonly deleted: List<string>;
+}
+
+export interface IProjectElementModificationRecord<Element>
+  extends TypedRecord<IProjectElementModificationRecord<Element>>,
+    IProjectElementModification<Element> {}
+
+export const projectElementModificationFactory = function<Element>() {
+  const defaultProjectElemetModificationRecord = {
+    added: List<Element>(),
+    modified: List<Element>(),
+    deleted: List<string>(),
+  };
+
+  return makeTypedFactory<
+    IProjectElementModification<Element>,
+    IProjectElementModificationRecord<Element>
+  >(defaultProjectElemetModificationRecord);
+};
+
+export interface IProjectModification {
+  pages: IProjectElementModification<IPage>;
+  agents: IProjectElementModification<IAgent>;
+  ports: IProjectElementModification<IPort>;
+  connections: IProjectElementModification<IConnection>;
+}
+
+export interface IProjectModificationRecord
+  extends TypedRecord<IProjectModificationRecord>,
+    Readonly<IProjectModification> {}
+
+const defaultProjectModificationRecord = {
+  pages: projectElementModificationFactory<IPage>()(),
+  agents: projectElementModificationFactory<IAgent>()(),
+  ports: projectElementModificationFactory<IPort>()(),
+  connections: projectElementModificationFactory<IConnection>()(),
+};
+
+export const projectModificationRecordFactory = makeTypedFactory<
+  Readonly<IProjectModification>,
+  IProjectModificationRecord
+>(defaultProjectModificationRecord);
+
+export function projectModificationRecordFactoryPartial(
+  data: PartialPartial<IProjectModification>,
+): IProjectModificationRecord {
+  const defaultRecord = projectModificationRecordFactory();
+
+  let modifiedRecord = defaultRecord;
+  // TO DO: after upgrade of Immutable.JS to v4 change code so that it won't use this helper function for of should suffice
+  const iterate = function*<T>(iterator: Iterator<T>) {
+    let next = iterator.next();
+    while (!next.done) {
+      yield next.value;
+      next = iterator.next();
+    }
+  };
+
+  for (const elementKey of iterate(defaultRecord.keys())) {
+    let elementSubrecord: IProjectElementModificationRecord<any> =
+      modifiedRecord[elementKey];
+    const dataSubrecord = data[elementKey];
+
+    if (dataSubrecord == null) {
+      continue;
+    }
+
+    for (const key of iterate(elementSubrecord.keys())) {
+      const value =
+        dataSubrecord[key] != null ? dataSubrecord[key] : elementSubrecord[key];
+      elementSubrecord = elementSubrecord.set(key, value);
+    }
+
+    modifiedRecord = modifiedRecord.set(elementKey, elementSubrecord);
+  }
+
+  return modifiedRecord;
+}

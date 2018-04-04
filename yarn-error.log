@@ -1,0 +1,178 @@
+Arguments: 
+  C:\Program Files\nodejs\node.exe C:\Users\Jakub\AppData\Roaming\npm\node_modules\yarn\bin\yarn.js remove es6-promise
+
+PATH: 
+  C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\bin;C:\Users\Jakub\bin;C:\ProgramData\Oracle\Java\javapath;C:\Program Files\Docker\Docker\Resources\bin;C:\Program Files (x86)\Intel\iCLS Client;C:\Program Files\Intel\iCLS Client;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\Program Files\Intel\Intel(R) Management Engine Components\DAL;C:\Program Files\Intel\Intel(R) Management Engine Components\IPT;C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\DAL;C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\IPT;C:\Program Files\Intel\WiFi\bin;C:\Program Files\Common Files\Intel\WirelessCommon;C:\Program Files (x86)\Windows Live\Shared;C:\Program Files\Git\cmd;C:\Program Files\PuTTY;C:\Program Files\nodejs;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\110\Tools\Binn;C:\Program Files (x86)\Microsoft SQL Server\120\Tools\Binn;C:\Program Files\Microsoft SQL Server\120\Tools\Binn;C:\Program Files\Microsoft SQL Server\120\DTS\Binn;C:\Program Files (x86)\Microsoft SQL Server\80\Tools\Binn;C:\Program Files\Microsoft VS Code\bin;C:\Program Files\PostgreSQL\10\bin;C:\Users\Jakub\AppData\Local\Microsoft\WindowsApps;C:\Users\Jakub\AppData\Roaming\npm
+
+Yarn version: 
+  1.5.1
+
+Node version: 
+  8.9.4
+
+Platform: 
+  win32 x64
+
+npm manifest: 
+  {
+    "name": "alvis-web-editor",
+    "version": "0.0.0",
+    "description": "Alvis Web Editor",
+    "main": "index.js",
+    "scripts": {
+      "precommit": "lint-staged",
+      "tslint-check": "tslint-config-prettier-check ./tslint.json",
+      "test": "jest",
+      "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+      "a": "tslint --fix src\\client\\reducers\\app.ts",
+      "start_dev": "nodemon ./dist/server.js",
+      "client:build": "webpack --config webpack.client.prod.js",
+      "client:builddev": "webpack --config webpack.client.dev.js",
+      "server:build": "webpack --config webpack.server.prod.js",
+      "server:builddev": "webpack --config webpack.server.dev.js",
+      "build": "webpack --config webpack.client.config.js",
+      "client:devserver": "node dev-server.js",
+      "server:server": "node ./dist/server/bundle.js"
+    },
+    "jest": {
+      "transform": {
+        "^.+\\.tsx?$": "ts-jest"
+      },
+      "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+      "moduleFileExtensions": [
+        "ts",
+        "tsx",
+        "js",
+        "jsx",
+        "json",
+        "node"
+      ]
+    },
+    "lint-staged": {
+      "*.{ts,tsx}": [
+        "prettier --write",
+        "git add"
+      ]
+    },
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/tischsoic/alvis-web-editor.git"
+    },
+    "keywords": [
+      "alvis"
+    ],
+    "author": "Jakub Brzegowski",
+    "license": "ISC",
+    "bugs": {
+      "url": "https://github.com/tischsoic/alvis-web-editor/issues"
+    },
+    "homepage": "https://github.com/tischsoic/alvis-web-editor#readme",
+    "dependencies": {
+      "@types/color": "^3.0.0",
+      "@types/errorhandler": "0.0.30",
+      "@types/immutable": "^3.8.7",
+      "@types/morgan": "^1.7.32",
+      "@types/multer": "^1.3.6",
+      "@types/react": "^16.0.31",
+      "@types/react-color": "^2.13.4",
+      "@types/react-dom": "^16.0.3",
+      "@types/react-redux": "^5.0.14",
+      "@types/react-router": "^4.0.20",
+      "@types/react-router-dom": "^4.2.3",
+      "@types/redux": "^3.6.31",
+      "@types/shortid": "0.0.29",
+      "@types/socket.io": "^1.4.29",
+      "@types/socket.io-client": "^1.4.29",
+      "@types/underscore": "^1.8.6",
+      "axios": "^0.17.1",
+      "body-parser": "^1.17.2",
+      "brace": "^0.10.0",
+      "color": "^3.0.0",
+      "cookie-parser": "^1.4.3",
+      "cors": "^2.8.3",
+      "errorhandler": "^1.5.0",
+      "es6-promise": "^4.1.1",
+      "express": "^4.15.2",
+      "immutable": "^3.8.1",
+      "isemail": "^3.0.0",
+      "jsonwebtoken": "^8.1.0",
+      "lodash": "^4.17.4",
+      "method-override": "^2.3.8",
+      "morgan": "^1.8.1",
+      "multer": "^1.3.0",
+      "mxgraph": "git+https://github.com/jgraph/mxgraph.git",
+      "passport": "^0.4.0",
+      "passport-jwt": "^3.0.1",
+      "pg": "^7.4.0",
+      "react": "^16.2.0",
+      "react-ace": "^5.5.0",
+      "react-bootstrap": "^0.31.5",
+      "react-color": "^2.13.8",
+      "react-dom": "^16.2.0",
+      "react-draggable": "^3.0.5",
+      "react-hot-loader": "^3.0.0-beta.7",
+      "react-redux": "^5.0.3",
+      "react-router": "^4.2.0",
+      "react-router-dom": "^4.2.2",
+      "redux": "^3.6.0",
+      "redux-actions": "^2.0.3",
+      "redux-thunk": "^2.2.0",
+      "rxjs": "^5.5.6",
+      "sequelize": "^4.23.1",
+      "shortid": "^2.2.8",
+      "socket.io": "^1.7.3",
+      "socket.io-client": "^1.7.3",
+      "typed-immutable-record": "0.0.6",
+      "underscore": "^1.8.3"
+    },
+    "devDependencies": {
+      "@types/axios": "^0.14.0",
+      "@types/body-parser": "^1.16.3",
+      "@types/cookie-parser": "^1.3.30",
+      "@types/es6-promise": "0.0.33",
+      "@types/jest": "^22.1.3",
+      "@types/jsonwebtoken": "^7.2.3",
+      "@types/method-override": "0.0.29",
+      "@types/passport": "^0.4.1",
+      "@types/passport-jwt": "^3.0.0",
+      "@types/react-test-renderer": "^16.0.1",
+      "@types/redux-actions": "^1.2.4",
+      "@types/redux-thunk": "^2.1.32",
+      "@types/sequelize": "^4.0.79",
+      "awesome-typescript-loader": "^3.1.2",
+      "clean-webpack-plugin": "^0.1.17",
+      "connect-history-api-fallback": "^1.5.0",
+      "html-webpack-plugin": "^2.30.1",
+      "http-proxy-middleware": "^0.17.4",
+      "husky": "^0.14.3",
+      "jest": "^22.4.2",
+      "lint-staged": "^7.0.0",
+      "nodemon": "^1.11.0",
+      "prettier": "1.10.2",
+      "react-test-renderer": "^16.2.0",
+      "source-map-loader": "^0.2.1",
+      "ts-jest": "^22.4.0",
+      "tslint": "^5.9.1",
+      "tslint-config-airbnb": "^5.7.0",
+      "tslint-config-prettier": "^1.8.0",
+      "typescript": "^2.5.2",
+      "uglifyjs-webpack-plugin": "^1.1.6",
+      "webpack": "^2.3.3",
+      "webpack-dev-middleware": "^2.0.4",
+      "webpack-dev-server": "^2.4.2",
+      "webpack-hot-middleware": "^2.18.0",
+      "webpack-merge": "^4.1.1"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
+
+Trace: 
+  Error: No lockfile in this directory. Run `yarn install` to generate one.
+      at new MessageError (C:\Users\Jakub\AppData\Roaming\npm\node_modules\yarn\lib\cli.js:186:110)
+      at C:\Users\Jakub\AppData\Roaming\npm\node_modules\yarn\lib\cli.js:89389:13
+      at <anonymous>

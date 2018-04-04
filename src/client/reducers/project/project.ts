@@ -1,5 +1,5 @@
 import { handleActions, Action } from 'redux-actions';
-import * as Actions from '../constants/projectActions';
+import * as Actions from '../../constants/projectActions';
 import {
   IAlvisProjectRecord,
   IAgentRecord,
@@ -7,16 +7,23 @@ import {
   IPortRecord,
   IConnectionRecord,
   IPageRecord,
-} from '../models/alvisProject';
-import { IProjectRecord, projectRecordFactory } from '../models/project';
+} from '../../models/alvisProject';
+import {
+  IProjectRecord,
+  projectRecordFactory,
+  IProjectModification,
+  IOppositeModificationsRecord,
+} from '../../models/project';
 
-import * as apManager from '../utils/alvisProject';
-import { getValidEmptyAlvisProject } from '../utils/alvisProject';
+import * as apManager from '../../utils/alvisProject';
+import { List } from 'immutable';
 
-const initialState: IProjectRecord = projectRecordFactory({
+export const initialState: IProjectRecord = projectRecordFactory({
   xml: null,
-  alvisProject: getValidEmptyAlvisProject(),
+  alvisProject: apManager.getValidEmptyAlvisProject(),
   lastInternalId: 0,
+  oppositeModifications: List<IOppositeModificationsRecord>(),
+  oppositeModificationCurrentIdx: 0,
 });
 
 function addElementToState<
@@ -46,12 +53,14 @@ function addElementToState<
 
 export default handleActions<
   IProjectRecord,
+  | void
   | string
   | [IAlvisProjectRecord, number]
   | IAgentRecord
   | IPortRecord
   | IConnectionRecord
   | IPageRecord
+  | IProjectModification
 >(
   {
     [Actions.PROJECT_SET_XML]: (

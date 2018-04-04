@@ -1,6 +1,6 @@
 import * as React from 'react';
 import axios, { AxiosResponse, AxiosError, AxiosPromise } from 'axios';
-import * as projectActions from '../actions/project';
+import * as projectActions from '../actions/project/project';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import {

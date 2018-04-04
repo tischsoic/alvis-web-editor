@@ -11,7 +11,7 @@ import {
 import { RootState } from '../reducers/index';
 import { List } from 'immutable';
 import { mx } from '../utils/mx';
-import * as projectActions from './project';
+import * as projectActions from './project/project';
 import parseAlvisProjectXML from '../utils/alvisXmlParser';
 import { parseAlvisProjectToXml } from '../utils/toXml';
 import { getValidEmptyAlvisProject } from '../utils/alvisProject';

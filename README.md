@@ -55,6 +55,10 @@ Database's config file for server application is ./src/server/config.ts
 
 ## Running the app
 
+PS C:\Users\Jakub\Documents\alvis-web-editor> docker exec -it alviswebeditor_frontend_1 sh
+PS C:\Users\Jakub\Documents\alvis-web-editor> docker-compose up
+
+
 There are few npm commands and you run them by executing:
 ```
 $> npm run <command\_name>
@@ -93,3 +97,8 @@ Default user, which is insertred into database during creation is:
 
 
 --------------------------------------
+
+
+TO DO:
+- create interfaces with fields which can be modified in Records related to Alvis project; for example for IAgent
+- store internalId as number not string

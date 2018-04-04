@@ -1,3 +1,6 @@
-node_modules
+node_modules/*
 dist
 static/alvis-project
+!node_modules/@types
+node_modules/@types/*
+!node_modules/@types/mxgraph
