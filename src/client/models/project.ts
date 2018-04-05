@@ -10,25 +10,6 @@ import {
   IPage,
 } from './alvisProject';
 
-export interface IOppositeModifications {
-  readonly modification: IProjectModification;
-  readonly antiModification: IProjectModification;
-}
-
-export interface IOppositeModificationsRecord
-  extends TypedRecord<IOppositeModificationsRecord>,
-    IOppositeModifications {}
-
-const defaultOppositeModificationsRecord: IOppositeModifications = {
-  modification: projectModificationRecordFactoryPartial({}),
-  antiModification: projectModificationRecordFactoryPartial({}),
-};
-
-export const oppositeModificationsFactory = makeTypedFactory<
-  IOppositeModifications,
-  IOppositeModificationsRecord
->(defaultOppositeModificationsRecord);
-
 export interface IProject {
   readonly xml: string | null;
   readonly alvisProject: IAlvisProjectRecord | null;
@@ -99,9 +80,9 @@ export const projectModificationRecordFactory = makeTypedFactory<
   IProjectModificationRecord
 >(defaultProjectModificationRecord);
 
-export function projectModificationRecordFactoryPartial(
+export const projectModificationRecordFactoryPartial = (
   data: PartialPartial<IProjectModification>,
-): IProjectModificationRecord {
+): IProjectModificationRecord => {
   const defaultRecord = projectModificationRecordFactory();
 
   let modifiedRecord = defaultRecord;
@@ -133,4 +114,23 @@ export function projectModificationRecordFactoryPartial(
   }
 
   return modifiedRecord;
+};
+
+export interface IOppositeModifications {
+  readonly modification: IProjectModification;
+  readonly antiModification: IProjectModification;
 }
+
+export interface IOppositeModificationsRecord
+  extends TypedRecord<IOppositeModificationsRecord>,
+    IOppositeModifications {}
+
+const defaultOppositeModificationsRecord: IOppositeModifications = {
+  modification: projectModificationRecordFactoryPartial({}),
+  antiModification: projectModificationRecordFactoryPartial({}),
+};
+
+export const oppositeModificationsFactory = makeTypedFactory<
+  IOppositeModifications,
+  IOppositeModificationsRecord
+>(defaultOppositeModificationsRecord);

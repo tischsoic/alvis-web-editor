@@ -102,3 +102,4 @@ Default user, which is insertred into database during creation is:
 TO DO:
 - create interfaces with fields which can be modified in Records related to Alvis project; for example for IAgent
 - store internalId as number not string
+- add yarn.lock in backend Docker file
