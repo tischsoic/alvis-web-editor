@@ -22,6 +22,7 @@ import {
   IProjectRecord,
   IOppositeModifications,
   oppositeModificationsFactory,
+  IProjectModificationRecord,
 } from '../../models/project';
 import {
   alvisProjectRecordFactory,
@@ -40,188 +41,66 @@ import {
   IPage,
   IInternalRecord,
   IAlvisElement,
+  IAlvisProject,
+  IAlvisProjectRecord,
 } from '../../models/alvisProject';
 import * as projectActions from '../../constants/projectActions';
 import { List } from 'immutable';
 import { createAction } from 'redux-actions';
-
-const getRecordByInternalId = <T extends IInternalRecord>(
-  list: List<T>,
-  internalId: string,
-): T => list.find((el) => el.internalId === internalId);
-
-function getBasicAgentRecordForTests(
-  name: string,
-  pageInternalId: string,
-  subPageInternalId: string = null,
-  internalId: string = null,
-  portsInternalIds: List<string> = List(),
-): IAgentRecord {
-  return agentRecordFactory({
-    internalId,
-    pageInternalId,
-    subPageInternalId,
-    name,
-    portsInternalIds,
-    index: null,
-    active: null,
-    running: null,
-    height: null,
-    width: null,
-    x: 0,
-    y: 0,
-    color: null,
-  });
-}
-
-function getBasicPortRecordForTests(
-  internalId: string,
-  agentInternalId: string,
-  name: string,
-): IPortRecord {
-  return portRecordFactory({
-    internalId,
-    agentInternalId,
-    name,
-    x: null,
-    y: null,
-    color: null,
-  });
-}
-
-function getBasicConnectionRecordForTest(
-  internalId: string,
-  sourcePortInternalId: string,
-  targetPortInternalId: string,
-): IConnectionRecord {
-  return connectionRecordFactory({
-    internalId,
-    sourcePortInternalId,
-    targetPortInternalId,
-    direction: null,
-    style: null,
-  });
-}
+import { state as exampleState1 } from '../../utils/test/exampleState1';
+import {
+  getBasicAgentRecordForTests,
+  getBasicPortRecordForTests,
+  getBasicConnectionRecordForTest,
+} from '../../utils/test/recordsGenerators';
+import { getRecordByInternalId } from '../../utils/alvisProject';
 
 describe('Project reducer', () => {
   const emptyState = initialState;
-  const notEmptyState = projectRecordFactory({
-    xml: null,
-    alvisProject: alvisProjectRecordFactory({
-      pages: List<IPageRecord>([
-        pageRecordFactory({
-          internalId: '0',
-          name: 'System',
-          agentsInternalIds: List<string>(['4', '5']),
-          subPagesInternalIds: List<string>(['1']),
-          supAgentInternalId: null,
-        }),
-        pageRecordFactory({
-          internalId: '1',
-          name: 'SubSystem',
-          agentsInternalIds: List<string>(['6', '7', '8']),
-          subPagesInternalIds: List<string>(['2', '3']),
-          supAgentInternalId: '5',
-        }),
-        pageRecordFactory({
-          internalId: '2',
-          name: 'SubSubSystem',
-          agentsInternalIds: List<string>(['9', '10']),
-          subPagesInternalIds: List<string>([]),
-          supAgentInternalId: '9',
-        }),
-        pageRecordFactory({
-          internalId: '3',
-          name: 'AnotherPage',
-          agentsInternalIds: List<string>(['11', '12', '13']),
-          subPagesInternalIds: List<string>([]),
-          supAgentInternalId: '8',
-        }),
-      ]),
-      agents: List<IAgentRecord>([
-        getBasicAgentRecordForTests('A1', '0', '1', '4', List(['14', '15'])),
-        getBasicAgentRecordForTests('A2', '0', null, '5', List(['16'])),
-        getBasicAgentRecordForTests('A3', '1', null, '6', List(['17'])),
-        getBasicAgentRecordForTests('A4', '1', '3', '7', List(['18', '19'])),
-        getBasicAgentRecordForTests('A5', '1', '2', '8', List(['20'])),
-        getBasicAgentRecordForTests('A6', '2', null, '9', List(['21'])),
-        getBasicAgentRecordForTests('A7', '2', null, '10', List(['22'])),
-        getBasicAgentRecordForTests('A8', '3', null, '11', List(['23', '24'])),
-        getBasicAgentRecordForTests('A9', '3', null, '12', List(['25'])),
-        getBasicAgentRecordForTests('A10', '3', null, '13', List(['26'])),
-      ]),
-      ports: List<IPortRecord>([
-        getBasicPortRecordForTests('14', '4', 'p_1'),
-        getBasicPortRecordForTests('15', '4', 'p_2'),
-        getBasicPortRecordForTests('16', '5', 'p_3'),
-        getBasicPortRecordForTests('17', '6', 'p_4'),
-        getBasicPortRecordForTests('18', '7', 'p_5'),
-        getBasicPortRecordForTests('19', '7', 'p_6'),
-        getBasicPortRecordForTests('20', '8', 'p_7'),
-        getBasicPortRecordForTests('21', '9', 'p_8'),
-        getBasicPortRecordForTests('22', '10', 'p_9'),
-        getBasicPortRecordForTests('23', '11', 'p_10'),
-        getBasicPortRecordForTests('24', '11', 'p_11'),
-        getBasicPortRecordForTests('25', '12', 'p_12'),
-        getBasicPortRecordForTests('26', '13', 'p_13'),
-      ]),
-      connections: List<IConnectionRecord>([
-        getBasicConnectionRecordForTest('27', '14', '16'),
-        getBasicConnectionRecordForTest('28', '15', '16'),
-        getBasicConnectionRecordForTest('29', '17', '18'),
-        getBasicConnectionRecordForTest('30', '17', '19'),
-        getBasicConnectionRecordForTest('31', '19', '20'),
-        getBasicConnectionRecordForTest('32', '21', '22'),
-        getBasicConnectionRecordForTest('33', '23', '24'),
-        getBasicConnectionRecordForTest('34', '25', '26'),
-      ]),
-      code: alvisCodeRecordFactory({
-        text: '',
-      }),
-    }),
-    lastInternalId: 34,
-    oppositeModifications: List(),
-    oppositeModificationCurrentIdx: null,
-  });
+  const notEmptyState = exampleState1;
 
   it('adds Alvis diagram elements', () => {
     const agentToAddRecord = getBasicAgentRecordForTests('A_x', '0');
     const addedAgentInternalId = '35';
-    const portToAddRecord = getBasicPortRecordForTests(
-      null,
-      addedAgentInternalId,
-      'p_x',
-    );
+    // const portToAddRecord = getBasicPortRecordForTests(
+    //   null,
+    //   addedAgentInternalId, // TODO: we dont know unadded agent ID! e.g. there is no guaranteed order of assigning ids to added elements
+    //   'p_x',
+    // );
     const addedPortInternalId = '36';
     const stateAfterAgentWithPortAdded = project(
       notEmptyState,
-      createAction(projectActions.MODIFY_PROJECT, (): IProjectModification => {
-        return projectModificationRecordFactoryPartial({
-          agents: {
-            added: List([agentToAddRecord]),
-          },
-          ports: {
-            added: List([portToAddRecord]),
-          },
-        });
-      })(),
+      createAction(
+        projectActions.MODIFY_PROJECT,
+        (): IProjectModificationRecord => {
+          return projectModificationRecordFactoryPartial({
+            agents: {
+              added: List([agentToAddRecord]),
+            },
+            ports: {
+              // added: List([portToAddRecord]),
+            },
+          });
+        },
+      )(),
     );
 
-    expect(stateAfterAgentWithPortAdded.alvisProject.pages).toEqual(
-      notEmptyState.alvisProject.pages,
-    );
+    // TODO: should we improve it? Pages were changed because they store ids of their agents
+    // expect(stateAfterAgentWithPortAdded.alvisProject.pages).toEqual(
+    //   notEmptyState.alvisProject.pages,
+    // );
 
     expect(
       stateAfterAgentWithPortAdded.alvisProject.agents.find(
         (el) => el.internalId === addedAgentInternalId,
       ),
-    ).toEqual(agentToAddRecord);
+    ).toEqual(agentToAddRecord.set('internalId', addedAgentInternalId));
 
-    expect(
-      stateAfterAgentWithPortAdded.alvisProject.ports.find(
-        (port) => port.internalId === addedPortInternalId,
-      ),
-    ).toEqual(portToAddRecord);
+    // expect(
+    //   stateAfterAgentWithPortAdded.alvisProject.ports.find(
+    //     (port) => port.internalId === addedPortInternalId,
+    //   ),
+    // ).toEqual(portToAddRecord);
 
     expect(stateAfterAgentWithPortAdded.alvisProject.connections).toEqual(
       notEmptyState.alvisProject.connections,
@@ -230,6 +109,12 @@ describe('Project reducer', () => {
     // TO DO: add checking if other elements stay the same - unchanged, not deleted and so on...
   });
 
+  // TO DO: what about modification of element which is added in the same modification?
+  // Now it is impossible because for modification we must know element id, which is not known before adding of element
+  // 07.09 We should be careful, example:
+  // 1. add agent A; 2. add port P; 3. delete A, P; 4. undo delete
+  // in 4th, during applying antimodification to 3 modification, we may insert agent with already set `portsInternalIds`
+  // and after adding port P (during undo), we may end up with portsInternalIds with two identical ids of port P
   it('modifies Alvis diagram elements changing only elements which should be changed;', () => {
     const modifiedPage = pageRecordFactory({
       internalId: '2',
@@ -245,30 +130,33 @@ describe('Project reducer', () => {
       '11',
       List(['23', '24']),
     );
-    const modifiedPort = getBasicPortRecordForTests('23', '11', 'p_10');
-    const modifiedConnection = getBasicConnectionRecordForTest(
+    const modifiedPort = getBasicPortRecordForTests('23', '11', 'p_10_mod');
+    const modifiedConnection = getBasicConnectionRecordForTest( // TODO: this does not modify connection, because data are the same
       '33',
       '23',
       '24',
     );
     const modifiedState = project(
       notEmptyState,
-      createAction(projectActions.MODIFY_PROJECT, (): IProjectModification => {
-        return projectModificationRecordFactoryPartial({
-          pages: {
-            modified: List([modifiedPage]),
-          },
-          agents: {
-            modified: List([modifiedAgent]),
-          },
-          ports: {
-            modified: List([modifiedPort]),
-          },
-          connections: {
-            modified: List([modifiedConnection]),
-          },
-        });
-      })(),
+      createAction(
+        projectActions.MODIFY_PROJECT,
+        (): IProjectModificationRecord => {
+          return projectModificationRecordFactoryPartial({
+            pages: {
+              modified: List([modifiedPage]),
+            },
+            agents: {
+              modified: List([modifiedAgent]),
+            },
+            ports: {
+              modified: List([modifiedPort]),
+            },
+            connections: {
+              modified: List([modifiedConnection]),
+            },
+          });
+        },
+      )(),
     );
 
     const modifiedRecsAndKeys: [IAlvisElement, string][] = [
@@ -296,9 +184,9 @@ describe('Project reducer', () => {
       keyInState: string,
       modifiedRecord: IAlvisElement,
     ): IProjectRecord =>
-      state.update('alvisProject', (alvisProject) =>
+      state.update('alvisProject', (alvisProject: IAlvisProjectRecord) =>
         alvisProject.update(keyInState, (elements: List<IInternalRecord>) =>
-          elements.filter((el) => el.internalId === modifiedRecord.internalId),
+          elements.filter((el) => el.internalId !== modifiedRecord.internalId),
         ),
       );
     for (const modifiedRecAndKey of modifiedRecsAndKeys) {
@@ -316,6 +204,8 @@ describe('Project reducer', () => {
         modifiedRecord,
       );
     }
+    modifiedStateWithoutModifiedRecs = modifiedStateWithoutModifiedRecs.set('oppositeModifications', List());
+    modifiedStateWithoutModifiedRecs = modifiedStateWithoutModifiedRecs.set('oppositeModificationCurrentIdx', -1);
 
     expect(modifiedStateWithoutModifiedRecs).toEqual(stateWithoutModifiedRecs);
   });
@@ -344,16 +234,19 @@ describe('Project reducer', () => {
 
     const modifiedState = project(
       notEmptyState,
-      createAction(projectActions.MODIFY_PROJECT, (): IProjectModification => {
-        return projectModificationRecordFactoryPartial({
-          pages: {
-            modified: List([modifiedPage]),
-          },
-          agents: {
-            modified: List([modifiedAgent]),
-          },
-        });
-      })(),
+      createAction(
+        projectActions.MODIFY_PROJECT,
+        (): IProjectModificationRecord => {
+          return projectModificationRecordFactoryPartial({
+            pages: {
+              modified: List([modifiedPage]),
+            },
+            agents: {
+              modified: List([modifiedAgent]),
+            },
+          });
+        },
+      )(),
     );
 
     const oldPage = getRecordByInternalId(
@@ -388,17 +281,18 @@ describe('Project reducer', () => {
     const agentToAddRecord = getBasicAgentRecordForTests('A_x', '0');
     const stateAfterAgentAdded = project(
       initialState,
-      createAction(projectActions.MODIFY_PROJECT, (): IProjectModification => {
-        return projectModificationRecordFactoryPartial({
-          agents: {
-            added: List([agentToAddRecord]),
-          },
-        });
-      })(),
+      createAction(
+        projectActions.MODIFY_PROJECT,
+        (): IProjectModificationRecord => {
+          return projectModificationRecordFactoryPartial({
+            agents: {
+              added: List([agentToAddRecord]),
+            },
+          });
+        },
+      )(),
     );
-    const properAddedAgentInternalId = String(
-      Number(initialLastInternalId) + 1,
-    );
+    const properAddedAgentInternalId = initialLastInternalId + 1;
 
     expect(stateAfterAgentAdded.lastInternalId).toEqual(
       properAddedAgentInternalId,
@@ -406,22 +300,23 @@ describe('Project reducer', () => {
 
     const portToAddRecord = getBasicPortRecordForTests(
       null,
-      properAddedAgentInternalId,
+      String(properAddedAgentInternalId),
       'p_x',
     );
     const stateAfterPortAdded = project(
       stateAfterAgentAdded,
-      createAction(projectActions.MODIFY_PROJECT, (): IProjectModification => {
-        return projectModificationRecordFactoryPartial({
-          ports: {
-            added: List([portToAddRecord]),
-          },
-        });
-      })(),
+      createAction(
+        projectActions.MODIFY_PROJECT,
+        (): IProjectModificationRecord => {
+          return projectModificationRecordFactoryPartial({
+            ports: {
+              added: List([portToAddRecord]),
+            },
+          });
+        },
+      )(),
     );
-    const properAddedPortInternalId = String(
-      Number(stateAfterAgentAdded.lastInternalId) + 1,
-    );
+    const properAddedPortInternalId = stateAfterAgentAdded.lastInternalId + 1;
 
     expect(stateAfterPortAdded.lastInternalId).toEqual(
       properAddedPortInternalId,
@@ -432,13 +327,16 @@ describe('Project reducer', () => {
     const removedPortInternalId = '17';
     const stateAfterPortRemoved = project(
       notEmptyState,
-      createAction(projectActions.MODIFY_PROJECT, (): IProjectModification => {
-        return projectModificationRecordFactoryPartial({
-          ports: {
-            deleted: List([removedPortInternalId]),
-          },
-        });
-      })(),
+      createAction(
+        projectActions.MODIFY_PROJECT,
+        (): IProjectModificationRecord => {
+          return projectModificationRecordFactoryPartial({
+            ports: {
+              deleted: List([removedPortInternalId]),
+            },
+          });
+        },
+      )(),
     );
 
     expect(
@@ -456,13 +354,16 @@ describe('Project reducer', () => {
     const removedAgentInternalId = '7';
     const stateAfterAgentRemoved = project(
       notEmptyState,
-      createAction(projectActions.MODIFY_PROJECT, (): IProjectModification => {
-        return projectModificationRecordFactoryPartial({
-          agents: {
-            deleted: List([removedAgentInternalId]),
-          },
-        });
-      })(),
+      createAction(
+        projectActions.MODIFY_PROJECT,
+        (): IProjectModificationRecord => {
+          return projectModificationRecordFactoryPartial({
+            agents: {
+              deleted: List([removedAgentInternalId]),
+            },
+          });
+        },
+      )(),
     );
 
     expect(
@@ -486,13 +387,16 @@ describe('Project reducer', () => {
     const removedAgentInternalId = '9';
     const stateAfterAgentRemoved = project(
       notEmptyState,
-      createAction(projectActions.MODIFY_PROJECT, (): IProjectModification => {
-        return projectModificationRecordFactoryPartial({
-          agents: {
-            deleted: List([removedAgentInternalId]),
-          },
-        });
-      })(),
+      createAction(
+        projectActions.MODIFY_PROJECT,
+        (): IProjectModificationRecord => {
+          return projectModificationRecordFactoryPartial({
+            agents: {
+              deleted: List([removedAgentInternalId]),
+            },
+          });
+        },
+      )(),
     );
 
     expect(
@@ -510,13 +414,16 @@ describe('Project reducer', () => {
     const pageToRemoveInternalId = '2';
     const stateAfterPage1Removed = project(
       notEmptyState,
-      createAction(projectActions.MODIFY_PROJECT, (): IProjectModification => {
-        return projectModificationRecordFactoryPartial({
-          pages: {
-            deleted: List([pageToRemoveInternalId]),
-          },
-        });
-      })(),
+      createAction(
+        projectActions.MODIFY_PROJECT,
+        (): IProjectModificationRecord => {
+          return projectModificationRecordFactoryPartial({
+            pages: {
+              deleted: List([pageToRemoveInternalId]),
+            },
+          });
+        },
+      )(),
     );
 
     expect(
@@ -545,13 +452,16 @@ describe('Project reducer', () => {
   it('removes subpages of the page if page is removed', () => {
     const stateAfterPage1Removed = project(
       notEmptyState,
-      createAction(projectActions.MODIFY_PROJECT, (): IProjectModification => {
-        return projectModificationRecordFactoryPartial({
-          pages: {
-            deleted: List(['1']),
-          },
-        });
-      })(),
+      createAction(
+        projectActions.MODIFY_PROJECT,
+        (): IProjectModificationRecord => {
+          return projectModificationRecordFactoryPartial({
+            pages: {
+              deleted: List(['1']),
+            },
+          });
+        },
+      )(),
     );
 
     expect(
@@ -562,7 +472,7 @@ describe('Project reducer', () => {
   function getStatesModifications(
     state: IProjectRecord,
   ): [IProjectRecord, IOppositeModifications][] {
-    const agentToAddRecord = getBasicAgentRecordForTests('A_x', '0');
+    const agentToAddRecord = getBasicAgentRecordForTests('A_x', '0', null, '35'); // TO DO: would't it be better to remove 'Record' from variable name -> information about this is already stored in type of variable
     const addAgentModifications = {
       modification: projectModificationRecordFactoryPartial({
         agents: {
@@ -577,14 +487,17 @@ describe('Project reducer', () => {
     };
     const stateAfterAgentAdded = project(
       notEmptyState,
-      createAction(projectActions.MODIFY_PROJECT, (): IProjectModification => {
-        return addAgentModifications.modification;
-      })(),
+      createAction(
+        projectActions.MODIFY_PROJECT,
+        (): IProjectModificationRecord => {
+          return addAgentModifications.modification;
+        },
+      )(),
     );
     const addedAgentInternalId = addAgentModifications.antiModification.agents.deleted.first();
 
     const portToAddRecord = getBasicPortRecordForTests(
-      null,
+      '36',
       addedAgentInternalId,
       'p_x',
     );
@@ -600,11 +513,15 @@ describe('Project reducer', () => {
         },
       }),
     };
+    const addedAgentAfterPortAdded = agentToAddRecord.set('portsInternalIds', List(['36']));
     const stateAfterPortAdded = project(
       stateAfterAgentAdded,
-      createAction(projectActions.MODIFY_PROJECT, (): IProjectModification => {
-        return addPortModifications.modification;
-      })(),
+      createAction(
+        projectActions.MODIFY_PROJECT,
+        (): IProjectModificationRecord => {
+          return addPortModifications.modification;
+        },
+      )(),
     );
     const addedPortInternalId = addPortModifications.antiModification.ports.deleted.first();
 
@@ -613,13 +530,14 @@ describe('Project reducer', () => {
         agents: {
           deleted: List([addedAgentInternalId]),
         },
+        // Do not comment out 'ports', we assume it is full modification - we are not testing creation of full modification
         ports: {
           deleted: List([addedPortInternalId]),
         },
       }),
       antiModification: projectModificationRecordFactoryPartial({
         agents: {
-          added: List([agentToAddRecord]),
+          added: List([addedAgentAfterPortAdded]),
         },
         ports: {
           added: List([portToAddRecord]),
@@ -628,9 +546,12 @@ describe('Project reducer', () => {
     };
     const stateAfterAgentDeleted = project(
       stateAfterPortAdded,
-      createAction(projectActions.MODIFY_PROJECT, (): IProjectModification => {
-        return deleteAgentModifications.modification;
-      })(),
+      createAction(
+        projectActions.MODIFY_PROJECT,
+        (): IProjectModificationRecord => {
+          return deleteAgentModifications.modification;
+        },
+      )(),
     );
 
     return [
@@ -674,9 +595,9 @@ describe('Project reducer', () => {
       stateModifications1[stateModifications1.length - 1];
     let lastState = lastStateModification[0];
 
-    for (let i = stateModifications1.length - 2; i >= 0; i -= 1) {
-      const stateModification = stateModifications1[i];
-      const state = stateModification[0];
+    for (let i = stateModifications1.length - 1; i >= 0; i -= 1) {
+      // const stateModification = stateModifications1[i];
+      // const state = stateModification[0];
 
       lastState = project(
         lastState,
@@ -713,18 +634,23 @@ describe('Project reducer', () => {
       notEmptyState,
     ];
 
-    const lastState = statesLastToInitial.shift();
+    const statesPostLastToInitial = statesLastToInitial.slice();
+    const lastState = statesPostLastToInitial.shift();
     let state = lastState;
 
-    for (const previousState of statesLastToInitial) {
+    for (const previousState of statesPostLastToInitial) {
       state = project(state, createAction(projectActions.PROJECT_UNDO)());
 
       expect(state.alvisProject).toEqual(previousState.alvisProject);
     }
 
+    expect(state.oppositeModificationCurrentIdx).toEqual(-1);
+
     const statesPostInitialToLast: IProjectRecord[] = [
-      ...statesLastToInitial.reverse().splice(0, 1),
-      lastState,
+      ...getStatesModifications(notEmptyState)
+        .map((el) => el[0])
+      // ...statesLastToInitial,//.reverse(),//.splice(0, 1),
+      // lastState,
     ];
     for (const nextState of statesPostInitialToLast) {
       state = project(state, createAction(projectActions.PROJECT_REDO)());
@@ -752,10 +678,8 @@ describe('Project reducer', () => {
     );
     const oppositeModificationsAfterUndo = stateAfterUndo.oppositeModifications;
 
-    const agentToAddRecord = getBasicAgentRecordForTests('A_x2', '0');
-    const addedAgentInternalId = String(
-      Number(stateAfterUndo.lastInternalId) + 1,
-    );
+    const addedAgentInternalId = String(stateAfterUndo.lastInternalId + 1);
+    const agentToAddRecord = getBasicAgentRecordForTests('A_x2', '0', null, addedAgentInternalId); // TODO: is it OK to set ID here in context of future?
     const addAgentModifications = oppositeModificationsFactory({
       modification: projectModificationRecordFactoryPartial({
         agents: {
@@ -770,9 +694,12 @@ describe('Project reducer', () => {
     });
     const stateAfterAgentAdded = project(
       stateAfterUndo,
-      createAction(projectActions.MODIFY_PROJECT, (): IProjectModification => {
-        return addAgentModifications.modification;
-      })(),
+      createAction(
+        projectActions.MODIFY_PROJECT,
+        (): IProjectModificationRecord => {
+          return addAgentModifications.modification;
+        },
+      )(),
     );
 
     expect(stateAfterAgentAdded.oppositeModifications).toEqual(

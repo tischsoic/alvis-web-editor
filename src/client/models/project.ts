@@ -8,6 +8,10 @@ import {
   IPort,
   IAgent,
   IPage,
+  IPageRecord,
+  IAgentRecord,
+  IPortRecord,
+  IConnectionRecord,
 } from './alvisProject';
 
 export interface IProject {
@@ -25,7 +29,7 @@ const defaultPorjectRecord = {
   alvisProject: null,
   lastInternalId: -1,
   oppositeModifications: List<IOppositeModificationsRecord>(),
-  oppositeModificationCurrentIdx: 0,
+  oppositeModificationCurrentIdx: -1, // TODO: do we want -1, maybe 0/null would be better?
 };
 
 export const projectRecordFactory = makeTypedFactory<IProject, IProjectRecord>(
@@ -58,10 +62,10 @@ export const projectElementModificationFactory = function<Element>() {
 };
 
 export interface IProjectModification {
-  pages: IProjectElementModification<IPage>;
-  agents: IProjectElementModification<IAgent>;
-  ports: IProjectElementModification<IPort>;
-  connections: IProjectElementModification<IConnection>;
+  pages: IProjectElementModificationRecord<IPageRecord>;
+  agents: IProjectElementModificationRecord<IAgentRecord>;
+  ports: IProjectElementModificationRecord<IPortRecord>;
+  connections: IProjectElementModificationRecord<IConnectionRecord>;
 }
 
 export interface IProjectModificationRecord
@@ -69,10 +73,10 @@ export interface IProjectModificationRecord
     Readonly<IProjectModification> {}
 
 const defaultProjectModificationRecord = {
-  pages: projectElementModificationFactory<IPage>()(),
-  agents: projectElementModificationFactory<IAgent>()(),
-  ports: projectElementModificationFactory<IPort>()(),
-  connections: projectElementModificationFactory<IConnection>()(),
+  pages: projectElementModificationFactory<IPageRecord>()(),
+  agents: projectElementModificationFactory<IAgentRecord>()(),
+  ports: projectElementModificationFactory<IPortRecord>()(),
+  connections: projectElementModificationFactory<IConnectionRecord>()(),
 };
 
 export const projectModificationRecordFactory = makeTypedFactory<
@@ -86,7 +90,7 @@ export const projectModificationRecordFactoryPartial = (
   const defaultRecord = projectModificationRecordFactory();
 
   let modifiedRecord = defaultRecord;
-  // TO DO: after upgrade of Immutable.JS to v4 change code so that it won't use this helper function for of should suffice
+  // TODO: after upgrade of Immutable.JS to v4 change code so that it won't use this helper function for of should suffice
   const iterate = function*<T>(iterator: Iterator<T>) {
     let next = iterator.next();
     while (!next.done) {
@@ -117,8 +121,8 @@ export const projectModificationRecordFactoryPartial = (
 };
 
 export interface IOppositeModifications {
-  readonly modification: IProjectModification;
-  readonly antiModification: IProjectModification;
+  readonly modification: IProjectModificationRecord;
+  readonly antiModification: IProjectModificationRecord;
 }
 
 export interface IOppositeModificationsRecord

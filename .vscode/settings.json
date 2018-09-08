@@ -1,4 +1,11 @@
 {
     "vsicons.presets.angular": false,
-    "typescript.tsdk": "node_modules\\typescript\\lib"
+    "typescript.tsdk": "node_modules\\typescript\\lib",
+    "cSpell.words": [
+        "all",
+        "alvis",
+        "get",
+        "page",
+        "subpages"
+    ]
 }

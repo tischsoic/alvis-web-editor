@@ -35,20 +35,21 @@ const setAlvisProject = createAction<
 );
 
 function createElementAction<T extends IAlvisElement>(
-  modification: keyof IProjectElementModification<T> & ('added' | 'modified'),
-  elementsType: keyof IProjectModification,
+  modification: keyof IProjectElementModification<T> & ('added' | 'modified'), // TO DO: check other places where it can be used (?)
+  elementsType: keyof IProjectModification, // TO DO: change it to IAlvisElementTag?
 ) {
   return createAction<IProjectModification, T>(
     Actions.MODIFY_PROJECT,
     (element: T) =>
       projectModificationRecordFactoryPartial({
         [elementsType]: {
-          [modification]: List(element),
+          [modification]: List([element]),
         },
       }),
   );
 }
 
+// TO DO: Enable delete by Record not only by id.
 function createElementDeleteAction(elementsType: keyof IProjectModification) {
   return createAction<IProjectModification, string>(
     Actions.MODIFY_PROJECT,

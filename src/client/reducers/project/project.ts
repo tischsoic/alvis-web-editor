@@ -13,10 +13,20 @@ import {
   projectRecordFactory,
   IProjectModification,
   IOppositeModificationsRecord,
+  IProjectModificationRecord,
+  oppositeModificationsFactory,
 } from '../../models/project';
 
-import * as apManager from '../../utils/alvisProject';
+import alvisProject, * as apManager from '../../utils/alvisProject';
 import { List } from 'immutable';
+
+/*
+* semiModification - modification incomplete e.g. if modification deletes agent with port
+*   modification with deletion of only agent would be semi,
+*   wehere modifications with deletion of agent and port would be fullModification
+* fullModification - (see semiModification definition above)
+*/
+// TO DO: remark: fullModification is modifications with all deletions - additions and modifications stay the same -> maybe change name to something else?
 
 export const initialState: IProjectRecord = projectRecordFactory({
   xml: null,
@@ -25,6 +35,210 @@ export const initialState: IProjectRecord = projectRecordFactory({
   oppositeModifications: List<IOppositeModificationsRecord>(),
   oppositeModificationCurrentIdx: 0,
 });
+
+export default handleActions<
+  IProjectRecord,
+  // void | string | [IAlvisProjectRecord, number] | IProjectModification
+  string | [IAlvisProjectRecord, number] | IProjectModificationRecord | void
+>(
+  {
+    [Actions.MODIFY_PROJECT]: (
+      state: IProjectRecord,
+      action: Action<IProjectModificationRecord>,
+    ) => {
+      const [modification, project] = apManager.assignInternalIdsToNewElements(action.payload, state);
+      const alvisProject = project.alvisProject;
+      const fullModification = apManager.generateFullModification(
+        modification,
+        alvisProject,
+      );
+      const antiModification = apManager.generateAntiModification(
+        modification,
+        alvisProject,
+      );
+
+      const modifiedAlvisProject = apManager.applyModification(
+        project.alvisProject,
+      )(fullModification);
+      const afterDo = apManager.addOppositeModifications(project)(
+        oppositeModificationsFactory({
+          antiModification,
+          modification: fullModification,
+        }),
+      );
+
+      return afterDo.set('alvisProject', modifiedAlvisProject);
+    },
+    [Actions.PROJECT_UNDO]: (state: IProjectRecord) => {
+      const [project, oppositeModifications] = apManager.shiftAntiModifications(
+        state,
+        true,
+      );
+
+      if (!oppositeModifications) {
+        return state;
+      }
+
+      const modifiedAlvisProject = apManager.applyModification(
+        state.alvisProject,
+      )(oppositeModifications.antiModification);
+
+      return project.set('alvisProject', modifiedAlvisProject);
+    },
+    [Actions.PROJECT_REDO]: (state: IProjectRecord) => {
+      const [project, oppositeModifications] = apManager.shiftAntiModifications(
+        state,
+        false,
+      );
+
+      if (!oppositeModifications) {
+        return state;
+      }
+
+      const modifiedAlvisProject = apManager.applyModification(
+        state.alvisProject,
+      )(oppositeModifications.modification);
+
+      return project.set('alvisProject', modifiedAlvisProject);
+    },
+
+    [Actions.PROJECT_SET_XML]: (
+      state: IProjectRecord,
+      action: Action<string>,
+    ) => {
+      return state.set('xml', action.payload);
+    },
+    [Actions.PROJECT_SET_ALVIS_PROJECT]: (
+      state: IProjectRecord,
+      action: Action<[IAlvisProjectRecord, number]>,
+    ) => {
+      const afterProjectSet = state.set('alvisProject', action.payload[0]);
+      const afterlastInternalIdSet = afterProjectSet.set(
+        'lastInternalId',
+        action.payload[1],
+      );
+
+      return afterlastInternalIdSet;
+    },
+    // [Actions.PROJECT_ADD_PAGE]: (
+    //   state: IProjectRecord,
+    //   action: Action<IPageRecord>,
+    // ) => {
+    //   return addElementToState(
+    //     state,
+    //     action.payload,
+    //     apManager.addPageToAlvisProject,
+    //   );
+    // },
+    // [Actions.PROJECT_DELETE_PAGE]: (
+    //   state: IProjectRecord,
+    //   action: Action<string>,
+    // ) => {
+    //   return state.set(
+    //     'alvisProject',
+    //     apManager.deletePageInAlvisProject(state.alvisProject)(action.payload),
+    //   );
+    // },
+    // [Actions.PROJECT_MODIFY_PAGE]: (
+    //   state: IProjectRecord,
+    //   action: Action<IPageRecord>,
+    // ) => {
+    //   return state.set(
+    //     'alvisProject',
+    //     apManager.modifyPageInAlvisProject(state.alvisProject)(action.payload),
+    //   );
+    // },
+    // [Actions.PROJECT_ADD_AGENT]: (
+    //   state: IProjectRecord,
+    //   action: Action<IAgentRecord>,
+    // ) => {
+    //   return addElementToState(
+    //     state,
+    //     action.payload,
+    //     apManager.addAgentToAlvisProject,
+    //   );
+    // },
+    // [Actions.PROJECT_DELETE_AGENT]: (
+    //   state: IProjectRecord,
+    //   action: Action<string>,
+    // ) => {
+    //   return state.set(
+    //     'alvisProject',
+    //     apManager.deleteAgentInAlvisProject(state.alvisProject)(action.payload),
+    //   );
+    // },
+    // [Actions.PROJECT_MODIFY_AGENT]: (
+    //   state: IProjectRecord,
+    //   action: Action<IAgentRecord>,
+    // ) => {
+    //   return state.set(
+    //     'alvisProject',
+    //     apManager.modifyAgentInAlvisProject(state.alvisProject)(action.payload),
+    //   );
+    // },
+    // [Actions.PROJECT_ADD_PORT]: (
+    //   state: IProjectRecord,
+    //   action: Action<IPortRecord>,
+    // ) => {
+    //   return addElementToState(
+    //     state,
+    //     action.payload,
+    //     apManager.addPortToAlvisProject,
+    //   );
+    // },
+    // [Actions.PROJECT_DELETE_PORT]: (
+    //   state: IProjectRecord,
+    //   action: Action<string>,
+    // ) => {
+    //   return state.set(
+    //     'alvisProject',
+    //     apManager.deletePortInAlvisProject(state.alvisProject)(action.payload),
+    //   );
+    // },
+    // [Actions.PROJECT_MODIFY_PORT]: (
+    //   state: IProjectRecord,
+    //   action: Action<IPortRecord>,
+    // ) => {
+    //   return state.set(
+    //     'alvisProject',
+    //     apManager.modifyPortInAlvisProject(state.alvisProject)(action.payload),
+    //   );
+    // },
+    // [Actions.PROJECT_ADD_CONNECTION]: (
+    //   state: IProjectRecord,
+    //   action: Action<IConnectionRecord>,
+    // ) => {
+    //   return addElementToState(
+    //     state,
+    //     action.payload,
+    //     apManager.addConnectionToAlvisProject,
+    //   );
+    // },
+    // [Actions.PROJECT_DELETE_CONNECTION]: (
+    //   state: IProjectRecord,
+    //   action: Action<string>,
+    // ) => {
+    //   return state.set(
+    //     'alvisProject',
+    //     apManager.deleteConnectionInAlvisProject(state.alvisProject)(
+    //       action.payload,
+    //     ),
+    //   );
+    // },
+    // [Actions.PROJECT_MODIFY_CONNECTION]: (
+    //   state: IProjectRecord,
+    //   action: Action<IConnectionRecord>,
+    // ) => {
+    //   return state.set(
+    //     'alvisProject',
+    //     apManager.modifyConnectionInAlvisProject(state.alvisProject)(
+    //       action.payload,
+    //     ),
+    //   );
+    // },
+  },
+  initialState,
+);
 
 function addElementToState<
   T extends IAgentRecord | IPortRecord | IConnectionRecord | IPageRecord
@@ -35,170 +249,21 @@ function addElementToState<
     p: IAlvisProjectRecord,
   ) => (el: T) => IAlvisProjectRecord,
 ) {
-  const newElementInternalId = state.lastInternalId + 1,
-    elementToAdd: T = <T>elementRecord.set('internalId', newElementInternalId), // TO DO: Check why without casting it does not work?
-    stateAfterLastInternalIdUpdated = state.set(
-      'lastInternalId',
-      newElementInternalId,
+  const newElementInternalId = state.lastInternalId + 1;
+  const elementToAdd: T = <T>elementRecord.set(
+    'internalId',
+    newElementInternalId,
+  ); // TO DO: Check why without casting it does not work?
+  const stateAfterLastInternalIdUpdated = state.set(
+    'lastInternalId',
+    newElementInternalId,
+  );
+  const stateAfterElementAdded = stateAfterLastInternalIdUpdated.set(
+    'alvisProject',
+    fnToModifyAlvisProjectRecord(stateAfterLastInternalIdUpdated.alvisProject)(
+      elementToAdd,
     ),
-    stateAfterElementAdded = stateAfterLastInternalIdUpdated.set(
-      'alvisProject',
-      fnToModifyAlvisProjectRecord(
-        stateAfterLastInternalIdUpdated.alvisProject,
-      )(elementToAdd),
-    );
+  );
 
   return stateAfterElementAdded;
 }
-
-export default handleActions<
-  IProjectRecord,
-  | void
-  | string
-  | [IAlvisProjectRecord, number]
-  | IAgentRecord
-  | IPortRecord
-  | IConnectionRecord
-  | IPageRecord
-  | IProjectModification
->(
-  {
-    [Actions.PROJECT_SET_XML]: (
-      state: IProjectRecord,
-      action: Action<string>,
-    ) => {
-      console.log('reducers project:');
-      console.log(action.payload);
-      return state.set('xml', action.payload);
-    },
-    [Actions.PROJECT_SET_ALVIS_PROJECT]: (
-      state: IProjectRecord,
-      action: Action<[IAlvisProjectRecord, number]>,
-    ) => {
-      const afterProjectSet = state.set('alvisProject', action.payload[0]),
-        afterlastInternalIdSet = afterProjectSet.set(
-          'lastInternalId',
-          action.payload[1],
-        );
-
-      return afterlastInternalIdSet;
-    },
-    [Actions.PROJECT_ADD_PAGE]: (
-      state: IProjectRecord,
-      action: Action<IPageRecord>,
-    ) => {
-      return addElementToState(
-        state,
-        action.payload,
-        apManager.addPageToAlvisProject,
-      );
-    },
-    [Actions.PROJECT_DELETE_PAGE]: (
-      state: IProjectRecord,
-      action: Action<string>,
-    ) => {
-      return state.set(
-        'alvisProject',
-        apManager.deletePageInAlvisProject(state.alvisProject)(action.payload),
-      );
-    },
-    [Actions.PROJECT_MODIFY_PAGE]: (
-      state: IProjectRecord,
-      action: Action<IPageRecord>,
-    ) => {
-      return state.set(
-        'alvisProject',
-        apManager.modifyPageInAlvisProject(state.alvisProject)(action.payload),
-      );
-    },
-    [Actions.PROJECT_ADD_AGENT]: (
-      state: IProjectRecord,
-      action: Action<IAgentRecord>,
-    ) => {
-      return addElementToState(
-        state,
-        action.payload,
-        apManager.addAgentToAlvisProject,
-      );
-    },
-    [Actions.PROJECT_DELETE_AGENT]: (
-      state: IProjectRecord,
-      action: Action<string>,
-    ) => {
-      return state.set(
-        'alvisProject',
-        apManager.deleteAgentInAlvisProject(state.alvisProject)(action.payload),
-      );
-    },
-    [Actions.PROJECT_MODIFY_AGENT]: (
-      state: IProjectRecord,
-      action: Action<IAgentRecord>,
-    ) => {
-      return state.set(
-        'alvisProject',
-        apManager.modifyAgentInAlvisProject(state.alvisProject)(action.payload),
-      );
-    },
-    [Actions.PROJECT_ADD_PORT]: (
-      state: IProjectRecord,
-      action: Action<IPortRecord>,
-    ) => {
-      return addElementToState(
-        state,
-        action.payload,
-        apManager.addPortToAlvisProject,
-      );
-    },
-    [Actions.PROJECT_DELETE_PORT]: (
-      state: IProjectRecord,
-      action: Action<string>,
-    ) => {
-      return state.set(
-        'alvisProject',
-        apManager.deletePortInAlvisProject(state.alvisProject)(action.payload),
-      );
-    },
-    [Actions.PROJECT_MODIFY_PORT]: (
-      state: IProjectRecord,
-      action: Action<IPortRecord>,
-    ) => {
-      return state.set(
-        'alvisProject',
-        apManager.modifyPortInAlvisProject(state.alvisProject)(action.payload),
-      );
-    },
-    [Actions.PROJECT_ADD_CONNECTION]: (
-      state: IProjectRecord,
-      action: Action<IConnectionRecord>,
-    ) => {
-      return addElementToState(
-        state,
-        action.payload,
-        apManager.addConnectionToAlvisProject,
-      );
-    },
-    [Actions.PROJECT_DELETE_CONNECTION]: (
-      state: IProjectRecord,
-      action: Action<string>,
-    ) => {
-      return state.set(
-        'alvisProject',
-        apManager.deleteConnectionInAlvisProject(state.alvisProject)(
-          action.payload,
-        ),
-      );
-    },
-    [Actions.PROJECT_MODIFY_CONNECTION]: (
-      state: IProjectRecord,
-      action: Action<IConnectionRecord>,
-    ) => {
-      return state.set(
-        'alvisProject',
-        apManager.modifyConnectionInAlvisProject(state.alvisProject)(
-          action.payload,
-        ),
-      );
-    },
-  },
-  initialState,
-);

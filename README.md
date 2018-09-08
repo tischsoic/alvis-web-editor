@@ -103,3 +103,19 @@ TO DO:
 - create interfaces with fields which can be modified in Records related to Alvis project; for example for IAgent
 - store internalId as number not string
 - add yarn.lock in backend Docker file
+- think about searching agents by name not by ids in tests and use in tests some realworld examples, not abstract ones to make tets more clear.
+- allow editing the same diagram by many people like in Draw.io
+- implement checking syntax correctness of model (maybe using window.requestIdleCallback() ?)
+
+
+To test app:
+docker exec -it alviswebeditor_frontend_1 sh
+yarn test
+
+INTERESTING IDEA:
+- what about using GUID as id for elements of Alvis diagram? We would not have to keep lastInternalId in store.
+  We would also be able to assign IDs without knowing the last assigned ID. 
+  Should we care about uniqueness of GUID?
+  What about performance of generating UID during applying modification? Maybe it might be optimized by generating 
+  some quantity before (on the off-chance - na zapas)?;
+  https://stackoverflow.com/questions/39771/is-a-guid-unique-100-of-the-time
