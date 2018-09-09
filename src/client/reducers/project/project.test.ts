@@ -131,7 +131,8 @@ describe('Project reducer', () => {
       List(['23', '24']),
     );
     const modifiedPort = getBasicPortRecordForTests('23', '11', 'p_10_mod');
-    const modifiedConnection = getBasicConnectionRecordForTest( // TODO: this does not modify connection, because data are the same
+    const modifiedConnection = getBasicConnectionRecordForTest(
+      // TODO: this does not modify connection, because data are the same
       '33',
       '23',
       '24',
@@ -204,8 +205,14 @@ describe('Project reducer', () => {
         modifiedRecord,
       );
     }
-    modifiedStateWithoutModifiedRecs = modifiedStateWithoutModifiedRecs.set('oppositeModifications', List());
-    modifiedStateWithoutModifiedRecs = modifiedStateWithoutModifiedRecs.set('oppositeModificationCurrentIdx', -1);
+    modifiedStateWithoutModifiedRecs = modifiedStateWithoutModifiedRecs.set(
+      'oppositeModifications',
+      List(),
+    );
+    modifiedStateWithoutModifiedRecs = modifiedStateWithoutModifiedRecs.set(
+      'oppositeModificationCurrentIdx',
+      -1,
+    );
 
     expect(modifiedStateWithoutModifiedRecs).toEqual(stateWithoutModifiedRecs);
   });
@@ -472,7 +479,12 @@ describe('Project reducer', () => {
   function getStatesModifications(
     state: IProjectRecord,
   ): [IProjectRecord, IOppositeModifications][] {
-    const agentToAddRecord = getBasicAgentRecordForTests('A_x', '0', null, '35'); // TO DO: would't it be better to remove 'Record' from variable name -> information about this is already stored in type of variable
+    const agentToAddRecord = getBasicAgentRecordForTests(
+      'A_x',
+      '0',
+      null,
+      '35',
+    ); // TO DO: would't it be better to remove 'Record' from variable name -> information about this is already stored in type of variable
     const addAgentModifications = {
       modification: projectModificationRecordFactoryPartial({
         agents: {
@@ -513,7 +525,10 @@ describe('Project reducer', () => {
         },
       }),
     };
-    const addedAgentAfterPortAdded = agentToAddRecord.set('portsInternalIds', List(['36']));
+    const addedAgentAfterPortAdded = agentToAddRecord.set(
+      'portsInternalIds',
+      List(['36']),
+    );
     const stateAfterPortAdded = project(
       stateAfterAgentAdded,
       createAction(
@@ -647,8 +662,7 @@ describe('Project reducer', () => {
     expect(state.oppositeModificationCurrentIdx).toEqual(-1);
 
     const statesPostInitialToLast: IProjectRecord[] = [
-      ...getStatesModifications(notEmptyState)
-        .map((el) => el[0])
+      ...getStatesModifications(notEmptyState).map((el) => el[0]),
       // ...statesLastToInitial,//.reverse(),//.splice(0, 1),
       // lastState,
     ];
@@ -679,7 +693,12 @@ describe('Project reducer', () => {
     const oppositeModificationsAfterUndo = stateAfterUndo.oppositeModifications;
 
     const addedAgentInternalId = String(stateAfterUndo.lastInternalId + 1);
-    const agentToAddRecord = getBasicAgentRecordForTests('A_x2', '0', null, addedAgentInternalId); // TODO: is it OK to set ID here in context of future?
+    const agentToAddRecord = getBasicAgentRecordForTests(
+      'A_x2',
+      '0',
+      null,
+      addedAgentInternalId,
+    ); // TODO: is it OK to set ID here in context of future?
     const addAgentModifications = oppositeModificationsFactory({
       modification: projectModificationRecordFactoryPartial({
         agents: {

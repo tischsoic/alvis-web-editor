@@ -81,6 +81,9 @@ const modifyConnection = createElementAction<IConnection>(
 );
 const deleteConnection = createElementDeleteAction('connections');
 
+const undo = createAction(Actions.PROJECT_UNDO);
+const redo = createAction(Actions.PROJECT_REDO);
+
 export {
   setProjectXML,
   addPage,
@@ -96,4 +99,6 @@ export {
   deleteConnection,
   modifyConnection,
   setAlvisProject,
+  undo,
+  redo,
 };

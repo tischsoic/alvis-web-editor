@@ -50,6 +50,9 @@ export interface AlvisGraphPanelProps {
   onMxGraphConnectionAdded: (connection: IConnectionRecord) => any;
   onMxGraphConnectionDeleted: (connectionInternalId: string) => any;
   onMxGraphConnectionModified: (connection: IConnectionRecord) => any;
+
+  onUndo: () => any;
+  onRedo: () => any;
 }
 
 export interface AlvisGraphPanelState {
@@ -83,9 +86,9 @@ export class AlvisGraphPanel extends React.Component<
   namePicker: NamePicker | null = null;
 
   componentWillReceiveProps(nextProps: AlvisGraphPanelProps) {
-    const { projectId } = this.props,
-      { openedPagesInternalIds } = this.state,
-      nextActivePageInternalId = nextProps.activePageInternalId;
+    const { projectId } = this.props;
+    const { openedPagesInternalIds } = this.state;
+    const nextActivePageInternalId = nextProps.activePageInternalId;
 
     if (nextProps.projectId !== projectId) {
       const openedPagesInternalIds =
@@ -120,8 +123,8 @@ export class AlvisGraphPanel extends React.Component<
   }
 
   getElementByFn<T>(elements: List<T>, fn: (element: T) => boolean) {
-    const elementIndex = elements.findIndex(fn),
-      element = elementIndex !== -1 ? elements.get(elementIndex) : null;
+    const elementIndex = elements.findIndex(fn);
+    const element = elementIndex !== -1 ? elements.get(elementIndex) : null;
 
     return element;
   }
@@ -139,20 +142,20 @@ export class AlvisGraphPanel extends React.Component<
   getPageElements(pageInternalId: string) {
     const { alvisProject } = this.props;
     const page = this.getElementByInternalId(
-        alvisProject.pages,
-        pageInternalId,
-      ),
-      agents = alvisProject.agents.filter(
-        (agent) => agent.pageInternalId === page.internalId,
-      ),
-      agentsInternalIds = agents.map((agent) => agent.internalId),
-      ports = alvisProject.ports.filter((port) =>
-        agentsInternalIds.contains(port.agentInternalId),
-      ),
-      portsInternalIds = ports.map((port) => port.internalId),
-      connections = alvisProject.connections.filter((connection) =>
-        portsInternalIds.contains(connection.sourcePortInternalId),
-      );
+      alvisProject.pages,
+      pageInternalId,
+    );
+    const agents = alvisProject.agents.filter(
+      (agent) => agent.pageInternalId === page.internalId,
+    );
+    const agentsInternalIds = agents.map((agent) => agent.internalId);
+    const ports = alvisProject.ports.filter((port) =>
+      agentsInternalIds.contains(port.agentInternalId),
+    );
+    const portsInternalIds = ports.map((port) => port.internalId);
+    const connections = alvisProject.connections.filter((connection) =>
+      portsInternalIds.contains(connection.sourcePortInternalId),
+    );
 
     return {
       page, // TO DO: page is not page element
@@ -176,47 +179,49 @@ export class AlvisGraphPanel extends React.Component<
       onMxGraphConnectionAdded,
       onMxGraphConnectionDeleted,
       onMxGraphConnectionModified,
+      onUndo,
+      onRedo,
     } = this.props;
     const { openedPagesInternalIds, selectedColor } = this.state;
 
     const pagesElements = openedPagesInternalIds.map((pageInternalId) =>
-        this.getPageElements(pageInternalId),
-      ),
-      pagesTabs = pagesElements.map((pageElements) => {
-        const page = pageElements.page,
-          agents = pageElements.agents.toList(),
-          ports = pageElements.ports.toList(),
-          connections = pageElements.connections.toList(),
-          pageInternalId = page.internalId;
+      this.getPageElements(pageInternalId),
+    );
+    const pagesTabs = pagesElements.map((pageElements) => {
+      const page = pageElements.page;
+      const agents = pageElements.agents.toList();
+      const ports = pageElements.ports.toList();
+      const connections = pageElements.connections.toList();
+      const pageInternalId = page.internalId;
 
-        return (
-          <Tab eventKey={pageInternalId} title={page.name} key={pageInternalId}>
-            <AlvisGraph
-              ref={(alvisGraph) => {
-                if (pageInternalId == activePageInternalId) {
-                  this.activeAlvisGraph = alvisGraph;
-                }
-              }}
-              agents={agents}
-              ports={ports}
-              connections={connections}
-              pageInternalId={pageInternalId}
-              onChangeActivePage={onChangeActivePage}
-              onMxGraphPageAdded={onMxGraphPageAdded}
-              onMxGraphAgentAdded={onMxGraphAgentAdded}
-              onMxGraphAgentDeleted={onMxGraphAgentDeleted}
-              onMxGraphAgentModified={onMxGraphAgentModified}
-              onMxGraphPortAdded={onMxGraphPortAdded}
-              onMxGraphPortDeleted={onMxGraphPortDeleted}
-              onMxGraphPortModified={onMxGraphPortModified}
-              onMxGraphConnectionAdded={onMxGraphConnectionAdded}
-              onMxGraphConnectionDeleted={onMxGraphConnectionDeleted}
-              onMxGraphConnectionModified={onMxGraphConnectionModified}
-              getNameFromUser={this.getNameFromUser}
-            />
-          </Tab>
-        );
-      });
+      return (
+        <Tab eventKey={pageInternalId} title={page.name} key={pageInternalId}>
+          <AlvisGraph
+            ref={(alvisGraph) => {
+              if (pageInternalId == activePageInternalId) {
+                this.activeAlvisGraph = alvisGraph;
+              }
+            }}
+            agents={agents}
+            ports={ports}
+            connections={connections}
+            pageInternalId={pageInternalId}
+            onChangeActivePage={onChangeActivePage}
+            onMxGraphPageAdded={onMxGraphPageAdded}
+            onMxGraphAgentAdded={onMxGraphAgentAdded}
+            onMxGraphAgentDeleted={onMxGraphAgentDeleted}
+            onMxGraphAgentModified={onMxGraphAgentModified}
+            onMxGraphPortAdded={onMxGraphPortAdded}
+            onMxGraphPortDeleted={onMxGraphPortDeleted}
+            onMxGraphPortModified={onMxGraphPortModified}
+            onMxGraphConnectionAdded={onMxGraphConnectionAdded}
+            onMxGraphConnectionDeleted={onMxGraphConnectionDeleted}
+            onMxGraphConnectionModified={onMxGraphConnectionModified}
+            getNameFromUser={this.getNameFromUser}
+          />
+        </Tab>
+      );
+    });
 
     return (
       <div className="modal-container">
@@ -234,6 +239,10 @@ export class AlvisGraphPanel extends React.Component<
             <Button onClick={() => this.activeAlvisGraph.zoomIn()}>
               <Glyphicon glyph="zoom-in" />
             </Button>
+          </ButtonGroup>
+          <ButtonGroup>
+            <Button onClick={() => onUndo()}>undo</Button>
+            <Button onClick={() => onRedo()}>redo</Button>
           </ButtonGroup>
           <ColorPicker
             color={selectedColor}

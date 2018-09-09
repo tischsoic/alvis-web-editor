@@ -239,8 +239,10 @@ export const shiftAntiModifications = (
 
   const oppositeModificationsCurrentIdxNext =
     project.oppositeModificationCurrentIdx + (isUndo ? -1 : 1);
-    
-  const oppositeModificationIdx = isUndo ? idx : oppositeModificationsCurrentIdxNext;
+
+  const oppositeModificationIdx = isUndo
+    ? idx
+    : oppositeModificationsCurrentIdxNext;
   const oppositeModifications = project.oppositeModifications.get(
     oppositeModificationIdx,
   );
@@ -328,7 +330,10 @@ function assignInternalIdsInList<
 
   return elements
     .map((el: T) => {
-      const elementWithInternalId: T = <T>el.set('internalId', String(internalId)); // TODO: why the hell we need to cast it to <T> ??? // it is probably related to TS typings from types-record
+      const elementWithInternalId: T = <T>el.set(
+        'internalId',
+        String(internalId),
+      ); // TODO: why the hell we need to cast it to <T> ??? // it is probably related to TS typings from types-record
       internalId += 1;
 
       return elementWithInternalId;
@@ -362,7 +367,7 @@ export function assignInternalIdsToNewElements(
   );
   lastInternalId += ports.added.size;
 
-  const updatedAddedConnections = assignInternalIdsInList<IConnectionRecord>( // TODO: why I need to specify generic? 
+  const updatedAddedConnections = assignInternalIdsInList<IConnectionRecord>( // TODO: why I need to specify generic?
     // why it does not cause TS error if i ommit <IConnectionRecor> and pass page.added
     connections.added,
     lastInternalId,
@@ -729,7 +734,10 @@ const getPageAllSubpages = (alvisProject: IAlvisProjectRecord) => (
 export const addPageToAlvisProject = (alvisProject: IAlvisProjectRecord) => (
   newPage: IPageRecord,
 ): IAlvisProjectRecord => {
-  const afterPageAddedToProject = addRecord(alvisProject)(purifyPage(newPage), 'pages');
+  const afterPageAddedToProject = addRecord(alvisProject)(
+    purifyPage(newPage),
+    'pages',
+  );
   const supAgent = <IAgentRecord>getRecord(alvisProject)(
     newPage.supAgentInternalId,
     'agents',
@@ -749,7 +757,10 @@ export const addPageToAlvisProject = (alvisProject: IAlvisProjectRecord) => (
 export const modifyPageInAlvisProject = (alvisProject: IAlvisProjectRecord) => (
   modifiedPage: IPageRecord,
 ): IAlvisProjectRecord => {
-  const oldPage = getRecordByInternalId(alvisProject.pages, modifiedPage.internalId);
+  const oldPage = getRecordByInternalId(
+    alvisProject.pages,
+    modifiedPage.internalId,
+  );
   const newPage = modifiedPage
     .set('agentsInternalIds', oldPage.agentsInternalIds)
     .set('supAgentInternalId', oldPage.supAgentInternalId) // TODO: are we sure?
@@ -944,7 +955,10 @@ const removeAgentFromPage = (alvisProject: IAlvisProjectRecord) => (
 export const addAgentToAlvisProject = (alvisProject: IAlvisProjectRecord) => (
   newAgent: IAgentRecord,
 ): IAlvisProjectRecord => {
-  const afterAgentAddedToProject = addRecord(alvisProject)(purifyAgent(newAgent), 'agents');
+  const afterAgentAddedToProject = addRecord(alvisProject)(
+    purifyAgent(newAgent),
+    'agents',
+  );
   const afterAgentAssignedToPage = assignAgentToPage(afterAgentAddedToProject)(
     newAgent.internalId,
     newAgent.pageInternalId,
@@ -957,15 +971,15 @@ export const addAgentToAlvisProject = (alvisProject: IAlvisProjectRecord) => (
 export const modifyAgentInAlvisProject = (
   alvisProject: IAlvisProjectRecord,
 ) => (modifiedAgent: IAgentRecord): IAlvisProjectRecord => {
-  const oldAgent = getRecordByInternalId(alvisProject.agents, modifiedAgent.internalId);
+  const oldAgent = getRecordByInternalId(
+    alvisProject.agents,
+    modifiedAgent.internalId,
+  );
   const newAgent = modifiedAgent
     .set('pageInternalId', oldAgent.pageInternalId)
     .set('portsInternalIds', oldAgent.portsInternalIds)
     .set('subPageInternalId', oldAgent.subPageInternalId);
-  const afterAgentModified = changeRecord(alvisProject)(
-    newAgent,
-    'agents',
-  );
+  const afterAgentModified = changeRecord(alvisProject)(newAgent, 'agents');
 
   return afterAgentModified;
 };
@@ -1102,7 +1116,10 @@ const getAgentPage = (alvisProject: IAlvisProjectRecord) => (
 export const addPortToAlvisProject = (alvisProject: IAlvisProjectRecord) => (
   newPort: IPortRecord,
 ): IAlvisProjectRecord => {
-  const afterPortAddedToProject = addRecord(alvisProject)(purifyPort(newPort), 'ports');
+  const afterPortAddedToProject = addRecord(alvisProject)(
+    purifyPort(newPort),
+    'ports',
+  );
   const afterPortAssignedToAgent = assignPortToAgent(afterPortAddedToProject)(
     newPort.internalId,
     newPort.agentInternalId,
@@ -1185,7 +1202,10 @@ const getPortAllConnections = (alvisProject: IAlvisProjectRecord) => (
 export const addConnectionToAlvisProject = (
   alvisProject: IAlvisProjectRecord,
 ) => (newConnection: IConnectionRecord): IAlvisProjectRecord => {
-  return addRecord(alvisProject)(purifyConnection(newConnection), 'connections');
+  return addRecord(alvisProject)(
+    purifyConnection(newConnection),
+    'connections',
+  );
 };
 
 export const modifyConnectionInAlvisProject = (
@@ -1269,10 +1289,6 @@ export function getSystemPage(pages: List<IPageRecord>): IPageRecord | null {
   return this.getElementByFn(pages, (page) => page.name === 'System'); // TO DO: extract "System" as constant in some config
 }
 
-
-
-
-
 function purifyPort(port: IPortRecord): IPortRecord {
   let purifiedPort = port;
 
@@ -1349,4 +1365,3 @@ function purifyPage(page: IPageRecord): IPageRecord {
 //   readonly supAgentInternalId: string;    // For first page it is set to `null`
 //   // readonly connectionsInternalIds: List<string>,
 // }
-
