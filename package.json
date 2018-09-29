@@ -51,18 +51,21 @@
     "url": "https://github.com/tischsoic/alvis-web-editor/issues"
   },
   "homepage": "https://github.com/tischsoic/alvis-web-editor#readme",
+  "resolutions": {
+    "@types/react": "16.4.7",
+    "@types/react-router": "4.0.23"
+  },
   "dependencies": {
     "@types/color": "^3.0.0",
     "@types/errorhandler": "0.0.30",
     "@types/morgan": "^1.7.32",
     "@types/multer": "^1.3.6",
-    "@types/react": "^16.4.7",
-    "@types/react-color": "^2.13.4",
-    "@types/react-dom": "^16.0.3",
-    "@types/react-redux": "^5.0.14",
-    "@types/react-router": "^4.0.20",
-    "@types/react-router-dom": "^4.2.3",
-    "@types/redux": "^3.6.31",
+    "@types/react": "16.4.7",
+    "@types/react-color": "^2.13.6",
+    "@types/react-dom": "^16.0.7",
+    "@types/react-redux": "^5.0.15",
+    "@types/react-router": "4.0.23",
+    "@types/react-router-dom": "4.2.3",
     "@types/shortid": "0.0.29",
     "@types/socket.io": "^1.4.29",
     "@types/socket.io-client": "^1.4.29",
@@ -75,7 +78,7 @@
     "cors": "^2.8.3",
     "errorhandler": "^1.5.0",
     "express": "^4.15.2",
-    "immutable": "^3.8.1",
+    "immutable": "4.0.0-rc.9",
     "isemail": "^3.0.0",
     "jsonwebtoken": "^8.1.0",
     "lodash": "^4.17.4",
@@ -104,7 +107,6 @@
     "shortid": "^2.2.8",
     "socket.io": "^1.7.3",
     "socket.io-client": "^1.7.3",
-    "typed-immutable-record": "0.0.6",
     "underscore": "^1.8.3"
   },
   "devDependencies": {

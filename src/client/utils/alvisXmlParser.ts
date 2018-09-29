@@ -224,14 +224,12 @@ function processHierarchyToGetPagesData(
     lastInternalId,
   };
   subPagesData.forEach((subPageData) => {
-    allPagesData.agents = allPagesData.agents
-      .concat(subPageData.agents)
-      .toList();
-    allPagesData.connections = allPagesData.connections
-      .concat(subPageData.connections)
-      .toList();
-    allPagesData.pages = allPagesData.pages.concat(subPageData.pages).toList();
-    allPagesData.ports = allPagesData.ports.concat(subPageData.ports).toList();
+    allPagesData.agents = allPagesData.agents.concat(subPageData.agents);
+    allPagesData.connections = allPagesData.connections.concat(
+      subPageData.connections,
+    );
+    allPagesData.pages = allPagesData.pages.concat(subPageData.pages);
+    allPagesData.ports = allPagesData.ports.concat(subPageData.ports);
   });
 
   return allPagesData;

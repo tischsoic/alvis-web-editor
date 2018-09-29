@@ -19,6 +19,7 @@ import {
   IInternalId,
   IAlvisElementTag,
   IAlvisElementRecord,
+  IInternalRecordF,
 } from '../models/alvisProject';
 import { List, Stack, Set } from 'immutable';
 import {
@@ -52,12 +53,12 @@ export function getValidEmptyAlvisProject(): IAlvisProjectRecord {
 
 // ABSTRACT --------------------------------------------
 
-export const getRecordByInternalId = <T extends IInternalRecord>(
+export const getRecordByInternalId = <T extends IInternalRecordF>(
   list: List<T>,
   internalId: string,
 ): T => list.find((el) => el.internalId === internalId);
 
-type AlvisProjectKeysLeadingToLists =
+export type AlvisProjectKeysLeadingToLists =
   | 'pages'
   | 'agents'
   | 'ports'
@@ -78,18 +79,26 @@ export function getRecord(alvisProject: IAlvisProjectRecord) {
   };
 }
 
-function addRecord(alvisProject: IAlvisProjectRecord) {
-  return (
-    record: IInternalRecord,
-    key: AlvisProjectKeysLeadingToLists,
-  ): IAlvisProjectRecord => {
-    const projectWithAddedRecord = alvisProject.update(
-      key,
-      (records: List<IInternalRecord>) => records.push(record),
-    );
+function addPageRecord(alvisProject: IAlvisProjectRecord) {
+  return (page: IPageRecord): IAlvisProjectRecord =>
+    alvisProject.update('pages', (pages) => pages.push(page));
+}
 
-    return projectWithAddedRecord;
-  };
+function addAgentRecord(alvisProject: IAlvisProjectRecord) {
+  return (agent: IAgentRecord): IAlvisProjectRecord =>
+    alvisProject.update('agents', (pages) => pages.push(agent));
+}
+
+function addPortRecord(alvisProject: IAlvisProjectRecord) {
+  return (port: IPortRecord): IAlvisProjectRecord =>
+    alvisProject.update('ports', (ports) => ports.push(port));
+}
+
+function addConnectionRecord(alvisProject: IAlvisProjectRecord) {
+  return (connection: IConnectionRecord): IAlvisProjectRecord =>
+    alvisProject.update('connections', (connections) =>
+      connections.push(connection),
+    );
 }
 
 function changeRecord(alvisProject: IAlvisProjectRecord) {
@@ -99,40 +108,34 @@ function changeRecord(alvisProject: IAlvisProjectRecord) {
   ): IAlvisProjectRecord => {
     const projectWithChangedRecord = alvisProject.update(
       key,
-      (records: List<IInternalRecord>) => updateListElement(records)(record),
+      (records: List<any>) => updateListElement(records)(record),
     );
 
     return projectWithChangedRecord;
   };
 }
 
-function deleteRecord(alvisProject: IAlvisProjectRecord) {
-  return (
-    recordInternalId: string,
-    key: AlvisProjectKeysLeadingToLists,
-  ): IAlvisProjectRecord => {
-    const projectWithDeletedRecord = alvisProject.update(
-      key,
-      (records: List<IInternalRecord>) => {
-        const recordIndex = getListElementIndexWithInternalId(records)(
-          recordInternalId,
-        );
+function deleteRecord<K extends AlvisProjectKeysLeadingToLists>(
+  alvisProject: IAlvisProjectRecord,
+) {
+  return (recordInternalId: string, key: K): IAlvisProjectRecord => {
+    const projectWithDeletedRecord = alvisProject.update<K>(key, (records) => {
+      const recordIndex = getListElementIndexWithInternalId(records)(
+        recordInternalId,
+      );
 
-        if (recordIndex === -1) {
-          return records;
-        }
+      if (recordIndex === -1) {
+        return records;
+      }
 
-        return records.delete(recordIndex);
-      },
-    );
+      return records.delete(recordIndex);
+    });
 
     return projectWithDeletedRecord;
   };
 }
 
-function updateListElement<T extends IInternalRecord | IInternalRecord>(
-  elements: List<T>,
-) {
+function updateListElement<T extends IInternalRecordF>(elements: List<T>) {
   return (elementToUpdate: T): List<T> => {
     return elements.update(
       elements.findIndex(
@@ -209,9 +212,10 @@ export const addOppositeModifications = (project: IProjectRecord) => (
 ): IProjectRecord => {
   const oppositeModificationsCurrentIndex =
     project.oppositeModificationCurrentIdx;
-  const oppositeModificationsWithoutRedos = project.oppositeModifications
-    .slice(0, oppositeModificationsCurrentIndex + 1)
-    .toList();
+  const oppositeModificationsWithoutRedos = project.oppositeModifications.slice(
+    0,
+    oppositeModificationsCurrentIndex + 1,
+  );
   const oppositeModificationsWithNewOne = oppositeModificationsWithoutRedos.push(
     oppositeModifications,
   );
@@ -323,22 +327,18 @@ export const applyModification = (alvisProject: IAlvisProjectRecord) => (
 //
 //
 //
-function assignInternalIdsInList<
-  T extends IPageRecord | IAgentRecord | IPortRecord | IConnectionRecord
->(elements: List<T>, lastInternalId: number): List<T> {
+function assignInternalIdsInList<T extends IInternalRecordF>(
+  elements: List<T>,
+  lastInternalId: number,
+): List<T> {
   let internalId = lastInternalId + 1;
 
-  return elements
-    .map((el: T) => {
-      const elementWithInternalId: T = <T>el.set(
-        'internalId',
-        String(internalId),
-      ); // TODO: why the hell we need to cast it to <T> ??? // it is probably related to TS typings from types-record
-      internalId += 1;
+  return elements.map((el) => {
+    const elementWithInternalId = el.set('internalId', String(internalId));
+    internalId += 1;
 
-      return elementWithInternalId;
-    })
-    .toList();
+    return elementWithInternalId;
+  });
 }
 
 export function assignInternalIdsToNewElements(
@@ -420,68 +420,54 @@ export function generateFullModification(
   // TODO: What if someone tries to add page to page which was deleted?
   // should we consider such cases? Do we want it to be THAT bulletproof?
   const allPagesDeleted = getAllPagesDeleted(semiModification, alvisProject);
-  const allPagesDeletedInternalIds = allPagesDeleted
-    .map((el) => el.internalId)
-    .toList(); // TODO:  `.toList()` is redundant but TS types for Immutable.js are but, byt after upgrade to newest Immutable.js it should be OK to delete this
+  const allPagesDeletedInternalIds = allPagesDeleted.map((el) => el.internalId);
   // TODO: this is interesting: we may (1) pass `allPagesDeleted` to getAllAgentsDeleted
   // or we may (2) memoize getAllPagesDeleted and use it again in `getAllAgentsDeleted` to make code simpler to read
   // yet as efficient as in first way
   const allAgentsDeleted = getAllAgentsDeleted(semiModification, alvisProject);
-  const allAgentsDeletedInternalIds = allAgentsDeleted
-    .map((el) => el.internalId)
-    .toList();
+  const allAgentsDeletedInternalIds = allAgentsDeleted.map(
+    (el) => el.internalId,
+  );
 
   const allConnectionsDeleted = getAllConnectionsDeleted(
     semiModification,
     alvisProject,
   );
-  const allConnectionsDeletedInternalIds = allConnectionsDeleted
-    .map((el) => el.internalId)
-    .toList();
+  const allConnectionsDeletedInternalIds = allConnectionsDeleted.map(
+    (el) => el.internalId,
+  );
 
   const allPortsDeleted = getAllPortsDeleted(semiModification, alvisProject);
-  const allPortsDeletedInternalIds = allPortsDeleted
-    .map((el) => el.internalId)
-    .toList();
+  const allPortsDeletedInternalIds = allPortsDeleted.map((el) => el.internalId);
 
-  const allPagesModified = semiModification.pages.modified
-    .filter((page) => !allPagesDeletedInternalIds.contains(page.internalId))
-    .toList();
-  const allAgentsModified = semiModification.agents.modified
-    .filter((agent) => !allAgentsDeletedInternalIds.contains(agent.internalId))
-    .toList();
-  const allPortsModified = semiModification.ports.modified
-    .filter((port) => !allPortsDeletedInternalIds.contains(port.internalId))
-    .toList();
-  const allConnectionsModified = semiModification.connections.modified
-    .filter(
-      (connection) =>
-        !allConnectionsDeletedInternalIds.contains(connection.internalId),
-    )
-    .toList();
+  const allPagesModified = semiModification.pages.modified.filter(
+    (page) => !allPagesDeletedInternalIds.contains(page.internalId),
+  );
+  const allAgentsModified = semiModification.agents.modified.filter(
+    (agent) => !allAgentsDeletedInternalIds.contains(agent.internalId),
+  );
+  const allPortsModified = semiModification.ports.modified.filter(
+    (port) => !allPortsDeletedInternalIds.contains(port.internalId),
+  );
+  const allConnectionsModified = semiModification.connections.modified.filter(
+    (connection) =>
+      !allConnectionsDeletedInternalIds.contains(connection.internalId),
+  );
 
-  const allPagesAdded = semiModification.pages.added
-    .filter(
-      (page) => !allAgentsDeletedInternalIds.contains(page.supAgentInternalId), // TODO: is it enough? what if agent have never existed (never will be in allAgentsDeletedInternalIds)
-    )
-    .toList();
-  const allAgentsAdded = semiModification.agents.added
-    .filter(
-      (agent) => !allPagesDeletedInternalIds.contains(agent.pageInternalId),
-    )
-    .toList();
-  const allPortsAdded = semiModification.ports.added
-    .filter(
-      (port) => !allAgentsDeletedInternalIds.contains(port.agentInternalId),
-    )
-    .toList();
-  const allConnectionsAdded = semiModification.connections.added
-    .filter(
-      (connection) =>
-        !allPortsDeletedInternalIds.contains(connection.sourcePortInternalId) &&
-        !allPortsDeletedInternalIds.contains(connection.targetPortInternalId),
-    )
-    .toList();
+  const allPagesAdded = semiModification.pages.added.filter(
+    (page) => !allAgentsDeletedInternalIds.contains(page.supAgentInternalId), // TODO: is it enough? what if agent have never existed (never will be in allAgentsDeletedInternalIds)
+  );
+  const allAgentsAdded = semiModification.agents.added.filter(
+    (agent) => !allPagesDeletedInternalIds.contains(agent.pageInternalId),
+  );
+  const allPortsAdded = semiModification.ports.added.filter(
+    (port) => !allAgentsDeletedInternalIds.contains(port.agentInternalId),
+  );
+  const allConnectionsAdded = semiModification.connections.added.filter(
+    (connection) =>
+      !allPortsDeletedInternalIds.contains(connection.sourcePortInternalId) &&
+      !allPortsDeletedInternalIds.contains(connection.targetPortInternalId),
+  );
 
   return projectModificationRecordFactoryPartial({
     pages: {
@@ -522,44 +508,34 @@ export function generateAntiModification(
   // TODO: rewrite this section to make it more readable
   return projectModificationRecordFactoryPartial({
     pages: {
-      added: fullModification.pages.deleted
-        .map(getPageById(alvisProject))
-        .toList(), // TODO: remote .toList() after immutable update - here and in other places
-      modified: fullModification.pages.modified
-        .map((el) => getPageById(alvisProject)(el.internalId))
-        .toList(),
-      deleted: fullModification.pages.added.map((el) => el.internalId).toList(),
+      added: fullModification.pages.deleted.map(getPageById(alvisProject)),
+      modified: fullModification.pages.modified.map((el) =>
+        getPageById(alvisProject)(el.internalId),
+      ),
+      deleted: fullModification.pages.added.map((el) => el.internalId),
     },
     agents: {
-      added: fullModification.agents.deleted
-        .map(getAgentById(alvisProject))
-        .toList(),
-      modified: fullModification.agents.modified
-        .map((el) => getAgentById(alvisProject)(el.internalId))
-        .toList(),
-      deleted: fullModification.agents.added
-        .map((el) => el.internalId)
-        .toList(),
+      added: fullModification.agents.deleted.map(getAgentById(alvisProject)),
+      modified: fullModification.agents.modified.map((el) =>
+        getAgentById(alvisProject)(el.internalId),
+      ),
+      deleted: fullModification.agents.added.map((el) => el.internalId),
     },
     ports: {
-      added: fullModification.ports.deleted
-        .map(getPortById(alvisProject))
-        .toList(),
-      modified: fullModification.ports.modified
-        .map((el) => getPortById(alvisProject)(el.internalId))
-        .toList(),
-      deleted: fullModification.ports.added.map((el) => el.internalId).toList(),
+      added: fullModification.ports.deleted.map(getPortById(alvisProject)),
+      modified: fullModification.ports.modified.map((el) =>
+        getPortById(alvisProject)(el.internalId),
+      ),
+      deleted: fullModification.ports.added.map((el) => el.internalId),
     },
     connections: {
-      added: fullModification.connections.deleted
-        .map(getConnectionById(alvisProject))
-        .toList(),
-      modified: fullModification.connections.modified
-        .map((el) => getConnectionById(alvisProject)(el.internalId))
-        .toList(),
-      deleted: fullModification.connections.added
-        .map((el) => el.internalId)
-        .toList(),
+      added: fullModification.connections.deleted.map(
+        getConnectionById(alvisProject),
+      ),
+      modified: fullModification.connections.modified.map((el) =>
+        getConnectionById(alvisProject)(el.internalId),
+      ),
+      deleted: fullModification.connections.added.map((el) => el.internalId),
     },
   });
 }
@@ -638,18 +614,16 @@ export function getAllPagesDeleted(
   const deletedPagesIds = semiModification.pages.deleted;
   const deletedAgentsIds = semiModification.agents.deleted;
   const deletedPages = deletedPagesIds.map(getPageById(alvisProject));
-  const deletedPagesAllSubpages = deletedPagesIds
+  const deletedPagesAllSubpages = <List<IPageRecord>>deletedPagesIds
     .map(getPageAllSubpages(alvisProject))
     .flatten(true); // TODO: flatten returns type: Iterable<any, any> --- change to something with better types
-  const deletedAgentsAllSubpages = deletedAgentsIds
+  const deletedAgentsAllSubpages = <List<IPageRecord>>deletedAgentsIds
     .map(getAgentAllSubpages(alvisProject))
     .flatten(true);
 
   // TODO: I guess we are not deleting duplicates, we may use set, or something,
   // we should also check it in tests
-  return deletedPages
-    .concat(deletedPagesAllSubpages, deletedAgentsAllSubpages)
-    .toList();
+  return deletedPages.concat(deletedPagesAllSubpages, deletedAgentsAllSubpages);
 }
 
 export const getPageById = (alvisProject: IAlvisProjectRecord) => (
@@ -714,13 +688,13 @@ const getPageAllSubpages = (alvisProject: IAlvisProjectRecord) => (
   const page = getPageById(alvisProject)(pageId);
   const directSubpagesIds = page.subPagesInternalIds;
   const directSubpages = directSubpagesIds.map(getPageById(alvisProject));
-  const directSubpagesAllSubpages = directSubpages
+  const directSubpagesAllSubpages = <List<IPageRecord>>directSubpages
     .map((page) => page.subPagesInternalIds)
     .flatten()
     .map(getPageAllSubpages(alvisProject))
     .flatten();
 
-  return directSubpages.concat(directSubpagesAllSubpages).toList();
+  return directSubpages.concat(directSubpagesAllSubpages);
 };
 
 //
@@ -734,9 +708,8 @@ const getPageAllSubpages = (alvisProject: IAlvisProjectRecord) => (
 export const addPageToAlvisProject = (alvisProject: IAlvisProjectRecord) => (
   newPage: IPageRecord,
 ): IAlvisProjectRecord => {
-  const afterPageAddedToProject = addRecord(alvisProject)(
+  const afterPageAddedToProject = addPageRecord(alvisProject)(
     purifyPage(newPage),
-    'pages',
   );
   const supAgent = <IAgentRecord>getRecord(alvisProject)(
     newPage.supAgentInternalId,
@@ -955,9 +928,8 @@ const removeAgentFromPage = (alvisProject: IAlvisProjectRecord) => (
 export const addAgentToAlvisProject = (alvisProject: IAlvisProjectRecord) => (
   newAgent: IAgentRecord,
 ): IAlvisProjectRecord => {
-  const afterAgentAddedToProject = addRecord(alvisProject)(
+  const afterAgentAddedToProject = addAgentRecord(alvisProject)(
     purifyAgent(newAgent),
-    'agents',
   );
   const afterAgentAssignedToPage = assignAgentToPage(afterAgentAddedToProject)(
     newAgent.internalId,
@@ -1081,7 +1053,10 @@ const removePortFromAgent = (alvisProject: IAlvisProjectRecord) => (
   portInternalId: string,
 ): IAlvisProjectRecord => {
   const portAgent = getPortAgent(alvisProject)(portInternalId);
-  const agentPortsInternalIds: List<string> = portAgent.get('portsInternalIds');
+  const agentPortsInternalIds: List<string> = portAgent.get(
+    'portsInternalIds',
+    List(),
+  );
   const portToRemoveIndex = getListElementIndexWithFn(agentPortsInternalIds)(
     (id) => id === portInternalId,
   );
@@ -1116,9 +1091,8 @@ const getAgentPage = (alvisProject: IAlvisProjectRecord) => (
 export const addPortToAlvisProject = (alvisProject: IAlvisProjectRecord) => (
   newPort: IPortRecord,
 ): IAlvisProjectRecord => {
-  const afterPortAddedToProject = addRecord(alvisProject)(
+  const afterPortAddedToProject = addPortRecord(alvisProject)(
     purifyPort(newPort),
-    'ports',
   );
   const afterPortAssignedToAgent = assignPortToAgent(afterPortAddedToProject)(
     newPort.internalId,
@@ -1186,13 +1160,11 @@ const getPortAllConnections = (alvisProject: IAlvisProjectRecord) => (
   portInternalId: string,
 ): List<IConnectionRecord> => {
   const connections = alvisProject.connections;
-  const portConnections = connections
-    .filter(
-      (connection) =>
-        connection.sourcePortInternalId === portInternalId ||
-        connection.targetPortInternalId === portInternalId,
-    )
-    .toList();
+  const portConnections = connections.filter(
+    (connection) =>
+      connection.sourcePortInternalId === portInternalId ||
+      connection.targetPortInternalId === portInternalId,
+  );
 
   return portConnections;
 };
@@ -1202,10 +1174,7 @@ const getPortAllConnections = (alvisProject: IAlvisProjectRecord) => (
 export const addConnectionToAlvisProject = (
   alvisProject: IAlvisProjectRecord,
 ) => (newConnection: IConnectionRecord): IAlvisProjectRecord => {
-  return addRecord(alvisProject)(
-    purifyConnection(newConnection),
-    'connections',
-  );
+  return addConnectionRecord(alvisProject)(purifyConnection(newConnection));
 };
 
 export const modifyConnectionInAlvisProject = (

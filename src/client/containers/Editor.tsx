@@ -258,7 +258,7 @@ function mapStateToProps(state: RootState): Editor.StateProps {
     appData: state.app,
     xml: state.project.xml,
     alvisProject: state.project.alvisProject,
-    agents: state.project.alvisProject.agents, //.filter((agent) => agent.pageInternalId === '0').toList(),
+    agents: state.project.alvisProject.agents, // .filter((agent) => agent.pageInternalId === '0').toList(),
     ports: state.project.alvisProject.ports,
     connections: state.project.alvisProject.connections,
     pages: state.project.alvisProject.pages,

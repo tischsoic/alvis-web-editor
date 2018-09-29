@@ -64,7 +64,7 @@ describe('Project actions', () => {
         type: MODIFY_PROJECT,
         payload: projectModificationRecordFactoryPartial({
           [elementsName]: {
-            added: List(elementToAddOrModifyRecord),
+            added: List([elementToAddOrModifyRecord]),
           },
         }),
       });
@@ -73,7 +73,7 @@ describe('Project actions', () => {
         type: MODIFY_PROJECT,
         payload: projectModificationRecordFactoryPartial({
           [elementsName]: {
-            modified: List(elementToAddOrModifyRecord),
+            modified: List([elementToAddOrModifyRecord]),
           },
         }),
       });
@@ -82,7 +82,7 @@ describe('Project actions', () => {
         type: MODIFY_PROJECT,
         payload: projectModificationRecordFactoryPartial({
           [elementsName]: {
-            deleted: List(elementToDeleteInternalId),
+            deleted: List([elementToDeleteInternalId]),
           },
         }),
       });

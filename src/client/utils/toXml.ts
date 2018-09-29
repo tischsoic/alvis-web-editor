@@ -6,7 +6,7 @@ import {
   IPortRecord,
   IConnectionRecord,
 } from '../models/alvisProject';
-import { List, Iterable } from 'immutable';
+import { List } from 'immutable';
 import { getSystemPage, getListElementByInternalId } from './alvisProject';
 
 // <?xml version="1.0" encoding="UTF-8"?>
@@ -148,20 +148,16 @@ function appendPage(
   ports: List<IPortRecord>,
   connections: List<IConnectionRecord>,
 ) {
-  const pageElement = createPageElement(page),
-    pageAgents = page.agentsInternalIds
-      .map((agentInternalId) =>
-        getListElementByInternalId(agents, agentInternalId),
-      )
-      .toList(),
-    pagePortsInternalIds = ports
-      .filter((port) => page.agentsInternalIds.contains(port.agentInternalId))
-      .map((port) => port.internalId),
-    pageConnections = connections
-      .filter((connection) =>
-        pagePortsInternalIds.contains(connection.sourcePortInternalId),
-      )
-      .toList();
+  const pageElement = createPageElement(page);
+  const pageAgents = page.agentsInternalIds.map((agentInternalId) =>
+    getListElementByInternalId(agents, agentInternalId),
+  );
+  const pagePortsInternalIds = ports
+    .filter((port) => page.agentsInternalIds.contains(port.agentInternalId))
+    .map((port) => port.internalId);
+  const pageConnections = connections.filter((connection) =>
+    pagePortsInternalIds.contains(connection.sourcePortInternalId),
+  );
 
   appendAgents(pageElement, pageAgents, ports);
   appendConnections(pageElement, pageConnections);
@@ -191,12 +187,10 @@ function appendAgent(
   agent: IAgentRecord,
   ports: List<IPortRecord>,
 ) {
-  const agentElement = createAgentElement(agent),
-    agentPorts: List<IPortRecord> = agent.portsInternalIds
-      .map((portInetrnalId) =>
-        getListElementByInternalId(ports, portInetrnalId),
-      )
-      .toList();
+  const agentElement = createAgentElement(agent);
+  const agentPorts: List<IPortRecord> = agent.portsInternalIds.map(
+    (portInetrnalId) => getListElementByInternalId(ports, portInetrnalId),
+  );
 
   appendPorts(agentElement, agentPorts);
   pageElement.appendChild(agentElement);

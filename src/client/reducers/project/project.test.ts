@@ -43,6 +43,7 @@ import {
   IAlvisElement,
   IAlvisProject,
   IAlvisProjectRecord,
+  IInternalRecordF,
 } from '../../models/alvisProject';
 import * as projectActions from '../../constants/projectActions';
 import { List } from 'immutable';
@@ -53,7 +54,10 @@ import {
   getBasicPortRecordForTests,
   getBasicConnectionRecordForTest,
 } from '../../utils/test/recordsGenerators';
-import { getRecordByInternalId } from '../../utils/alvisProject';
+import {
+  getRecordByInternalId,
+  AlvisProjectKeysLeadingToLists,
+} from '../../utils/alvisProject';
 
 describe('Project reducer', () => {
   const emptyState = initialState;
@@ -160,7 +164,10 @@ describe('Project reducer', () => {
       )(),
     );
 
-    const modifiedRecsAndKeys: [IAlvisElement, string][] = [
+    const modifiedRecsAndKeys: [
+      IAlvisElement,
+      AlvisProjectKeysLeadingToLists
+    ][] = [
       [modifiedPage, 'pages'],
       [modifiedAgent, 'agents'],
       [modifiedPort, 'ports'],
@@ -171,7 +178,7 @@ describe('Project reducer', () => {
       const keyInState = modifiedRecAndKey[1];
       expect(
         getRecordByInternalId(
-          modifiedState.alvisProject[keyInState],
+          modifiedState.alvisProject[keyInState] as List<IInternalRecordF>, // TODO: is it good idea to cast it to List<IInternalRecordF>?
           modifiedRecord.internalId,
         ),
       ).toEqual(modifiedRecord);
@@ -182,13 +189,17 @@ describe('Project reducer', () => {
     let modifiedStateWithoutModifiedRecs = modifiedState;
     const removeModifiedRecord = (
       state: IProjectRecord,
-      keyInState: string,
+      keyInState: AlvisProjectKeysLeadingToLists,
       modifiedRecord: IAlvisElement,
     ): IProjectRecord =>
       state.update('alvisProject', (alvisProject: IAlvisProjectRecord) =>
-        alvisProject.update(keyInState, (elements: List<IInternalRecord>) =>
-          elements.filter((el) => el.internalId !== modifiedRecord.internalId),
-        ),
+        alvisProject.update(keyInState, (elements) => {
+          // https://stackoverflow.com/questions/42427393/cannot-invoke-an-expression-whose-type-lacks-a-call-signature
+          // https://github.com/Microsoft/TypeScript/issues/7294
+          return <IAlvisProjectRecord[AlvisProjectKeysLeadingToLists]>(elements as List<
+            IInternalRecordF
+          >).filter((el) => el.internalId !== modifiedRecord.internalId);
+        }),
       );
     for (const modifiedRecAndKey of modifiedRecsAndKeys) {
       const modifiedRecord = modifiedRecAndKey[0];
