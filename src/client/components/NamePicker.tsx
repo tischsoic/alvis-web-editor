@@ -98,9 +98,9 @@ export class NamePicker extends React.Component<
     }
 
     this.setState({
+      callback,
       show: true,
       name: '',
-      callback,
     });
   }
 }

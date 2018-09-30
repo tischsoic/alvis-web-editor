@@ -19,10 +19,10 @@ export class IndexRoute extends BaseRoute {
       new IndexRoute().index(req, res, next);
     });
 
-    const projectsRouter: Router = Router(),
-      regirsterRouter = Router(),
-      authRouter = Router(),
-      accountPublicRouter = Router();
+    const projectsRouter: Router = Router();
+    const regirsterRouter = Router();
+    const authRouter = Router();
+    const accountPublicRouter = Router();
 
     AlvisProjectRoute.create(projectsRouter);
     RegisterRoute.create(regirsterRouter);
@@ -46,9 +46,9 @@ export class IndexRoute extends BaseRoute {
       })(req, res, next);
     });
 
-    const systemRouter = Router(),
-      accountsRouter = Router(),
-      projectRouter = Router();
+    const systemRouter = Router();
+    const accountsRouter = Router();
+    const projectRouter = Router();
 
     AccountsRoute.create(accountsRouter);
     ProjectRoute.create(projectRouter);

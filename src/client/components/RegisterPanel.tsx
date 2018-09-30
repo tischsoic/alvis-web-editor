@@ -112,23 +112,23 @@ export class RegisterPanel extends React.Component<
         return;
       }
 
-      const afterAccountEmail = axios.head(urlBase + '/account/' + email),
-        emailUniqueByResponseStatus = (
-          responseStatus: number,
-        ): boolean | null => {
-          let emailUnique = null;
+      const afterAccountEmail = axios.head(urlBase + '/account/' + email);
+      const emailUniqueByResponseStatus = (
+        responseStatus: number,
+      ): boolean | null => {
+        let emailUnique = null;
 
-          switch (responseStatus) {
-            case 200:
-              emailUnique = false;
-              break;
-            case 404:
-              emailUnique = true;
-              break;
-          }
+        switch (responseStatus) {
+          case 200:
+            emailUnique = false;
+            break;
+          case 404:
+            emailUnique = true;
+            break;
+        }
 
-          return emailUnique;
-        };
+        return emailUnique;
+      };
 
       afterAccountEmail
         .then((response: AxiosResponse) => {
@@ -371,8 +371,8 @@ export class RegisterPanel extends React.Component<
                 afterRegistered
                   .then((response: AxiosResponse) => {
                     console.log(response);
-                    const responseData = response.data,
-                      success = responseData.success;
+                    const responseData = response.data;
+                    const success = responseData.success;
 
                     this.setState({
                       registered: success,

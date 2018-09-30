@@ -33,8 +33,8 @@ export class HierarchyTree extends React.Component<
   }
 
   getElementByFn<T>(elements: List<T>, fn: (element: T) => boolean) {
-    const elementIndex = elements.findIndex(fn),
-      element = elementIndex !== -1 ? elements.get(elementIndex) : null;
+    const elementIndex = elements.findIndex(fn);
+    const element = elementIndex !== -1 ? elements.get(elementIndex) : null;
 
     return element;
   }
@@ -60,11 +60,11 @@ export class HierarchyTree extends React.Component<
   getPageTree(page: IPageRecord) {
     const { onPageClick, onMxGraphPageDeleted } = this.props;
     const subPages = page.subPagesInternalIds.map((pageInternalId) =>
-        this.getPageByInternalId(pageInternalId),
-      ),
-      subPagesTrees = subPages.map((subPage) => this.getPageTree(subPage)),
-      supAgent = this.getPageSupAgent(page),
-      pageInternalId = page.internalId;
+      this.getPageByInternalId(pageInternalId),
+    );
+    const subPagesTrees = subPages.map((subPage) => this.getPageTree(subPage));
+    const supAgent = this.getPageSupAgent(page);
+    const pageInternalId = page.internalId;
 
     return (
       <li key={pageInternalId}>

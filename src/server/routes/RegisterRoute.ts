@@ -24,16 +24,16 @@ export class RegisterRoute extends BaseRoute {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const reqBody = req.body,
-        userData: IUserAttribute = {
-          email: reqBody.email,
-          password: sha512(reqBody.password, dbPasswordSalt),
-          firstname: reqBody.firstname,
-          lastname: reqBody.lastname,
-          activated: false,
-        },
-        newEntity = db.models.User.build(userData),
-        savedUser = await newEntity.save();
+      const reqBody = req.body;
+      const userData: IUserAttribute = {
+        email: reqBody.email,
+        password: sha512(reqBody.password, dbPasswordSalt),
+        firstname: reqBody.firstname,
+        lastname: reqBody.lastname,
+        activated: false,
+      };
+      const newEntity = db.models.User.build(userData);
+      const savedUser = await newEntity.save();
 
       res.json({ success: true });
     } catch (e) {

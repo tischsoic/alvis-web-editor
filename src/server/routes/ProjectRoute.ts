@@ -94,9 +94,9 @@ export class ProjectRoute extends BaseRoute {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const projectId: number = req.params.id,
-        filePath = await this.getProjectFilePath(projectId),
-        projectSourceCode: string = req.body.sourcecode;
+      const projectId: number = req.params.id;
+      const filePath = await this.getProjectFilePath(projectId);
+      const projectSourceCode: string = req.body.sourcecode;
 
       fs.writeFile(filePath, projectSourceCode, { encoding: 'utf-8' }, (e) => {
         if (e) {
@@ -116,8 +116,8 @@ export class ProjectRoute extends BaseRoute {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const projectId: number = req.params.id,
-        filePath = await this.getProjectFilePath(projectId);
+      const projectId: number = req.params.id;
+      const filePath = await this.getProjectFilePath(projectId);
 
       fs.readFile(filePath, 'utf-8', (e, data: string) => {
         if (e) {
@@ -139,15 +139,15 @@ export class ProjectRoute extends BaseRoute {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const reqBody = req.body,
-        reqFileFilename = req.file.filename,
-        fileData: IFileAttribute = {
-          name: reqBody.name,
-          realtive_path: reqFileFilename,
-        },
-        newFileEntity = db.models.File.build(fileData),
-        savedFileEntity = await newFileEntity.save(),
-        filePath = alvisProjectsFilesDir + reqFileFilename;
+      const reqBody = req.body;
+      const reqFileFilename = req.file.filename;
+      const fileData: IFileAttribute = {
+        name: reqBody.name,
+        realtive_path: reqFileFilename,
+      };
+      const newFileEntity = db.models.File.build(fileData);
+      const savedFileEntity = await newFileEntity.save();
+      const filePath = alvisProjectsFilesDir + reqFileFilename;
 
       fs.readFile(filePath, 'utf-8', (e, sourcecode: string) => {
         if (e) {
@@ -155,9 +155,9 @@ export class ProjectRoute extends BaseRoute {
         }
 
         res.json({
+          sourcecode,
           projectId: savedFileEntity.id,
           name: savedFileEntity.name,
-          sourcecode,
         });
       });
     } catch (e) {
@@ -171,10 +171,10 @@ export class ProjectRoute extends BaseRoute {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const reqBody: { name: string; sourceCode: string } = req.body,
-        { name, sourceCode } = reqBody,
-        filename = getRandomAlvisProjectFilename(),
-        filePath = path.join(alvisProjectsFilesDir + filename);
+      const reqBody: { name: string; sourceCode: string } = req.body;
+      const { name, sourceCode } = reqBody;
+      const filename = getRandomAlvisProjectFilename();
+      const filePath = path.join(alvisProjectsFilesDir + filename);
 
       fs.writeFile(
         filePath,
@@ -192,11 +192,11 @@ export class ProjectRoute extends BaseRoute {
           } // TO DO: handle more exceptions
 
           const fileData: IFileAttribute = {
-              name: reqBody.name,
-              realtive_path: filename,
-            },
-            newFileEntity = db.models.File.build(fileData),
-            savedFileEntity = await newFileEntity.save();
+            name: reqBody.name,
+            realtive_path: filename,
+          };
+          const newFileEntity = db.models.File.build(fileData);
+          const savedFileEntity = await newFileEntity.save();
 
           res.json({
             projectId: savedFileEntity.id,

@@ -108,9 +108,9 @@ export class EditorComponent extends React.Component<
   }
 
   componentWillReceiveProps(nextProps: Editor.AllProps) {
-    const { activePageInternalId } = this.state,
-      nextPages = nextProps.alvisProject.pages,
-      nextPagesInternalIds = nextPages.map((page) => page.internalId);
+    const { activePageInternalId } = this.state;
+    const nextPages = nextProps.alvisProject.pages;
+    const nextPagesInternalIds = nextPages.map((page) => page.internalId);
 
     let nextActivePageInternalId: string = null;
     if (nextPagesInternalIds.contains(activePageInternalId)) {
@@ -149,8 +149,8 @@ export class EditorComponent extends React.Component<
   }
 
   getElementByFn<T>(elements: List<T>, fn: (element: T) => boolean) {
-    const elementIndex = elements.findIndex(fn),
-      element = elementIndex !== -1 ? elements.get(elementIndex) : null;
+    const elementIndex = elements.findIndex(fn);
+    const element = elementIndex !== -1 ? elements.get(elementIndex) : null;
 
     return element;
   }
@@ -272,6 +272,7 @@ function mapDispatchToProps(dispatch: any): Editor.DispatchProps {
 }
 
 // It seems that you need withRouter when using connect.
+/* tslint:disable-next-line:variable-name */
 export const Editor: React.ComponentClass = withRouter(connect<
   Editor.StateProps,
   Editor.DispatchProps,

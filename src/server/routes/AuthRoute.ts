@@ -24,12 +24,12 @@ export class AuthRoute extends BaseRoute {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const reqBody: { email: string; password: string } = req.body,
-        user = await db.models.User.findOne({
-          where: {
-            email: reqBody.email,
-          },
-        });
+      const reqBody: { email: string; password: string } = req.body;
+      const user = await db.models.User.findOne({
+        where: {
+          email: reqBody.email,
+        },
+      });
 
       if (!user) {
         res.status(401).json({
@@ -48,8 +48,8 @@ export class AuthRoute extends BaseRoute {
         return;
       }
 
-      const payload = { id: user.id },
-        token = jwt.sign(payload, jwtSalt);
+      const payload = { id: user.id };
+      const token = jwt.sign(payload, jwtSalt);
 
       res.json({ success: true, token: token });
     } catch (e) {

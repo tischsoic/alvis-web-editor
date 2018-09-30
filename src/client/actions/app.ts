@@ -81,10 +81,10 @@ const signIn = (email: string, password: string) => {
       .then((response: AxiosResponse) => {
         console.log(response);
 
-        const responseData = response.data,
-          success = responseData.success,
-          message = responseData.message,
-          token = responseData.token;
+        const responseData = response.data;
+        const success = responseData.success;
+        const message = responseData.message;
+        const token = responseData.token;
 
         if (success) {
           dispatch(setBearerToken(token));
@@ -124,8 +124,8 @@ const register = (
       .then((response: AxiosResponse) => {
         console.log(response);
 
-        const responseData = response.data,
-          success = responseData.success;
+        const responseData = response.data;
+        const success = responseData.success;
 
         dispatch(setDuringRegistration(false));
       })
@@ -270,8 +270,8 @@ const openProjectFromServer = (
 
     promise
       .then((response: AxiosResponse) => {
-        const { sourcecode } = response.data, // TO DO: better name would be 'code' or 'sources', probably 'code'
-          xmlDocument = mx.mxUtils.parseXml(sourcecode);
+        const { sourcecode } = response.data; // TO DO: better name would be 'code' or 'sources', probably 'code'
+        const xmlDocument = mx.mxUtils.parseXml(sourcecode);
 
         dispatch(openProject(projectId, parseAlvisProjectXML(xmlDocument)));
         // dispatch(setProjectsDuringFetching(false));
@@ -291,14 +291,14 @@ const saveProjectToServer = (): ((
   getState: () => RootState,
 ) => AxiosPromise) => {
   return (dispatch, getState): AxiosPromise => {
-    const alvisProject = getState().project.alvisProject,
-      alvisProjectXml = parseAlvisProjectToXml(alvisProject);
+    const alvisProject = getState().project.alvisProject;
+    const alvisProjectXml = parseAlvisProjectToXml(alvisProject);
 
-    const projectId = getState().app.openedProjectId,
-      promise = getServerApi(getState()).project.save(
-        projectId,
-        alvisProjectXml,
-      );
+    const projectId = getState().app.openedProjectId;
+    const promise = getServerApi(getState()).project.save(
+      projectId,
+      alvisProjectXml,
+    );
 
     promise
       .then((response) => {
@@ -340,8 +340,8 @@ const createProjectFromFile = (
 
     promise
       .then((response) => {
-        const { id, name, sourcecode } = response.data,
-          xmlDocument = mx.mxUtils.parseXml(sourcecode);
+        const { id, name, sourcecode } = response.data;
+        const xmlDocument = mx.mxUtils.parseXml(sourcecode);
 
         dispatch(openProject(id, parseAlvisProjectXML(xmlDocument)));
         dispatch(fetchProjects());
@@ -363,8 +363,8 @@ const createEmptyProject = (
   getState: () => RootState,
 ) => AxiosPromise) => {
   return (dispatch, getState): AxiosPromise => {
-    const emptyAlvisProject = getValidEmptyAlvisProject(),
-      emptyAlvisProjectXml = parseAlvisProjectToXml(emptyAlvisProject);
+    const emptyAlvisProject = getValidEmptyAlvisProject();
+    const emptyAlvisProjectXml = parseAlvisProjectToXml(emptyAlvisProject);
 
     const promise = getServerApi(getState()).project.create(
       projectName,
@@ -373,8 +373,8 @@ const createEmptyProject = (
 
     promise
       .then((response) => {
-        const { projectId, projectName, projectSourceCode } = response.data,
-          xmlDocument = mx.mxUtils.parseXml(projectSourceCode);
+        const { projectId, projectName, projectSourceCode } = response.data;
+        const xmlDocument = mx.mxUtils.parseXml(projectSourceCode);
 
         dispatch(openProject(projectId, parseAlvisProjectXML(xmlDocument)));
         dispatch(fetchProjects());
@@ -401,14 +401,14 @@ const deleteProject = (
 
     promise
       .then((response) => {
-        const responseData: { success: boolean } = response.data,
-          { success } = responseData;
+        const responseData: { success: boolean } = response.data;
+        const { success } = responseData;
 
         if (success) {
-          const allProjects = getState().app.projects,
-            allProjectsWithoutDeleted = allProjects.delete(
-              allProjects.findIndex((el) => el.id === projectId),
-            );
+          const allProjects = getState().app.projects;
+          const allProjectsWithoutDeleted = allProjects.delete(
+            allProjects.findIndex((el) => el.id === projectId),
+          );
 
           dispatch(setProjects(allProjectsWithoutDeleted));
           if (projectId == currentProjectId) {
