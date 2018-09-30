@@ -39,11 +39,11 @@ import {
   IPort,
   IConnection,
   IPage,
-  IInternalRecord,
+  IIdentifiableElement,
   IAlvisElement,
   IAlvisProject,
   IAlvisProjectRecord,
-  IInternalRecordF,
+  IInternalRecord,
 } from '../../models/alvisProject';
 import * as projectActions from '../../constants/projectActions';
 import { List } from 'immutable';
@@ -178,7 +178,7 @@ describe('Project reducer', () => {
       const keyInState = modifiedRecAndKey[1];
       expect(
         getRecordByInternalId(
-          modifiedState.alvisProject[keyInState] as List<IInternalRecordF>, // TODO: is it good idea to cast it to List<IInternalRecordF>?
+          modifiedState.alvisProject[keyInState] as List<IInternalRecord>, // TODO: is it good idea to cast it to List<IInternalRecordF>?
           modifiedRecord.internalId,
         ),
       ).toEqual(modifiedRecord);
@@ -197,7 +197,7 @@ describe('Project reducer', () => {
           // https://stackoverflow.com/questions/42427393/cannot-invoke-an-expression-whose-type-lacks-a-call-signature
           // https://github.com/Microsoft/TypeScript/issues/7294
           return <IAlvisProjectRecord[AlvisProjectKeysLeadingToLists]>(elements as List<
-            IInternalRecordF
+            IInternalRecord
           >).filter((el) => el.internalId !== modifiedRecord.internalId);
         }),
       );

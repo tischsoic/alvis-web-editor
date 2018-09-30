@@ -7,8 +7,8 @@ import {
   IPortRecord,
   IConnectionRecord,
   IPageRecord,
+  IIdentifiableElement,
   IInternalRecord,
-  IInternalRecordF,
 } from '../../models/alvisProject';
 import {
   IProjectRecord,
@@ -245,7 +245,7 @@ export default handleActions<
   initialState,
 );
 
-function addElementToState<T extends IInternalRecordF>(
+function addElementToState<T extends IInternalRecord>(
   state: IProjectRecord,
   elementRecord: T,
   fnToModifyAlvisProjectRecord: (

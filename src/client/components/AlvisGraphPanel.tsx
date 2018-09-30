@@ -6,7 +6,7 @@ import {
   portRecordFactory,
   IConnectionRecord,
   connectionRecordFactory,
-  IInternalRecord,
+  IIdentifiableElement,
   IAlvisPageElement,
   ConnectionDirection,
   IPageRecord,
@@ -128,7 +128,7 @@ export class AlvisGraphPanel extends React.Component<
     return element;
   }
 
-  getElementByInternalId<T extends IInternalRecord>(
+  getElementByInternalId<T extends IIdentifiableElement>(
     elements: List<T>,
     internalId: string,
   ): T {

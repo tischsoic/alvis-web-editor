@@ -13,13 +13,13 @@ import {
   IAlvisCodeRecord,
   ConnectionDirection,
   IAlvisProject,
-  IInternalRecord,
+  IIdentifiableElement,
   IAgent,
   IConnection,
   IInternalId,
   IAlvisElementTag,
   IAlvisElementRecord,
-  IInternalRecordF,
+  IInternalRecord,
 } from '../models/alvisProject';
 import { List, Stack, Set } from 'immutable';
 import {
@@ -53,7 +53,7 @@ export function getValidEmptyAlvisProject(): IAlvisProjectRecord {
 
 // ABSTRACT --------------------------------------------
 
-export const getRecordByInternalId = <T extends IInternalRecordF>(
+export const getRecordByInternalId = <T extends IInternalRecord>(
   list: List<T>,
   internalId: string,
 ): T => list.find((el) => el.internalId === internalId);
@@ -68,8 +68,8 @@ export function getRecord(alvisProject: IAlvisProjectRecord) {
   return (
     recordInternalId: string,
     key: AlvisProjectKeysLeadingToLists,
-  ): IInternalRecord => {
-    const records: List<IInternalRecord> = alvisProject[key];
+  ): IIdentifiableElement => {
+    const records: List<IIdentifiableElement> = alvisProject[key];
     const recordIndex = getListElementIndexWithInternalId(records)(
       recordInternalId,
     );
@@ -103,7 +103,7 @@ function addConnectionRecord(alvisProject: IAlvisProjectRecord) {
 
 function changeRecord(alvisProject: IAlvisProjectRecord) {
   return (
-    record: IInternalRecord,
+    record: IIdentifiableElement,
     key: AlvisProjectKeysLeadingToLists,
   ): IAlvisProjectRecord => {
     const projectWithChangedRecord = alvisProject.update(
@@ -135,7 +135,7 @@ function deleteRecord<K extends AlvisProjectKeysLeadingToLists>(
   };
 }
 
-function updateListElement<T extends IInternalRecordF>(elements: List<T>) {
+function updateListElement<T extends IInternalRecord>(elements: List<T>) {
   return (elementToUpdate: T): List<T> => {
     return elements.update(
       elements.findIndex(
@@ -147,7 +147,7 @@ function updateListElement<T extends IInternalRecordF>(elements: List<T>) {
 }
 
 function updateListElementWithInternalId<
-  T extends IInternalRecord | IInternalRecord
+  T extends IIdentifiableElement | IIdentifiableElement
 >(elements: List<T>) {
   return (elementInternalId: string, modifier: (elem: T) => T): List<T> => {
     return elements.update(
@@ -159,7 +159,7 @@ function updateListElementWithInternalId<
   };
 }
 
-function deleteListElementWithInternalId<T extends IInternalRecord>(
+function deleteListElementWithInternalId<T extends IIdentifiableElement>(
   elements: List<T>,
 ) {
   return (elementInternalId: string): List<T> => {
@@ -175,7 +175,7 @@ function deleteListElementWithInternalId<T extends IInternalRecord>(
   };
 }
 
-function getListElementIndexWithInternalId<T extends IInternalRecord>(
+function getListElementIndexWithInternalId<T extends IIdentifiableElement>(
   elements: List<T>,
 ) {
   return (elementInternalId: string): number => {
@@ -191,7 +191,7 @@ function getListElementIndexWithFn<T>(elements: List<T>) {
   };
 }
 
-export function getListElementByInternalId<T extends IInternalRecord>(
+export function getListElementByInternalId<T extends IIdentifiableElement>(
   elements: List<T>,
   internalId: string,
 ): T | null {
@@ -327,7 +327,7 @@ export const applyModification = (alvisProject: IAlvisProjectRecord) => (
 //
 //
 //
-function assignInternalIdsInList<T extends IInternalRecordF>(
+function assignInternalIdsInList<T extends IInternalRecord>(
   elements: List<T>,
   lastInternalId: number,
 ): List<T> {

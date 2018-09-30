@@ -4,10 +4,10 @@ import { IProjectModification } from './project';
 export type IInternalId = string;
 
 // TODO: rename internalId to just id. There is no need to call it internalId because mxGraph id is stored in AlvisGraph component
-export interface IInternalRecord {
+export interface IIdentifiableElement {
   internalId: IInternalId;
 }
-export type IInternalRecordF = ReturnType<Record.Factory<IInternalRecord>>;
+export type IInternalRecord = ReturnType<Record.Factory<IIdentifiableElement>>;
 
 // TODO: it is a bit stupid to call one thing IAlvisPageElement and IAgent another
 // better call it IPageElement!
@@ -24,7 +24,7 @@ export type IAlvisElementTag = 'pages' | IAlvisPageElementTag;
 export type IAlvisElementRecord = IPageRecord | IAlvisPageElementRecord;
 
 // TO DO: what about creating another interface with properties which can be modified? -> e.g. agentInternalId should not be changed in port modification.
-export interface IPort extends IInternalRecord {
+export interface IPort extends IIdentifiableElement {
   agentInternalId: string;
   name: string;
   x: number;
@@ -44,7 +44,7 @@ const defaultPortRecord: IPort = {
 };
 export const portRecordFactory = Record<IPort>(defaultPortRecord);
 
-export interface IAgent extends IInternalRecord {
+export interface IAgent extends IIdentifiableElement {
   internalId: string; // TODO: if it extends IInternalRecord it is not necessary to redefne internalId field here.
   pageInternalId: string;
   subPageInternalId: string;
@@ -78,7 +78,7 @@ const defaultAgentRecord: IAgent = {
 export const agentRecordFactory = Record<IAgent>(defaultAgentRecord);
 
 export type ConnectionDirection = 'target' | 'source' | 'none'; // TO DO: that is all?
-export interface IConnection extends IInternalRecord {
+export interface IConnection extends IIdentifiableElement {
   internalId: string; // TODO: should we remove ''? Record.Factory does not need this, but wouldnt it be good
   // to let it be in order to make this interface more practical?
   direction: ConnectionDirection;
@@ -98,7 +98,7 @@ export const connectionRecordFactory = Record<IConnection>(
   defaultConnectionRecord,
 );
 
-export interface IPage extends IInternalRecord {
+export interface IPage extends IIdentifiableElement {
   internalId: string;
   name: string;
   agentsInternalIds: List<string>;

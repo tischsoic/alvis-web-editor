@@ -2,7 +2,7 @@ import { Record, List } from 'immutable';
 import {
   IAlvisProjectRecord,
   IAlvisElement,
-  IInternalRecord,
+  IIdentifiableElement,
   IConnection,
   IPort,
   IAgent,
@@ -40,6 +40,10 @@ export interface IProjectElementModification<Element> {
 export type IProjectElementModificationRecord<Element> = ReturnType<
   Record.Factory<IProjectElementModification<Element>>
 >;
+// TODO: should it take as input object Partial<IProjectElementModificationRecord> ?
+// do we need this?
+// TODO: name is misleading, in fact it is FactoryOfFactory
+// this is why we need: `()()` in `pages: projectElementModificationFactory<IPageRecord>()(),`
 export const projectElementModificationFactory = function<Element>() {
   const defaultProjectElementModificationRecord = {
     added: List<Element>(),
