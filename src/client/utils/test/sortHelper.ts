@@ -8,24 +8,24 @@ export function sortProjectModification(
 ): IProjectModificationRecord {
   return projectModificationRecordFactoryPartial({
     pages: {
-      added: semiModification.pages.added.sort().toList(),
-      modified: semiModification.pages.modified.sort().toList(),
-      deleted: semiModification.pages.deleted.sort().toList(),
+      added: semiModification.pages.added.sort(),
+      modified: semiModification.pages.modified.sort(),
+      deleted: semiModification.pages.deleted.sort(),
     },
     agents: {
-      added: semiModification.agents.added.sort().toList(),
-      modified: semiModification.agents.modified.sort().toList(),
-      deleted: semiModification.agents.deleted.sort().toList(),
+      added: semiModification.agents.added.sort(),
+      modified: semiModification.agents.modified.sort(),
+      deleted: semiModification.agents.deleted.sort(),
     },
     ports: {
-      added: semiModification.ports.added.sort().toList(),
-      modified: semiModification.ports.modified.sort().toList(),
-      deleted: semiModification.ports.deleted.sort().toList(),
+      added: semiModification.ports.added.sort(),
+      modified: semiModification.ports.modified.sort(),
+      deleted: semiModification.ports.deleted.sort(),
     },
     connections: {
-      added: semiModification.connections.added.sort().toList(),
-      modified: semiModification.connections.modified.sort().toList(),
-      deleted: semiModification.connections.deleted.sort().toList(),
+      added: semiModification.connections.added.sort(),
+      modified: semiModification.connections.modified.sort(),
+      deleted: semiModification.connections.deleted.sort(),
     },
   });
 }

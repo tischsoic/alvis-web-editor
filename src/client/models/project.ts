@@ -1,9 +1,8 @@
 import { Record, List } from 'immutable';
-import { TypedRecord, makeTypedFactory } from 'typed-immutable-record';
 import {
   IAlvisProjectRecord,
   IAlvisElement,
-  IInternalRecord,
+  IIdentifiableElement,
   IConnection,
   IPort,
   IAgent,
@@ -15,50 +14,46 @@ import {
 } from './alvisProject';
 
 export interface IProject {
-  readonly xml: string | null;
-  readonly alvisProject: IAlvisProjectRecord | null;
-  readonly lastInternalId: number;
-  readonly oppositeModifications: List<IOppositeModificationsRecord>;
-  readonly oppositeModificationCurrentIdx: number | null;
+  xml: string | null;
+  alvisProject: IAlvisProjectRecord | null;
+  lastInternalId: number;
+  oppositeModifications: List<IOppositeModificationsRecord>;
+  oppositeModificationCurrentIdx: number | null;
 }
-
-export interface IProjectRecord extends TypedRecord<IProjectRecord>, IProject {}
-
-const defaultPorjectRecord = {
+export type IProjectRecord = ReturnType<Record.Factory<IProject>>;
+const defaultProjectRecord = {
   xml: null,
   alvisProject: null,
   lastInternalId: -1,
   oppositeModifications: List<IOppositeModificationsRecord>(),
   oppositeModificationCurrentIdx: -1, // TODO: do we want -1, maybe 0/null would be better?
 };
-
-export const projectRecordFactory = makeTypedFactory<IProject, IProjectRecord>(
-  defaultPorjectRecord,
-);
+export const projectRecordFactory = Record<IProject>(defaultProjectRecord);
 
 type PartialPartial<T> = { [P in keyof T]?: Partial<T[P]> };
 
 export interface IProjectElementModification<Element> {
-  readonly added: List<Element>;
-  readonly modified: List<Element>;
-  readonly deleted: List<string>;
+  added: List<Element>;
+  modified: List<Element>;
+  deleted: List<string>;
 }
-
-export interface IProjectElementModificationRecord<Element>
-  extends TypedRecord<IProjectElementModificationRecord<Element>>,
-    IProjectElementModification<Element> {}
-
+export type IProjectElementModificationRecord<Element> = ReturnType<
+  Record.Factory<IProjectElementModification<Element>>
+>;
+// TODO: should it take as input object Partial<IProjectElementModificationRecord> ?
+// do we need this?
+// TODO: name is misleading, in fact it is FactoryOfFactory
+// this is why we need: `()()` in `pages: projectElementModificationFactory<IPageRecord>()(),`
 export const projectElementModificationFactory = function<Element>() {
-  const defaultProjectElemetModificationRecord = {
+  const defaultProjectElementModificationRecord = {
     added: List<Element>(),
     modified: List<Element>(),
     deleted: List<string>(),
   };
 
-  return makeTypedFactory<
-    IProjectElementModification<Element>,
-    IProjectElementModificationRecord<Element>
-  >(defaultProjectElemetModificationRecord);
+  return Record<IProjectElementModification<Element>>(
+    defaultProjectElementModificationRecord,
+  );
 };
 
 export interface IProjectModification {
@@ -67,39 +62,27 @@ export interface IProjectModification {
   ports: IProjectElementModificationRecord<IPortRecord>;
   connections: IProjectElementModificationRecord<IConnectionRecord>;
 }
-
-export interface IProjectModificationRecord
-  extends TypedRecord<IProjectModificationRecord>,
-    Readonly<IProjectModification> {}
-
+export type IProjectModificationRecord = ReturnType<
+  Record.Factory<IProjectModification>
+>;
 const defaultProjectModificationRecord = {
   pages: projectElementModificationFactory<IPageRecord>()(),
   agents: projectElementModificationFactory<IAgentRecord>()(),
   ports: projectElementModificationFactory<IPortRecord>()(),
   connections: projectElementModificationFactory<IConnectionRecord>()(),
 };
-
-export const projectModificationRecordFactory = makeTypedFactory<
-  Readonly<IProjectModification>,
-  IProjectModificationRecord
->(defaultProjectModificationRecord);
-
+export const projectModificationRecordFactory = Record<IProjectModification>(
+  defaultProjectModificationRecord,
+);
 export const projectModificationRecordFactoryPartial = (
   data: PartialPartial<IProjectModification>,
 ): IProjectModificationRecord => {
   const defaultRecord = projectModificationRecordFactory();
 
   let modifiedRecord = defaultRecord;
-  // TODO: after upgrade of Immutable.JS to v4 change code so that it won't use this helper function for of should suffice
-  const iterate = function*<T>(iterator: Iterator<T>) {
-    let next = iterator.next();
-    while (!next.done) {
-      yield next.value;
-      next = iterator.next();
-    }
-  };
 
-  for (const elementKey of iterate(defaultRecord.keys())) {
+  // TODO: simplify logic:
+  for (const [elementKey, element] of defaultRecord) {
     let elementSubrecord: IProjectElementModificationRecord<any> =
       modifiedRecord[elementKey];
     const dataSubrecord = data[elementKey];
@@ -108,7 +91,7 @@ export const projectModificationRecordFactoryPartial = (
       continue;
     }
 
-    for (const key of iterate(elementSubrecord.keys())) {
+    for (const [key, value] of elementSubrecord) {
       const value =
         dataSubrecord[key] != null ? dataSubrecord[key] : elementSubrecord[key];
       elementSubrecord = elementSubrecord.set(key, value);
@@ -121,20 +104,16 @@ export const projectModificationRecordFactoryPartial = (
 };
 
 export interface IOppositeModifications {
-  readonly modification: IProjectModificationRecord;
-  readonly antiModification: IProjectModificationRecord;
+  modification: IProjectModificationRecord;
+  antiModification: IProjectModificationRecord;
 }
-
-export interface IOppositeModificationsRecord
-  extends TypedRecord<IOppositeModificationsRecord>,
-    IOppositeModifications {}
-
+export type IOppositeModificationsRecord = ReturnType<
+  Record.Factory<IOppositeModifications>
+>;
 const defaultOppositeModificationsRecord: IOppositeModifications = {
   modification: projectModificationRecordFactoryPartial({}),
   antiModification: projectModificationRecordFactoryPartial({}),
 };
-
-export const oppositeModificationsFactory = makeTypedFactory<
-  IOppositeModifications,
-  IOppositeModificationsRecord
->(defaultOppositeModificationsRecord);
+export const oppositeModificationsFactory = Record(
+  defaultOppositeModificationsRecord,
+);

@@ -6,7 +6,7 @@ import {
   portRecordFactory,
   IConnectionRecord,
   connectionRecordFactory,
-  IInternalRecord,
+  IIdentifiableElement,
   IAlvisPageElement,
   ConnectionDirection,
   IPageRecord,
@@ -102,11 +102,10 @@ export class AlvisGraphPanel extends React.Component<
     const nextPagesInternalIds = nextProps.alvisProject.pages.map(
       (page) => page.internalId,
     );
-    let newOpenedPagesInternalIds = openedPagesInternalIds
-      .filter((openedPageInternalId) =>
+    let newOpenedPagesInternalIds = openedPagesInternalIds.filter(
+      (openedPageInternalId) =>
         nextPagesInternalIds.contains(openedPageInternalId),
-      )
-      .toList();
+    );
 
     if (
       nextActivePageInternalId &&
@@ -129,7 +128,7 @@ export class AlvisGraphPanel extends React.Component<
     return element;
   }
 
-  getElementByInternalId<T extends IInternalRecord>(
+  getElementByInternalId<T extends IIdentifiableElement>(
     elements: List<T>,
     internalId: string,
   ): T {
@@ -189,9 +188,9 @@ export class AlvisGraphPanel extends React.Component<
     );
     const pagesTabs = pagesElements.map((pageElements) => {
       const page = pageElements.page;
-      const agents = pageElements.agents.toList();
-      const ports = pageElements.ports.toList();
-      const connections = pageElements.connections.toList();
+      const agents = pageElements.agents;
+      const ports = pageElements.ports;
+      const connections = pageElements.connections;
       const pageInternalId = page.internalId;
 
       return (

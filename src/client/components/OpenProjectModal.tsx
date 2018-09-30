@@ -6,7 +6,7 @@ import {
   portRecordFactory,
   IConnectionRecord,
   connectionRecordFactory,
-  IInternalRecord,
+  IIdentifiableElement,
   IAlvisPageElement,
   ConnectionDirection,
   IPageRecord,

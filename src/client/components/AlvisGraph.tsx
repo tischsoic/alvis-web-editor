@@ -24,7 +24,7 @@ import {
   portRecordFactory,
   IConnectionRecord,
   connectionRecordFactory,
-  IInternalRecord,
+  IIdentifiableElement,
   IAlvisPageElement,
   ConnectionDirection,
   IAlvisPageElementRecord,
@@ -493,7 +493,7 @@ export class AlvisGraph extends React.Component<
     value: any,
   ): T {
     if (value !== undefined) {
-      return element.set(key, value) as T; // TO DO: Check why I must cast??
+      return (element as any).set(key, value); // TODO: improve to not use casting to any
       // Will this site be helpful: https://stackoverflow.com/questions/43300008/type-is-not-assignable-to-generic-type ?
     }
     return element;
@@ -1129,21 +1129,19 @@ export class AlvisGraph extends React.Component<
     ): T | null => {
       return elements.find((el) => el.internalId === internalId);
     };
-    const nextInternalIds = next.map((el) => el.internalId),
-      currentInternalIds = current.map((el) => el.internalId),
-      newElements = next
-        .filter((el) => !currentInternalIds.contains(el.internalId))
-        .toList(),
-      deletedElements = current
-        .filter((el) => !nextInternalIds.contains(el.internalId))
-        .toList(),
-      notNewNextElements = next.filter((el) => el.internalId !== null),
-      modifiedElements = notNewNextElements
-        .filter((el) => {
-          const currentElRecord = getByInternalId(current, el.internalId);
-          return currentElRecord != null && !currentElRecord.equals(el);
-        })
-        .toList();
+    const nextInternalIds = next.map((el) => el.internalId);
+    const currentInternalIds = current.map((el) => el.internalId);
+    const newElements = next.filter(
+      (el) => !currentInternalIds.contains(el.internalId),
+    );
+    const deletedElements = current.filter(
+      (el) => !nextInternalIds.contains(el.internalId),
+    );
+    const notNewNextElements = next.filter((el) => el.internalId !== null);
+    const modifiedElements = notNewNextElements.filter((el) => {
+      const currentElRecord = getByInternalId(current, el.internalId);
+      return currentElRecord != null && !currentElRecord.equals(el);
+    });
 
     return {
       new: newElements,
@@ -1178,36 +1176,33 @@ export class AlvisGraph extends React.Component<
     ): T | null => {
       return elements.find((el) => el.internalId === internalId);
     };
-    const basicChanges = this.getBasicChanges(next, current),
-      // Ports whose agentInternalId has changed and internalId has not changed
-      // should be removed and then readded to new agent
-      portsIdsWhoseAgentChanged = basicChanges.modified
-        .filter((modifiedPort) => {
-          const currentPortRecord = getByInternalId(
-            current,
-            modifiedPort.internalId,
-          );
-          return (
-            modifiedPort.agentInternalId !== currentPortRecord.agentInternalId
-          );
-        })
-        .map((port) => port.internalId)
-        .toList(),
-      portsWhoseAgentChangedToAdd = next.filter((port) =>
-        portsIdsWhoseAgentChanged.contains(port.internalId),
-      ),
-      portsWhoseAgentChangedToDelete = current.filter((port) =>
-        portsIdsWhoseAgentChanged.contains(port.internalId),
-      );
+    const basicChanges = this.getBasicChanges(next, current);
+    // Ports whose agentInternalId has changed and internalId has not changed
+    // should be removed and then readded to new agent
+    const portsIdsWhoseAgentChanged = basicChanges.modified
+      .filter((modifiedPort) => {
+        const currentPortRecord = getByInternalId(
+          current,
+          modifiedPort.internalId,
+        );
+        return (
+          modifiedPort.agentInternalId !== currentPortRecord.agentInternalId
+        );
+      })
+      .map((port) => port.internalId);
+    const portsWhoseAgentChangedToAdd = next.filter((port) =>
+      portsIdsWhoseAgentChanged.contains(port.internalId),
+    );
+    const portsWhoseAgentChangedToDelete = current.filter((port) =>
+      portsIdsWhoseAgentChanged.contains(port.internalId),
+    );
 
     return {
-      new: basicChanges.new.concat(portsWhoseAgentChangedToAdd).toList(),
-      deleted: basicChanges.deleted
-        .concat(portsWhoseAgentChangedToDelete)
-        .toList(),
-      modified: basicChanges.modified
-        .filter((port) => !portsIdsWhoseAgentChanged.contains(port.internalId))
-        .toList(),
+      new: basicChanges.new.concat(portsWhoseAgentChangedToAdd),
+      deleted: basicChanges.deleted.concat(portsWhoseAgentChangedToDelete),
+      modified: basicChanges.modified.filter(
+        (port) => !portsIdsWhoseAgentChanged.contains(port.internalId),
+      ),
     };
   }
 

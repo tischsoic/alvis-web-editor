@@ -7,6 +7,8 @@ import {
   IPortRecord,
   IConnectionRecord,
   IPageRecord,
+  IIdentifiableElement,
+  IInternalRecord,
 } from '../../models/alvisProject';
 import {
   IProjectRecord,
@@ -46,7 +48,10 @@ export default handleActions<
       state: IProjectRecord,
       action: Action<IProjectModificationRecord>,
     ) => {
-      const [modification, project] = apManager.assignInternalIdsToNewElements(action.payload, state);
+      const [modification, project] = apManager.assignInternalIdsToNewElements(
+        action.payload,
+        state,
+      );
       const alvisProject = project.alvisProject;
       const fullModification = apManager.generateFullModification(
         modification,
@@ -240,9 +245,7 @@ export default handleActions<
   initialState,
 );
 
-function addElementToState<
-  T extends IAgentRecord | IPortRecord | IConnectionRecord | IPageRecord
->(
+function addElementToState<T extends IInternalRecord>(
   state: IProjectRecord,
   elementRecord: T,
   fnToModifyAlvisProjectRecord: (
@@ -250,9 +253,9 @@ function addElementToState<
   ) => (el: T) => IAlvisProjectRecord,
 ) {
   const newElementInternalId = state.lastInternalId + 1;
-  const elementToAdd: T = <T>elementRecord.set(
+  const elementToAdd: T = elementRecord.set(
     'internalId',
-    newElementInternalId,
+    String(newElementInternalId),
   ); // TO DO: Check why without casting it does not work?
   const stateAfterLastInternalIdUpdated = state.set(
     'lastInternalId',
