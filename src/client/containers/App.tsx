@@ -220,6 +220,7 @@ function mapDispatchToProps(dispatch: any): App.DispatchProps {
 }
 
 // It seems that you need withRouter when using connect.
+/* tslint:disable-next-line:variable-name */
 export const AppContainer: React.ComponentClass = withRouter(connect<
   App.StateProps,
   App.DispatchProps,

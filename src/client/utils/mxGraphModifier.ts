@@ -69,13 +69,13 @@ function addPortValidation(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
         return 'You cannot connect ports which belong to the same agent!';
       }
 
-      let edgesBetweenParents = graph.getEdgesBetween(
+      const edgesBetweenParents = graph.getEdgesBetween(
         source.getParent(),
         target.getParent(),
         false,
       );
 
-      for (let edgeBetweenParents of edgesBetweenParents) {
+      for (const edgeBetweenParents of edgesBetweenParents) {
         if (
           this.edgeIsBetweenTwoPorts(graph, edgeBetweenParents, source, target)
         ) {
@@ -96,11 +96,11 @@ function addPortValidation(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
         return false;
       }
 
-      let sourceId = source.getId(),
-        targetId = target.getId(),
-        edgeStyle = graph.getCellStyle(edge),
-        edgeSourcePortId = edgeStyle[mx.mxConstants.STYLE_SOURCE_PORT],
-        edgeTargetPortId = edgeStyle[mx.mxConstants.STYLE_TARGET_PORT];
+      const sourceId = source.getId();
+      const targetId = target.getId();
+      const edgeStyle = graph.getCellStyle(edge);
+      const edgeSourcePortId = edgeStyle[mx.mxConstants.STYLE_SOURCE_PORT];
+      const edgeTargetPortId = edgeStyle[mx.mxConstants.STYLE_TARGET_PORT];
 
       return (
         (sourceId == edgeSourcePortId && targetId == edgeTargetPortId) ||
@@ -322,7 +322,7 @@ function preparePortsSettings(
   graph.processChange = function(change) {
     oldProcessChange.apply(this, arguments);
 
-    let changeConstructorName = change.constructor.name;
+    const changeConstructorName = change.constructor.name;
     if (
       changeConstructorName === 'mxTerminalChange' ||
       changeConstructorName === 'mxGeometryChange'
@@ -348,8 +348,8 @@ function makePortsTerminalsForConnections(
   // Ports are not used as terminals for edges, they are
   // only used to compute the graphical connection point
   graph.isPort = function(cell) {
-    const geo = this.getCellGeometry(cell),
-      isEdge = graph.getModel().isEdge(cell);
+    const geo = this.getCellGeometry(cell);
+    const isEdge = graph.getModel().isEdge(cell);
 
     return geo != null ? geo.relative && !isEdge : false;
   };
@@ -371,7 +371,7 @@ function enableRubberbandSelection(
 
 function enableDelete(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
   const keyHandler = new mx.mxKeyHandler(graph);
-  keyHandler.bindKey(46, function(evt) {
+  keyHandler.bindKey(46, (evt) => {
     if (graph.isEnabled()) {
       graph.removeCells();
     }
@@ -424,15 +424,15 @@ function addPopupMenu(
       const modifyConnection = (direction: ConnectionDirection) => {
         onMxGraphConnectionModified(
           alvisGraph.createConnection({
-            mxGraphId: cell.getId(),
             direction,
+            mxGraphId: cell.getId(),
           }),
         );
       };
       menu.addItem('Direct to source', null, () => {
         modifyConnection('source');
       });
-      menu.addItem('Ditect to target', null, () => {
+      menu.addItem('Direct to target', null, () => {
         modifyConnection('target');
       });
       menu.addItem('Undirect', null, () => {
@@ -453,12 +453,12 @@ function addPopupMenu(
 
     menu.addItem('Add port', null, () => {
       const { ports } = alvisGraph.props;
-      const portsCount = ports.size,
-        portName = 'port_' + portsCount;
+      const portsCount = ports.size;
+      const portName = 'port_' + portsCount;
 
       graph.getModel().beginUpdate();
       try {
-        var portVertex = graph.insertVertex(
+        const portVertex = graph.insertVertex(
           cell,
           null,
           portName,

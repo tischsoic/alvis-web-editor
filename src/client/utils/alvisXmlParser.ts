@@ -44,8 +44,8 @@ function getFstElementByTagName(
   root: Element | XMLDocument,
   tagName: string,
 ): Element {
-  const elements = root ? root.getElementsByTagName(tagName) : null,
-    element = elements && elements.length === 1 ? elements.item(0) : null;
+  const elements = root ? root.getElementsByTagName(tagName) : null;
+  const element = elements && elements.length === 1 ? elements.item(0) : null;
 
   return element;
 }
@@ -74,18 +74,18 @@ function agentToRecord(
 ): IAgentRecord {
   return agentRecordFactory({
     internalId,
+    portsInternalIds,
+    pageInternalId,
+    subPageInternalId,
     name: agent.getAttribute('name'),
     index: agent.getAttribute('index'),
-    active: parseInt(agent.getAttribute('active')),
-    running: parseInt(agent.getAttribute('running')),
+    active: parseInt(agent.getAttribute('active'), 10),
+    running: parseInt(agent.getAttribute('running'), 10),
     color: agent.getAttribute('color'),
     height: parseFloat(agent.getAttribute('height')),
     width: parseFloat(agent.getAttribute('width')),
     x: parseFloat(agent.getAttribute('x')),
     y: parseFloat(agent.getAttribute('y')),
-    portsInternalIds,
-    pageInternalId,
-    subPageInternalId,
   });
 }
 
@@ -129,10 +129,10 @@ function pageToRecord(
 ): IPageRecord {
   return pageRecordFactory({
     internalId,
-    name: page.getAttribute('name'),
     agentsInternalIds,
     subPagesInternalIds,
     supAgentInternalId,
+    name: page.getAttribute('name'),
   });
 }
 
@@ -168,34 +168,34 @@ function processHierarchyToGetPagesData(
   hierarhyNodeNameToInternalId: string[],
   hierarchyNodeNameToPageElement: Element[],
 ): IAllPagesData {
-  const pageName = hierarchyElement.getAttribute('name'),
-    pageInternalId = hierarhyNodeNameToInternalId[pageName],
-    pageElement = hierarchyNodeNameToPageElement[pageName],
-    pageData = getSinglePageData(
-      pageElement,
-      pageInternalId,
-      lastInternalId,
-      supAgentInternalId,
-    ),
-    agentNameSubPageInternalId: [string, string][] = [],
-    subPagesData: IAllPagesData[] = [];
+  const pageName = hierarchyElement.getAttribute('name');
+  const pageInternalId = hierarhyNodeNameToInternalId[pageName];
+  const pageElement = hierarchyNodeNameToPageElement[pageName];
+  const pageData = getSinglePageData(
+    pageElement,
+    pageInternalId,
+    lastInternalId,
+    supAgentInternalId,
+  );
+  const agentNameSubPageInternalId: [string, string][] = [];
+  const subPagesData: IAllPagesData[] = [];
 
   lastInternalId = pageData.lastInternalId;
   for (let j = 0; j < hierarchyElement.children.length; ++j) {
-    const child = hierarchyElement.children[j],
-      pageName = child.getAttribute('name'),
-      agentName = child.getAttribute('agent'),
-      // pageInternalId = hierarhyNodeNameToInternalId[pageName],
-      // pageElement = hierarchyNodeNameToPageElement[pageName],
-      supAgentRecordIndex = getAgentIndexByName(pageData.agents, agentName),
-      supAgentRecord = pageData.agents.get(supAgentRecordIndex),
-      pageAndSubPagesData = processHierarchyToGetPagesData(
-        child,
-        lastInternalId,
-        supAgentRecord.internalId,
-        hierarhyNodeNameToInternalId,
-        hierarchyNodeNameToPageElement,
-      );
+    const child = hierarchyElement.children[j];
+    const pageName = child.getAttribute('name');
+    const agentName = child.getAttribute('agent');
+    // pageInternalId = hierarhyNodeNameToInternalId[pageName],
+    // pageElement = hierarchyNodeNameToPageElement[pageName],
+    const supAgentRecordIndex = getAgentIndexByName(pageData.agents, agentName);
+    const supAgentRecord = pageData.agents.get(supAgentRecordIndex);
+    const pageAndSubPagesData = processHierarchyToGetPagesData(
+      child,
+      lastInternalId,
+      supAgentRecord.internalId,
+      hierarhyNodeNameToInternalId,
+      hierarchyNodeNameToPageElement,
+    );
     // subPageData = getSinglePageData(pageElement, pageInternalId, lastInternalId, supAgentRecord.internalId);
 
     lastInternalId = pageAndSubPagesData.lastInternalId;
@@ -236,7 +236,7 @@ function processHierarchyToGetPagesData(
 }
 
 function getElementWithName(elements: NodeListOf<Element>, name: string) {
-  for (let i = 0; i < elements.length; ++i) {
+  for (let i = 0; i < elements.length; i += 1) {
     const element = elements[i];
 
     if (element.getAttribute('name') === name) {
@@ -253,14 +253,14 @@ function getPagesData(
   hierarchyNodesElements: NodeListOf<Element>,
   pagesElements: NodeListOf<Element>,
 ) {
-  const hierarchyNodeNameToInternalId: string[] = [],
-    hierarchyNodeNameToPageElement: Element[] = [];
+  const hierarchyNodeNameToInternalId: string[] = [];
+  const hierarchyNodeNameToPageElement: Element[] = [];
   let lastInternalId = -1;
 
-  for (let i = 0; i < hierarchyNodesElements.length; ++i) {
-    const hierarchyNodeElement = hierarchyNodesElements[i],
-      hierarchyNodeName = hierarchyNodeElement.getAttribute('name'),
-      pageInternalId = (++lastInternalId).toString();
+  for (let i = 0; i < hierarchyNodesElements.length; i += 1) {
+    const hierarchyNodeElement = hierarchyNodesElements[i];
+    const hierarchyNodeName = hierarchyNodeElement.getAttribute('name');
+    const pageInternalId = (++lastInternalId).toString();
 
     hierarchyNodeNameToInternalId[hierarchyNodeName] = pageInternalId;
     hierarchyNodeNameToPageElement[hierarchyNodeName] = getElementWithName(
@@ -303,25 +303,31 @@ function getSinglePageData(
   supAgentInternalId: string,
 ): ISinglePageData {
   const xmlIdToInternalId = [];
-  const agents: IAgentRecord[] = [],
-    ports: IPortRecord[] = [],
-    connections: IConnectionRecord[] = [];
+  const agents: IAgentRecord[] = [];
+  const ports: IPortRecord[] = [];
+  const connections: IConnectionRecord[] = [];
 
-  const pageAgentsElements = pageElement.getElementsByTagName('agent'),
-    pageConnectionsElements = pageElement.getElementsByTagName('connection'),
-    pageAgentsInternalIds: string[] = [],
-    pageConnectionsInternalIds: string[] = [];
+  const pageAgentsElements = pageElement.getElementsByTagName('agent');
+  const pageConnectionsElements = pageElement.getElementsByTagName(
+    'connection',
+  );
+  const pageAgentsInternalIds: string[] = [];
+  const pageConnectionsInternalIds: string[] = [];
 
-  for (let j = 0; j < pageAgentsElements.length; ++j) {
-    const agentElement = pageAgentsElements[j],
-      agentPortsElements = agentElement.getElementsByTagName('port'),
-      agentInternalId = (++lastInternalId).toString(),
-      agentPortsInternalIds: string[] = [];
+  for (let j = 0; j < pageAgentsElements.length; j += 1) {
+    const agentElement = pageAgentsElements[j];
+    const agentPortsElements = agentElement.getElementsByTagName('port');
+    const agentInternalId = (++lastInternalId).toString();
+    const agentPortsInternalIds: string[] = [];
 
-    for (let k = 0; k < agentPortsElements.length; ++k) {
-      const portElement = agentPortsElements[k],
-        portInternalId = (++lastInternalId).toString(),
-        portRecord = portToRecord(portElement, portInternalId, agentInternalId);
+    for (let k = 0; k < agentPortsElements.length; k += 1) {
+      const portElement = agentPortsElements[k];
+      const portInternalId = (++lastInternalId).toString();
+      const portRecord = portToRecord(
+        portElement,
+        portInternalId,
+        agentInternalId,
+      );
 
       ports.push(portRecord);
       xmlIdToInternalId[portElement.getAttribute('id')] = portInternalId;
@@ -340,15 +346,15 @@ function getSinglePageData(
     pageAgentsInternalIds.push(agentInternalId);
   }
 
-  for (let l = 0; l < pageConnectionsElements.length; ++l) {
-    const connectionElement = pageConnectionsElements[l],
-      connectionInternalId = (++lastInternalId).toString(),
-      connectionRecord = connectionToRecord(
-        connectionElement,
-        connectionInternalId,
-        xmlIdToInternalId[connectionElement.getAttribute('source')],
-        xmlIdToInternalId[connectionElement.getAttribute('target')],
-      );
+  for (let l = 0; l < pageConnectionsElements.length; l += 1) {
+    const connectionElement = pageConnectionsElements[l];
+    const connectionInternalId = (++lastInternalId).toString();
+    const connectionRecord = connectionToRecord(
+      connectionElement,
+      connectionInternalId,
+      xmlIdToInternalId[connectionElement.getAttribute('source')],
+      xmlIdToInternalId[connectionElement.getAttribute('target')],
+    );
 
     connections.push(connectionRecord);
     pageConnectionsInternalIds.push(connectionInternalId);
@@ -360,15 +366,15 @@ function getSinglePageData(
     List(pageAgentsInternalIds),
     List(pageConnectionsInternalIds),
     null,
-    supAgentInternalId, //subPagesInternalIds not set!!
+    supAgentInternalId, // subPagesInternalIds not set!!
   );
 
   return {
+    lastInternalId,
     page: pageRecord,
     agents: List(agents),
     ports: List(ports),
     connections: List(connections),
-    lastInternalId,
   };
 }
 
@@ -378,17 +384,17 @@ function parseAlvisProjectXML(
   console.log({
     doc: xmlDocument,
   });
-  const alvisProject = getFstElementByTagName(xmlDocument, 'alvisproject'),
-    hierarchy = getFstElementByTagName(alvisProject, 'hierarchy'),
-    code = getFstElementByTagName(alvisProject, 'code');
+  const alvisProject = getFstElementByTagName(xmlDocument, 'alvisproject');
+  const hierarchy = getFstElementByTagName(alvisProject, 'hierarchy');
+  const code = getFstElementByTagName(alvisProject, 'code');
 
   if (!hierarchy || !alvisProject || !code) {
     return null;
   }
 
-  const hierarchyNodes = hierarchy.getElementsByTagName('node'),
-    pages = alvisProject.getElementsByTagName('page'),
-    pagesData = getPagesData(hierarchyNodes, pages);
+  const hierarchyNodes = hierarchy.getElementsByTagName('node');
+  const pages = alvisProject.getElementsByTagName('page');
+  const pagesData = getPagesData(hierarchyNodes, pages);
 
   const alvisProjectRecord = alvisProjectRecordFactory({
     pages: pagesData.pages,

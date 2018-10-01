@@ -29,7 +29,7 @@ export class Server {
       // Testing if Sequalize works:
       console.log();
       db.models.User.findOne()
-        .then(function(user) {
+        .then((user) => {
           console.log(user);
           // console.log(question.get({
           //   plain: true
@@ -49,14 +49,11 @@ export class Server {
   }
 
   private addPassport() {
-    var jwtOptions: JwtStrategyOptions = {
+    const jwtOptions: JwtStrategyOptions = {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: jwtSalt,
     };
-    var strategy = new JwtStrategy(jwtOptions, async function(
-      jwt_payload,
-      next,
-    ) {
+    const strategy = new JwtStrategy(jwtOptions, async (jwt_payload, next) => {
       console.log('payload received', jwt_payload);
       // usually this would be a database call:
 
@@ -107,15 +104,17 @@ export class Server {
     );
     this.app.use(cookieParser('SECRET'));
     this.app.use(methodOverride());
-    this.app.use(function(
-      err: any,
-      req: express.Request,
-      res: express.Response,
-      next: express.NextFunction,
-    ) {
-      err.status = 404;
-      next(err);
-    });
+    this.app.use(
+      (
+        err: any,
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+      ) => {
+        err.status = 404;
+        next(err);
+      },
+    );
     // this.app.use(errorHandler());
   }
 

@@ -41,9 +41,9 @@ export class AccountsRoute extends BaseRoute {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const email = req.params.email,
-        emailUnique = await this.emailUnique(email),
-        responseStatus = emailUnique ? 404 : 200;
+      const email = req.params.email;
+      const emailUnique = await this.emailUnique(email);
+      const responseStatus = emailUnique ? 404 : 200;
 
       res.status(responseStatus).end();
     } catch (e) {
@@ -63,8 +63,8 @@ export class AccountsRoute extends BaseRoute {
 
   private async setActivated(req: Request, res: Response, next: NextFunction) {
     try {
-      const id: number = req.params.id,
-        { activated }: { activated: boolean; id: number } = req.body;
+      const id: number = req.params.id;
+      const { activated }: { activated: boolean; id: number } = req.body;
 
       console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
 
@@ -81,13 +81,13 @@ export class AccountsRoute extends BaseRoute {
         .then((update) => {
           console.log(JSON.stringify(update));
           res.json({
-            success: true,
             activated,
+            success: true,
           });
         })
         .catch((error) => {
           console.log(error);
-          res.status(500).send('Activation failed.'); //TO DO: shouldn't it be {success: false, activated;: false}
+          res.status(500).send('Activation failed.'); // TODO: shouldn't it be {success: false, activated;: false}
         });
     } catch (e) {
       next(e);

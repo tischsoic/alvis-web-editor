@@ -30,7 +30,9 @@ import { AxiosPromise } from 'axios';
 import { IProjectRecord } from '../models/app';
 import { getValidationState } from '../utils/reactBootstrapUtils';
 
-function CustomListGroupItem({ projectName, onOpen, onDelete }) {
+/* tslint:disable-next-line:variable-name */
+const CustomListGroupItem = ({ projectName, onOpen, onDelete }) => {
+  // TODO: Change (rather) to class component
   return (
     <li
       className="list-group-item clearfix"
@@ -53,7 +55,7 @@ function CustomListGroupItem({ projectName, onOpen, onDelete }) {
       </span>
     </li>
   );
-}
+};
 
 export interface OpenProjectModalProps {
   showModal: boolean;
@@ -283,8 +285,8 @@ export class OpenProjectModal extends React.Component<
           <Button
             type="submit"
             onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-              const nameValid = this.newProjectNameValid(newProjectName),
-                fileValid = this.newProjectFileValid(newProjectFiles);
+              const nameValid = this.newProjectNameValid(newProjectName);
+              const fileValid = this.newProjectFileValid(newProjectFiles);
 
               if (!nameValid || !fileValid) {
                 this.validateNewProjectName();
@@ -319,8 +321,8 @@ export class OpenProjectModal extends React.Component<
       openedProjectId,
       onModalClose,
     } = this.props;
-    const someProjectIsOpened = openedProjectId !== null,
-      modalTitle = 'Open';
+    const someProjectIsOpened = openedProjectId !== null;
+    const modalTitle = 'Open';
 
     return (
       <div>

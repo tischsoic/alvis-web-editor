@@ -3,7 +3,6 @@ import * as ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import { configureStore } from './store';
 
-import { App as oldApp } from './containers/App';
 import { AppContainer } from './containers/App';
 import { BrowserRouter } from 'react-router-dom';
 

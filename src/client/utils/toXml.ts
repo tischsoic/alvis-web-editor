@@ -53,8 +53,8 @@ import { getSystemPage, getListElementByInternalId } from './alvisProject';
 export const alvisNSUri = 'http://alvis.kis.agh.edu.pl/';
 
 function appendCode(alvisprojectDoc: Document, code: IAlvisCodeRecord) {
-  const codeElement: Element = document.createElementNS(alvisNSUri, 'code'),
-    textNodeWithCode = document.createTextNode(code.text);
+  const codeElement: Element = document.createElementNS(alvisNSUri, 'code');
+  const textNodeWithCode = document.createTextNode(code.text);
 
   codeElement.appendChild(textNodeWithCode);
   alvisprojectDoc.documentElement.appendChild(codeElement);
@@ -65,8 +65,8 @@ function appendHierarchy(
   pages: List<IPageRecord>,
   agents: List<IAgentRecord>,
 ) {
-  const systemPage = getSystemPage(pages),
-    hierarchy: Element = document.createElementNS(alvisNSUri, 'hierarchy');
+  const systemPage = getSystemPage(pages);
+  const hierarchy: Element = document.createElementNS(alvisNSUri, 'hierarchy');
 
   appendHierarchyNode(hierarchy, systemPage, pages, agents);
 
@@ -79,32 +79,32 @@ function appendHierarchyNode(
   pages: List<IPageRecord>,
   agents: List<IAgentRecord>,
 ) {
-  const hierarchyNode: Element = createHierarchyNodeElement(page, agents),
-    subHierarchyNodes = page.subPagesInternalIds
-      .map((subPageInternalId) =>
-        getListElementByInternalId(pages, subPageInternalId),
-      ) // TO DO: should we check for null?
-      .map((subPage) => {
-        const subPageHierarchyNodeElement = createHierarchyNodeElement(
-            subPage,
-            agents,
-          ),
-          subPageSubPages = subPage.subPagesInternalIds.map(
-            (subPageInternalId) =>
-              getListElementByInternalId(pages, subPageInternalId),
-          );
+  const hierarchyNode: Element = createHierarchyNodeElement(page, agents);
+  const subHierarchyNodes = page.subPagesInternalIds
+    .map((subPageInternalId) =>
+      getListElementByInternalId(pages, subPageInternalId),
+    ) // TO DO: should we check for null?
+    .map((subPage) => {
+      const subPageHierarchyNodeElement = createHierarchyNodeElement(
+        subPage,
+        agents,
+      );
+      const subPageSubPages = subPage.subPagesInternalIds.map(
+        (subPageInternalId) =>
+          getListElementByInternalId(pages, subPageInternalId),
+      );
 
-        subPageSubPages.forEach((subPageSubPage) => {
-          appendHierarchyNode(
-            subPageHierarchyNodeElement,
-            subPageSubPage,
-            pages,
-            agents,
-          );
-        });
-
-        return subPageHierarchyNodeElement;
+      subPageSubPages.forEach((subPageSubPage) => {
+        appendHierarchyNode(
+          subPageHierarchyNodeElement,
+          subPageSubPage,
+          pages,
+          agents,
+        );
       });
+
+      return subPageHierarchyNodeElement;
+    });
 
   subHierarchyNodes.forEach((subHierarchyNode) => {
     hierarchyNode.appendChild(subHierarchyNode);
@@ -118,10 +118,10 @@ function createHierarchyNodeElement(
   agents: List<IAgentRecord>,
 ): Element {
   const hierarchyNodeElement: Element = document.createElementNS(
-      alvisNSUri,
-      'node',
-    ),
-    supAgent = getListElementByInternalId(agents, page.supAgentInternalId);
+    alvisNSUri,
+    'node',
+  );
+  const supAgent = getListElementByInternalId(agents, page.supAgentInternalId);
 
   hierarchyNodeElement.setAttribute('agent', supAgent ? supAgent.name : '');
   hierarchyNodeElement.setAttribute('name', page.name);
@@ -273,31 +273,31 @@ function createConnectionElement(connection: IConnectionRecord): Element {
 
 export function parseAlvisProjectToXml(alvisProject: IAlvisProjectRecord) {
   const alvisDocumentType: DocumentType = document.implementation.createDocumentType(
-      'alvisproject',
-      'alvisPublicId-v0.1',
-      'alvisSystemId-v0.1',
-    ),
-    alvisprojectDoc: Document = document.implementation.createDocument(
-      alvisNSUri,
-      'alvisproject',
-      alvisDocumentType,
-    );
+    'alvisproject',
+    'alvisPublicId-v0.1',
+    'alvisSystemId-v0.1',
+  );
+  const alvisprojectDoc: Document = document.implementation.createDocument(
+    alvisNSUri,
+    'alvisproject',
+    alvisDocumentType,
+  );
 
-  const pages = alvisProject.pages,
-    agents = alvisProject.agents,
-    ports = alvisProject.ports,
-    connections = alvisProject.connections,
-    code = alvisProject.code;
+  const pages = alvisProject.pages;
+  const agents = alvisProject.agents;
+  const ports = alvisProject.ports;
+  const connections = alvisProject.connections;
+  const code = alvisProject.code;
 
   appendHierarchy(alvisprojectDoc, pages, agents);
   appendPages(alvisprojectDoc, pages, agents, ports, connections);
   appendCode(alvisprojectDoc, code);
 
   const alvisProjectXml = new XMLSerializer().serializeToString(
-      alvisprojectDoc,
-    ),
-    prolog = '<?xml version="1.0" encoding="UTF-8"?>',
-    alvisProjectXmlWithProlog = prolog + alvisProjectXml;
+    alvisprojectDoc,
+  );
+  const prolog = '<?xml version="1.0" encoding="UTF-8"?>';
+  const alvisProjectXmlWithProlog = prolog + alvisProjectXml;
 
   return alvisProjectXmlWithProlog;
 }
