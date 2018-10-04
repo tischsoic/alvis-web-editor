@@ -742,7 +742,8 @@ export class AlvisGraph extends React.Component<
     this.graph.getModel().beginUpdate();
     try {
       const mxGraphAgentId = this.getMxGraphIdByInternalId(agent.internalId);
-      const cellToModify = this.graph.getModel().getCell(mxGraphAgentId);
+      const model = this.graph.getModel();
+      const cellToModify = model.getCell(mxGraphAgentId);
 
       // this.graph.translateCell(cellToModify, agent.x, agent.y);
       this.graph.resizeCell(
@@ -750,7 +751,7 @@ export class AlvisGraph extends React.Component<
         new mx.mxRectangle(agent.x, agent.y, agent.width, agent.height),
         false,
       );
-      cellToModify.setValue(agent.name);
+      model.setValue(cellToModify, agent.name);
       this.setAgentSpecificStyle(cellToModify, agent);
 
       if (agent.subPageInternalId !== null) {
