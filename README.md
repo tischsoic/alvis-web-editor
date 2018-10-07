@@ -119,3 +119,4 @@ INTERESTING IDEA:
   What about performance of generating UID during applying modification? Maybe it might be optimized by generating 
   some quantity before (on the off-chance - na zapas)?;
   https://stackoverflow.com/questions/39771/is-a-guid-unique-100-of-the-time
+- what about storing Alvis diagram elements in maps, so that to get element by ID we basically need constant time?

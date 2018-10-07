@@ -12,7 +12,7 @@ import {
   IPageRecord,
   IAlvisProjectRecord,
 } from '../models/alvisProject';
-import { List } from 'immutable';
+import { List, Record } from 'immutable';
 import {
   Nav,
   NavItem,
@@ -37,7 +37,7 @@ export interface AlvisGraphPanelProps {
   projectId: number;
   onChangeActivePage: (newActivePageInternalId: string) => void;
 
-  onMxGraphPageAdded: (page: IPageRecord) => any;
+  onMxGraphPageAdded: (page: IPageRecord) => any; // TODO: shouldn't return type be
 
   onMxGraphAgentAdded: (agent: IAgentRecord) => any;
   onMxGraphAgentDeleted: (agentInternalId: string) => any;
@@ -59,6 +59,7 @@ export interface AlvisGraphPanelState {
   openedPagesInternalIds: List<string>;
 
   selectedColor: string;
+  isColoringModeEnabled: boolean;
 }
 
 export class AlvisGraphPanel extends React.Component<
@@ -76,6 +77,7 @@ export class AlvisGraphPanel extends React.Component<
       openedPagesInternalIds: List(openedPagesInternalIds),
 
       selectedColor: '#000',
+      isColoringModeEnabled: false,
     };
 
     this.getNameFromUser = this.getNameFromUser.bind(this);
@@ -164,6 +166,52 @@ export class AlvisGraphPanel extends React.Component<
     };
   }
 
+  toggleColoringMode = () => {
+    this.setState((state) => ({
+      isColoringModeEnabled: !state.isColoringModeEnabled,
+    }));
+  };
+
+  colorElement = <T extends IAgentRecord | IPortRecord>(element: T): T => {
+    const { selectedColor } = this.state;
+
+    return (element as any).set('color', selectedColor);
+  };
+
+  manageElementColoring = <T extends IAgentRecord | IPortRecord>(
+    element: T,
+  ): T => {
+    const { isColoringModeEnabled } = this.state;
+
+    if (!isColoringModeEnabled) {
+      return element;
+    }
+
+    const { selectedColor } = this.state;
+
+    return (element as any).set('color', selectedColor);
+  };
+
+  onAgentClick = (id: string): void => {
+    const { onMxGraphAgentModified, alvisProject } = this.props;
+    const agent = alvisProject.agents.find((el) => el.internalId === id);
+    const coloredAgent = this.manageElementColoring(agent);
+
+    if (agent !== coloredAgent) {
+      onMxGraphAgentModified(coloredAgent);
+    }
+  };
+
+  onPortClick = (id: string): void => {
+    const { onMxGraphPortModified, alvisProject } = this.props;
+    const port = alvisProject.ports.find((el) => el.internalId === id);
+    const coloredPort = this.manageElementColoring(port);
+
+    if (port !== coloredPort) {
+      onMxGraphPortModified(coloredPort);
+    }
+  };
+
   render() {
     const {
       activePageInternalId,
@@ -181,7 +229,11 @@ export class AlvisGraphPanel extends React.Component<
       onUndo,
       onRedo,
     } = this.props;
-    const { openedPagesInternalIds, selectedColor } = this.state;
+    const {
+      openedPagesInternalIds,
+      selectedColor,
+      isColoringModeEnabled,
+    } = this.state;
 
     const pagesElements = openedPagesInternalIds.map((pageInternalId) =>
       this.getPageElements(pageInternalId),
@@ -197,7 +249,7 @@ export class AlvisGraphPanel extends React.Component<
         <Tab eventKey={pageInternalId} title={page.name} key={pageInternalId}>
           <AlvisGraph
             ref={(alvisGraph) => {
-              if (pageInternalId == activePageInternalId) {
+              if (pageInternalId === activePageInternalId) {
                 this.activeAlvisGraph = alvisGraph;
               }
             }}
@@ -216,6 +268,8 @@ export class AlvisGraphPanel extends React.Component<
             onMxGraphConnectionAdded={onMxGraphConnectionAdded}
             onMxGraphConnectionDeleted={onMxGraphConnectionDeleted}
             onMxGraphConnectionModified={onMxGraphConnectionModified}
+            onAgentClick={this.onAgentClick}
+            onPortClick={this.onPortClick}
             getNameFromUser={this.getNameFromUser}
           />
         </Tab>
@@ -243,10 +297,18 @@ export class AlvisGraphPanel extends React.Component<
             <Button onClick={() => onUndo()}>undo</Button>
             <Button onClick={() => onRedo()}>redo</Button>
           </ButtonGroup>
-          <ColorPicker
-            color={selectedColor}
-            onColorSelect={this.onColorSelect}
-          />
+          <ButtonGroup>
+            <ColorPicker
+              color={selectedColor}
+              onColorSelect={this.onColorSelect}
+            />
+            <Button
+              onClick={this.toggleColoringMode}
+              active={isColoringModeEnabled}
+            >
+              {isColoringModeEnabled ? 'Stop coloring' : 'Start coloring'}
+            </Button>
+          </ButtonGroup>
         </ButtonToolbar>
         <div>
           <Tabs

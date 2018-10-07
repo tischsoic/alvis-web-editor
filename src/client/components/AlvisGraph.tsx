@@ -43,7 +43,8 @@ export interface AlvisGraphProps {
 
   onChangeActivePage: (newActivePageInternalId: string) => void;
 
-  onMxGraphPageAdded: (page: IPageRecord) => any;
+  onMxGraphPageAdded: (page: IPageRecord) => any; // TODO: mxGraph should be encapsulated thus in interface should be no mention about it
+  // rather call this function: `onPageAdded`
 
   onMxGraphAgentAdded: (agent: IAgentRecord) => any;
   onMxGraphAgentDeleted: (agentInternalId: string) => any;
@@ -56,6 +57,9 @@ export interface AlvisGraphProps {
   onMxGraphConnectionAdded: (connection: IConnectionRecord) => any;
   onMxGraphConnectionDeleted: (connectionInternalId: string) => any;
   onMxGraphConnectionModified: (connection: IConnectionRecord) => any;
+
+  onAgentClick: (id: string) => void;
+  onPortClick: (id: string) => void;
 
   getNameFromUser: (callback: (chosenName: string) => void) => void;
 }
@@ -285,6 +289,27 @@ export class AlvisGraph extends React.Component<
       console.log(arguments);
     });
 
+    this.graph.addListener((mx as any).mxEvent.CLICK, (sender, event) => {
+      const cell: mxClasses.mxCell = event.getProperty('cell');
+
+      if (!cell || !cell.isVertex()) {
+        return;
+      }
+
+      const cellId = cell.getId();
+      const internalId = this.getInternalIdByMxGrpahId(cellId); // TODO: it would be more convinient to pass cell, not cellId
+      // TODO: and even more convenient to store internalId in cell id.
+
+      if (this.graph.isPort(cell)) {
+        this.props.onPortClick(internalId);
+        return;
+      }
+
+      this.props.onAgentClick(internalId);
+
+      event.consume(); // TODO: what it does?
+    });
+
     this.graph.addListener((mx as any).mxEvent.CELLS_ADDED, (sender, evt) => {
       if (alvisGraph.isDuringInternalChanges()) {
         return;
@@ -452,9 +477,7 @@ export class AlvisGraph extends React.Component<
         this.addConnection(newConnection),
       );
 
-      changes.agentsChanges.modified.forEach((modifiedAgent) =>
-        this.modifyAgent(modifiedAgent),
-      );
+      changes.agentsChanges.modified.forEach(this.modifyAgent);
       changes.portsChanges.modified.forEach((modifiedPort) =>
         this.modifyPort(modifiedPort),
       );
@@ -632,6 +655,7 @@ export class AlvisGraph extends React.Component<
     internalId?: string;
     mxGraphId?: string;
   }): IAgentRecord {
+    // TODO: change it to Partial<IAgentRecord>
     const { agents, pageInternalId } = this.props;
 
     if (internalId || mxGraphId) {
@@ -738,11 +762,12 @@ export class AlvisGraph extends React.Component<
   }
 
   // TO DO
-  private modifyAgent(agent: IAgentRecord): IAgentRecord {
+  private modifyAgent = (agent: IAgentRecord): IAgentRecord => {
     this.graph.getModel().beginUpdate();
     try {
       const mxGraphAgentId = this.getMxGraphIdByInternalId(agent.internalId);
-      const cellToModify = this.graph.getModel().getCell(mxGraphAgentId);
+      const model = this.graph.getModel();
+      const cellToModify = model.getCell(mxGraphAgentId);
 
       // this.graph.translateCell(cellToModify, agent.x, agent.y);
       this.graph.resizeCell(
@@ -750,7 +775,7 @@ export class AlvisGraph extends React.Component<
         new mx.mxRectangle(agent.x, agent.y, agent.width, agent.height),
         false,
       );
-      cellToModify.setValue(agent.name);
+      model.setValue(cellToModify, agent.name);
       this.setAgentSpecificStyle(cellToModify, agent);
 
       if (agent.subPageInternalId !== null) {
@@ -765,7 +790,7 @@ export class AlvisGraph extends React.Component<
     }
 
     return agent;
-  }
+  };
 
   private deleteAgent(agent: IAgentRecord): IAgentRecord {
     this.graph.getModel().beginUpdate();
@@ -947,7 +972,7 @@ export class AlvisGraph extends React.Component<
     let labelPosition = 'center';
     let verticalLabelPosition = 'middle';
     let align = 'center';
-    let vertivalAlign = 'middle';
+    let verticalAlign = 'middle';
 
     switch (portRecord.x) {
       case 1:
@@ -962,11 +987,11 @@ export class AlvisGraph extends React.Component<
         switch (portRecord.y) {
           case 1:
             verticalLabelPosition = 'top';
-            vertivalAlign = 'bottom';
+            verticalAlign = 'bottom';
             break;
           case 0:
             verticalLabelPosition = 'bottom';
-            vertivalAlign = 'top';
+            verticalAlign = 'top';
         }
     }
 
@@ -976,7 +1001,8 @@ export class AlvisGraph extends React.Component<
       portVertex,
     ]);
     this.graph.setCellStyles('align', align, [portVertex]);
-    this.graph.setCellStyles('verticalAlign', vertivalAlign, [portVertex]);
+    this.graph.setCellStyles('verticalAlign', verticalAlign, [portVertex]);
+    this.graph.setCellStyles('fillColor', portRecord.color, [portVertex]);
   }
 
   private addPort(port: IPortRecord): IPortRecord {
