@@ -255,7 +255,7 @@ function getPagesData(
 ) {
   const hierarchyNodeNameToInternalId: string[] = [];
   const hierarchyNodeNameToPageElement: Element[] = [];
-  let lastInternalId = -1;
+  let lastInternalId = 3;
 
   for (let i = 0; i < hierarchyNodesElements.length; i += 1) {
     const hierarchyNodeElement = hierarchyNodesElements[i];

@@ -18,6 +18,7 @@ import { mx } from '../utils/mx';
 import {
   IPageRecord,
   pageRecordFactory,
+  IAgent,
   IAgentRecord,
   agentRecordFactory,
   IPortRecord,
@@ -28,6 +29,8 @@ import {
   IAlvisPageElement,
   ConnectionDirection,
   IAlvisPageElementRecord,
+  IPort,
+  IConnection,
 } from '../models/alvisProject';
 import { List } from 'immutable';
 
@@ -177,16 +180,13 @@ export class AlvisGraph extends React.Component<
           onMxGraphPortModified(
             alvisGraph.createPort({
               name: value,
-              mxGraphId: cell.getId(),
+              internalId: cell.getId(),
             }),
           );
         } else if (alvisGraph.graph.getModel().isEdge(cell)) {
         } else {
           onMxGraphAgentModified(
-            alvisGraph.createAgent({
-              name: value,
-              mxGraphId: cell.getId(),
-            }),
+            alvisGraph.createAgent({ name: value, internalId: cell.getId() }),
           );
         }
       }
@@ -237,7 +237,7 @@ export class AlvisGraph extends React.Component<
             alvisGraph.createPort({
               x,
               y,
-              mxGraphId: cell.getId(),
+              internalId: cell.getId(),
             }),
           );
         } else if (alvisGraph.graph.getModel().isEdge(cell)) {
@@ -252,7 +252,7 @@ export class AlvisGraph extends React.Component<
               y,
               width,
               height,
-              mxGraphId: cell.getId(),
+              internalId: cell.getId(),
             }),
           );
         }
@@ -494,212 +494,55 @@ export class AlvisGraph extends React.Component<
   }
 
   private getElementByInternalId<T extends IAlvisPageElement>(
-    listOfElements: List<T>,
+    elements: List<T>,
     internalId: string,
   ): T {
-    const elementIndex = listOfElements.findIndex(
+    const elementIndex = elements.findIndex(
       (element) => element.internalId === internalId,
     );
 
-    if (elementIndex !== -1) {
-      return listOfElements.get(elementIndex);
+    if (elementIndex === -1) {
+      throw 'Element with given internalId does not exists!';
     }
+
+    return elements.get(elementIndex);
   }
 
-  private setIfNotUndefined<T extends IAlvisPageElementRecord>(
-    element: T,
-    key: string,
-    value: any,
-  ): T {
-    if (value !== undefined) {
-      return (element as any).set(key, value); // TODO: improve to not use casting to any
-      // Will this site be helpful: https://stackoverflow.com/questions/43300008/type-is-not-assignable-to-generic-type ?
-    }
-    return element;
-  }
-
-  createConnection({
-    sourcePortInternalId = undefined,
-    targetPortInternalId = undefined,
-    direction = undefined,
-    style = undefined,
-    internalId = undefined,
-    mxGraphId = undefined,
-  }: {
-    sourcePortInternalId?: string;
-    targetPortInternalId?: string;
-    direction?: ConnectionDirection;
-    style?: string;
-    internalId?: string;
-    mxGraphId?: string;
-  }): IConnectionRecord {
+  createConnection(connectionData: Partial<IConnection>): IConnectionRecord {
     const { connections } = this.props;
+    const { internalId } = connectionData;
+    const connection = internalId
+      ? this.getElementByInternalId(connections, internalId)
+      : connectionRecordFactory();
 
-    if (internalId || mxGraphId) {
-      const connection: IConnectionRecord = this.getElementByInternalId(
-        connections,
-        internalId ? internalId : this.getInternalIdByMxGrpahId(mxGraphId),
-      );
-      if (!connection) {
-        throw 'No connection with given internal or mxGraph ID!';
-      }
-
-      let modifiedConnection = connection;
-      modifiedConnection = this.setIfNotUndefined(
-        modifiedConnection,
-        'sourcePortInternalId',
-        sourcePortInternalId,
-      );
-      modifiedConnection = this.setIfNotUndefined(
-        modifiedConnection,
-        'targetPortInternalId',
-        targetPortInternalId,
-      );
-      modifiedConnection = this.setIfNotUndefined(
-        modifiedConnection,
-        'direction',
-        direction,
-      );
-      modifiedConnection = this.setIfNotUndefined(
-        modifiedConnection,
-        'style',
-        style,
-      );
-
-      return modifiedConnection;
-    }
-
-    return connectionRecordFactory({
-      sourcePortInternalId,
-      targetPortInternalId,
-      direction,
-      style,
-      internalId: null,
-    });
+    return connection.merge(connectionData);
   }
 
-  createPort({
-    x = undefined,
-    y = undefined,
-    name = undefined,
-    color = undefined,
-    agentInternalId = undefined,
-    internalId = undefined,
-    mxGraphId = undefined,
-  }: {
-    x?: number;
-    y?: number;
-    name?: string;
-    color?: string;
-    agentInternalId?: string;
-    internalId?: string;
-    mxGraphId?: string;
-  }): IPortRecord {
+  createPort(portData: Partial<IPort>): IPortRecord {
     const { ports } = this.props;
+    const { internalId } = portData;
+    const port = internalId
+      ? this.getElementByInternalId(ports, internalId)
+      : portRecordFactory();
 
-    if (internalId || mxGraphId) {
-      const port: IPortRecord = this.getElementByInternalId(
-        ports,
-        internalId ? internalId : this.getInternalIdByMxGrpahId(mxGraphId),
-      );
-      if (!port) {
-        throw 'No port with given internal or mxGraph ID!';
-      }
-
-      let modifiedPort = port;
-      modifiedPort = this.setIfNotUndefined(modifiedPort, 'x', x);
-      modifiedPort = this.setIfNotUndefined(modifiedPort, 'y', y);
-      modifiedPort = this.setIfNotUndefined(modifiedPort, 'name', name);
-      modifiedPort = this.setIfNotUndefined(modifiedPort, 'color', color);
-      modifiedPort = this.setIfNotUndefined(
-        modifiedPort,
-        'agentInternalId',
-        agentInternalId,
-      );
-
-      return modifiedPort;
-    }
-
-    return portRecordFactory({
-      name,
-      x,
-      y,
-      color,
-      agentInternalId,
-      internalId: null,
-    });
+    return port.merge(portData);
   }
 
-  createAgent({
-    x = undefined,
-    y = undefined,
-    width = undefined,
-    height = undefined,
-    name = undefined,
-    running = undefined,
-    active = undefined,
-    color = undefined,
-    subPageInternalId = undefined,
-    internalId = undefined,
-    mxGraphId = undefined,
-  }: {
-    x?: number;
-    y?: number;
-    width?: number;
-    height?: number;
-    name?: string;
-    running?: number;
-    active?: number;
-    color?: string;
-    subPageInternalId?: string;
-    internalId?: string;
-    mxGraphId?: string;
-  }): IAgentRecord {
-    // TODO: change it to Partial<IAgentRecord>
+  createAgent(agentData: Partial<IAgent>): IAgentRecord {
+    const { internalId } = agentData;
     const { agents, pageInternalId } = this.props;
+    const agent = internalId
+      ? this.getElementByInternalId(agents, internalId)
+      : agentRecordFactory();
 
-    if (internalId || mxGraphId) {
-      const agent: IAgentRecord = this.getElementByInternalId(
-        agents,
-        internalId ? internalId : this.getInternalIdByMxGrpahId(mxGraphId),
-      );
-      if (!agent) {
-        throw 'No port with given internal or mxGraph ID!';
-      }
-
-      let modifiedAgent = agent;
-      modifiedAgent = this.setIfNotUndefined(modifiedAgent, 'x', x);
-      modifiedAgent = this.setIfNotUndefined(modifiedAgent, 'y', y);
-      modifiedAgent = this.setIfNotUndefined(modifiedAgent, 'width', width);
-      modifiedAgent = this.setIfNotUndefined(modifiedAgent, 'height', height);
-      modifiedAgent = this.setIfNotUndefined(modifiedAgent, 'name', name);
-      modifiedAgent = this.setIfNotUndefined(modifiedAgent, 'active', active);
-      modifiedAgent = this.setIfNotUndefined(modifiedAgent, 'color', color);
-      modifiedAgent = this.setIfNotUndefined(
-        modifiedAgent,
-        'subPageInternalId',
-        subPageInternalId,
-      );
-
-      return modifiedAgent;
-    }
-
-    return agentRecordFactory({
-      internalId,
-      name,
-      x,
-      y,
-      color,
-      pageInternalId,
-      active,
-      index: null,
-      portsInternalIds: List<string>([]),
-      running: running !== undefined ? running : 0,
-      height: height !== undefined ? height : 100,
-      width: width !== undefined ? width : 140,
-
-      subPageInternalId:
-        subPageInternalId !== undefined ? subPageInternalId : null,
+    return agent.merge({
+      // default values:
+      pageInternalId, // TODO: should we allow to override it?
+      running: 0,
+      height: 100, // TODO: maybe set as default?
+      width: 140,
+      // custom values:
+      ...agentData,
     });
   }
 
@@ -886,7 +729,7 @@ export class AlvisGraph extends React.Component<
       const agentMainStyle = this.getAgentMainStyle(agent);
       const agentVertex = this.graph.insertVertex(
         this.parent,
-        null,
+        agent.internalId,
         agent.name,
         agent.x,
         agent.y,
@@ -1016,7 +859,7 @@ export class AlvisGraph extends React.Component<
 
       const portVertex = this.graph.insertVertex(
         portAgentVertex,
-        null,
+        port.internalId,
         port.name,
         port.x,
         port.y,
@@ -1095,7 +938,7 @@ export class AlvisGraph extends React.Component<
 
       const edgeCell = this.graph.insertEdge(
         this.parent,
-        null,
+        connection.internalId,
         '',
         this.graph.getModel().getCell(sourcePortMxGraphId),
         this.graph.getModel().getCell(targetPortMxGraphId),
