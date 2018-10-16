@@ -22,6 +22,8 @@ export default function modifyMxGraph(
   enableDelete(mx, graph);
   addPopupMenu(mx, graph, alvisGraph);
   enablePanning(mx, graph);
+
+  graph.enterStopsCellEditing = true;
 }
 
 function enablePanning(mx: mxgraph.allClasses, graph: mxClasses.mxGraph) {
