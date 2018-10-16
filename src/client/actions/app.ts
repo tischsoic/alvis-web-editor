@@ -252,7 +252,7 @@ const closeProject = (
 ): ((dispatch: redux.Dispatch<any>, getState: () => RootState) => void) => {
   return (dispatch, getState): void => {
     const emptyAlvisProject = getValidEmptyAlvisProject();
-    dispatch(projectActions.setAlvisProject([emptyAlvisProject, 0]));
+    dispatch(projectActions.setAlvisProject([emptyAlvisProject, 3]));
     dispatch(setOpenedProjectId(null));
   };
 };

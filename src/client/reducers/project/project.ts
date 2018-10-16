@@ -22,18 +22,18 @@ import {
 import alvisProject, * as apManager from '../../utils/alvisProject';
 import { List } from 'immutable';
 
-/*
-* semiModification - modification incomplete e.g. if modification deletes agent with port
-*   modification with deletion of only agent would be semi,
-*   wehere modifications with deletion of agent and port would be fullModification
-* fullModification - (see semiModification definition above)
-*/
+/**
+ * semiModification - modification incomplete e.g. if modification deletes agent with port
+ *   modification with deletion of only agent would be semi,
+ *   where modifications with deletion of agent and port would be fullModification
+ * fullModification - (see semiModification definition above)
+ */
 // TO DO: remark: fullModification is modifications with all deletions - additions and modifications stay the same -> maybe change name to something else?
 
 export const initialState: IProjectRecord = projectRecordFactory({
   xml: null,
   alvisProject: apManager.getValidEmptyAlvisProject(),
-  lastInternalId: 0,
+  lastInternalId: 3, // Not set to 0 or -1 because we store element's internalId as vertexId, and 0, 1 are reserved ids for graph, and first graph cell (which is graph?)
   oppositeModifications: List<IOppositeModificationsRecord>(),
   oppositeModificationCurrentIdx: 0,
 });
@@ -117,13 +117,10 @@ export default handleActions<
       state: IProjectRecord,
       action: Action<[IAlvisProjectRecord, number]>,
     ) => {
-      const afterProjectSet = state.set('alvisProject', action.payload[0]);
-      const afterlastInternalIdSet = afterProjectSet.set(
-        'lastInternalId',
-        action.payload[1],
-      );
-
-      return afterlastInternalIdSet;
+      return state.merge({
+        alvisProject: action.payload[0],
+        lastInternalId: action.payload[1],
+      });
     },
     // [Actions.PROJECT_ADD_PAGE]: (
     //   state: IProjectRecord,

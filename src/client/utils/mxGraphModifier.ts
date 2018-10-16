@@ -425,7 +425,7 @@ function addPopupMenu(
         onMxGraphConnectionModified(
           alvisGraph.createConnection({
             direction,
-            mxGraphId: cell.getId(),
+            internalId: cell.getId(),
           }),
         );
       };
