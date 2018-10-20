@@ -33,7 +33,6 @@ import { List } from 'immutable';
 export const initialState: IProjectRecord = projectRecordFactory({
   xml: null,
   alvisProject: apManager.getValidEmptyAlvisProject(),
-  lastInternalId: 3, // Not set to 0 or -1 because we store element's internalId as vertexId, and 0, 1 are reserved ids for graph, and first graph cell (which is graph?)
   oppositeModifications: List<IOppositeModificationsRecord>(),
   oppositeModificationCurrentIdx: 0,
 });
@@ -41,17 +40,15 @@ export const initialState: IProjectRecord = projectRecordFactory({
 export default handleActions<
   IProjectRecord,
   // void | string | [IAlvisProjectRecord, number] | IProjectModification
-  string | [IAlvisProjectRecord, number] | IProjectModificationRecord | void
+  string | IAlvisProjectRecord | IProjectModificationRecord | void
 >(
   {
     [Actions.MODIFY_PROJECT]: (
       state: IProjectRecord,
       action: Action<IProjectModificationRecord>,
     ) => {
-      const [modification, project] = apManager.assignInternalIdsToNewElements(
-        action.payload,
-        state,
-      );
+      const modification = action.payload;
+      const project = state;
       const alvisProject = project.alvisProject;
       const fullModification = apManager.generateFullModification(
         modification,
@@ -115,11 +112,10 @@ export default handleActions<
     },
     [Actions.PROJECT_SET_ALVIS_PROJECT]: (
       state: IProjectRecord,
-      action: Action<[IAlvisProjectRecord, number]>,
+      action: Action<IAlvisProjectRecord>,
     ) => {
       return state.merge({
-        alvisProject: action.payload[0],
-        lastInternalId: action.payload[1],
+        alvisProject: action.payload,
       });
     },
     // [Actions.PROJECT_ADD_PAGE]: (
@@ -241,29 +237,3 @@ export default handleActions<
   },
   initialState,
 );
-
-function addElementToState<T extends IInternalRecord>(
-  state: IProjectRecord,
-  elementRecord: T,
-  fnToModifyAlvisProjectRecord: (
-    p: IAlvisProjectRecord,
-  ) => (el: T) => IAlvisProjectRecord,
-) {
-  const newElementInternalId = state.lastInternalId + 1;
-  const elementToAdd: T = elementRecord.set(
-    'internalId',
-    String(newElementInternalId),
-  ); // TO DO: Check why without casting it does not work?
-  const stateAfterLastInternalIdUpdated = state.set(
-    'lastInternalId',
-    newElementInternalId,
-  );
-  const stateAfterElementAdded = stateAfterLastInternalIdUpdated.set(
-    'alvisProject',
-    fnToModifyAlvisProjectRecord(stateAfterLastInternalIdUpdated.alvisProject)(
-      elementToAdd,
-    ),
-  );
-
-  return stateAfterElementAdded;
-}

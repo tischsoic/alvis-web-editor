@@ -14,6 +14,7 @@ import {
   ConnectionDirection,
 } from '../models/alvisProject';
 import { List, Map } from 'immutable';
+import { newUuid } from './uuidGenerator';
 
 // class AlvisXmlParser {
 //     constructor(private document: XMLDocument) {
@@ -56,8 +57,8 @@ function portToRecord(
   agentInternalId: string,
 ): IPortRecord {
   return portRecordFactory({
-    internalId: internalId.toString(),
     agentInternalId,
+    internalId: internalId.toString(),
     name: port.getAttribute('name'),
     x: parseFloat(port.getAttribute('x')),
     y: parseFloat(port.getAttribute('y')),
@@ -163,25 +164,22 @@ function getAgentIndexByName(agents: List<IAgentRecord>, name: string): number {
 
 function processHierarchyToGetPagesData(
   hierarchyElement: Element,
-  lastInternalId: number,
   supAgentInternalId: string,
-  hierarhyNodeNameToInternalId: string[],
+  hierarchyNodeNameToInternalId: string[],
   hierarchyNodeNameToPageElement: Element[],
 ): IAllPagesData {
   const pageName = hierarchyElement.getAttribute('name');
-  const pageInternalId = hierarhyNodeNameToInternalId[pageName];
+  const pageInternalId = hierarchyNodeNameToInternalId[pageName];
   const pageElement = hierarchyNodeNameToPageElement[pageName];
   const pageData = getSinglePageData(
     pageElement,
     pageInternalId,
-    lastInternalId,
     supAgentInternalId,
   );
   const agentNameSubPageInternalId: [string, string][] = [];
   const subPagesData: IAllPagesData[] = [];
 
-  lastInternalId = pageData.lastInternalId;
-  for (let j = 0; j < hierarchyElement.children.length; ++j) {
+  for (let j = 0; j < hierarchyElement.children.length; j += 1) {
     const child = hierarchyElement.children[j];
     const pageName = child.getAttribute('name');
     const agentName = child.getAttribute('agent');
@@ -191,19 +189,16 @@ function processHierarchyToGetPagesData(
     const supAgentRecord = pageData.agents.get(supAgentRecordIndex);
     const pageAndSubPagesData = processHierarchyToGetPagesData(
       child,
-      lastInternalId,
       supAgentRecord.internalId,
-      hierarhyNodeNameToInternalId,
+      hierarchyNodeNameToInternalId,
       hierarchyNodeNameToPageElement,
     );
-    // subPageData = getSinglePageData(pageElement, pageInternalId, lastInternalId, supAgentRecord.internalId);
-
-    lastInternalId = pageAndSubPagesData.lastInternalId;
+    // subPageData = getSinglePageData(pageElement, pageInternalId, supAgentRecord.internalId);
 
     subPagesData.push(pageAndSubPagesData);
     agentNameSubPageInternalId.push([
       agentName,
-      hierarhyNodeNameToInternalId[pageName],
+      hierarchyNodeNameToInternalId[pageName],
     ]);
   }
 
@@ -221,7 +216,6 @@ function processHierarchyToGetPagesData(
     agents: pageData.agents,
     ports: pageData.ports,
     connections: pageData.connections,
-    lastInternalId,
   };
   subPagesData.forEach((subPageData) => {
     allPagesData.agents = allPagesData.agents.concat(subPageData.agents);
@@ -255,12 +249,11 @@ function getPagesData(
 ) {
   const hierarchyNodeNameToInternalId: string[] = [];
   const hierarchyNodeNameToPageElement: Element[] = [];
-  let lastInternalId = 3;
 
   for (let i = 0; i < hierarchyNodesElements.length; i += 1) {
     const hierarchyNodeElement = hierarchyNodesElements[i];
     const hierarchyNodeName = hierarchyNodeElement.getAttribute('name');
-    const pageInternalId = (++lastInternalId).toString();
+    const pageInternalId = newUuid();
 
     hierarchyNodeNameToInternalId[hierarchyNodeName] = pageInternalId;
     hierarchyNodeNameToPageElement[hierarchyNodeName] = getElementWithName(
@@ -273,7 +266,6 @@ function getPagesData(
 
   return processHierarchyToGetPagesData(
     systemPageHierarchyElement,
-    lastInternalId,
     null,
     hierarchyNodeNameToInternalId,
     hierarchyNodeNameToPageElement,
@@ -285,7 +277,6 @@ interface ISinglePageData {
   agents: List<IAgentRecord>;
   ports: List<IPortRecord>;
   connections: List<IConnectionRecord>;
-  lastInternalId: number;
 }
 
 interface IAllPagesData {
@@ -293,13 +284,11 @@ interface IAllPagesData {
   agents: List<IAgentRecord>;
   ports: List<IPortRecord>;
   connections: List<IConnectionRecord>;
-  lastInternalId: number;
 }
 
 function getSinglePageData(
   pageElement: Element,
   pageInternalId: string,
-  lastInternalId: number,
   supAgentInternalId: string,
 ): ISinglePageData {
   const xmlIdToInternalId = [];
@@ -317,12 +306,12 @@ function getSinglePageData(
   for (let j = 0; j < pageAgentsElements.length; j += 1) {
     const agentElement = pageAgentsElements[j];
     const agentPortsElements = agentElement.getElementsByTagName('port');
-    const agentInternalId = (++lastInternalId).toString();
+    const agentInternalId = newUuid();
     const agentPortsInternalIds: string[] = [];
 
     for (let k = 0; k < agentPortsElements.length; k += 1) {
       const portElement = agentPortsElements[k];
-      const portInternalId = (++lastInternalId).toString();
+      const portInternalId = newUuid();
       const portRecord = portToRecord(
         portElement,
         portInternalId,
@@ -348,7 +337,7 @@ function getSinglePageData(
 
   for (let l = 0; l < pageConnectionsElements.length; l += 1) {
     const connectionElement = pageConnectionsElements[l];
-    const connectionInternalId = (++lastInternalId).toString();
+    const connectionInternalId = newUuid();
     const connectionRecord = connectionToRecord(
       connectionElement,
       connectionInternalId,
@@ -370,7 +359,6 @@ function getSinglePageData(
   );
 
   return {
-    lastInternalId,
     page: pageRecord,
     agents: List(agents),
     ports: List(ports),
@@ -378,9 +366,7 @@ function getSinglePageData(
   };
 }
 
-function parseAlvisProjectXML(
-  xmlDocument: XMLDocument,
-): [IAlvisProjectRecord, number] {
+function parseAlvisProjectXML(xmlDocument: XMLDocument): IAlvisProjectRecord {
   console.log({
     doc: xmlDocument,
   });
@@ -405,7 +391,7 @@ function parseAlvisProjectXML(
   });
   xmlDocument.getElementsByTagNameNS;
 
-  return [alvisProjectRecord, pagesData.lastInternalId];
+  return alvisProjectRecord;
 }
 
 export default parseAlvisProjectXML;

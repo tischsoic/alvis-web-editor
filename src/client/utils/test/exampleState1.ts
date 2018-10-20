@@ -1,7 +1,22 @@
-import { List } from "immutable";
-import { IAgentRecord, alvisProjectRecordFactory, IPageRecord, agentRecordFactory, IPortRecord, portRecordFactory, IConnectionRecord, connectionRecordFactory, pageRecordFactory, alvisCodeRecordFactory } from "../../models/alvisProject";
-import { projectRecordFactory } from "../../models/project";
-import { getBasicAgentRecordForTests, getBasicPortRecordForTests, getBasicConnectionRecordForTest } from "./recordsGenerators";
+import { List } from 'immutable';
+import {
+  IAgentRecord,
+  alvisProjectRecordFactory,
+  IPageRecord,
+  agentRecordFactory,
+  IPortRecord,
+  portRecordFactory,
+  IConnectionRecord,
+  connectionRecordFactory,
+  pageRecordFactory,
+  alvisCodeRecordFactory,
+} from '../../models/alvisProject';
+import { projectRecordFactory } from '../../models/project';
+import {
+  getBasicAgentRecordForTests,
+  getBasicPortRecordForTests,
+  getBasicConnectionRecordForTest,
+} from './recordsGenerators';
 
 export const state = projectRecordFactory({
   xml: null,
@@ -77,7 +92,6 @@ export const state = projectRecordFactory({
       text: '',
     }),
   }),
-  lastInternalId: 34,
   oppositeModifications: List(),
   oppositeModificationCurrentIdx: -1,
 });

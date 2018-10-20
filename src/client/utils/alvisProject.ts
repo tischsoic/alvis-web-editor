@@ -290,7 +290,7 @@ export const applyModification = (alvisProject: IAlvisProjectRecord) => (
     // we can add more pages with preset internalIds
     // but then we must care about order of new pages and agents if we want
     // to check possible errors in functions responsible for adding elements
-  });
+  }); // TODO: IMPORTANT - what if page is subpage of agent which is being added !!!!!!!!!!!!!!!!!! Then we should add agent before adding page
   fullModification.agents.added.forEach((agent) => {
     finalProject = addAgentToAlvisProject(finalProject)(agent);
   });
@@ -327,70 +327,6 @@ export const applyModification = (alvisProject: IAlvisProjectRecord) => (
 //
 //
 //
-function assignInternalIdsInList<T extends IInternalRecord>(
-  elements: List<T>,
-  lastInternalId: number,
-): List<T> {
-  let internalId = lastInternalId + 1;
-
-  return elements.map((el) => {
-    const elementWithInternalId = el.set('internalId', String(internalId));
-    internalId += 1;
-
-    return elementWithInternalId;
-  });
-}
-
-export function assignInternalIdsToNewElements(
-  semiModification: IProjectModificationRecord,
-  project: IProjectRecord,
-): [IProjectModificationRecord, IProjectRecord] {
-  const { pages, agents, ports, connections } = semiModification;
-  let lastInternalId = project.lastInternalId;
-
-  // TODO: extract similar logic to another function
-  const updatedAddedPages = assignInternalIdsInList<IPageRecord>(
-    pages.added,
-    lastInternalId,
-  );
-  lastInternalId += pages.added.size;
-
-  const updatedAddedAgents = assignInternalIdsInList<IAgentRecord>(
-    agents.added,
-    lastInternalId,
-  );
-  lastInternalId += agents.added.size;
-
-  const updatedAddedPorts = assignInternalIdsInList<IPortRecord>(
-    ports.added,
-    lastInternalId,
-  );
-  lastInternalId += ports.added.size;
-
-  const updatedAddedConnections = assignInternalIdsInList<IConnectionRecord>( // TODO: why I need to specify generic?
-    // why it does not cause TS error if i ommit <IConnectionRecor> and pass page.added
-    connections.added,
-    lastInternalId,
-  );
-  lastInternalId += connections.added.size;
-
-  const stateAfterLastInternalIdUpdated = project.set(
-    'lastInternalId',
-    lastInternalId,
-  );
-
-  const updatedSemiModification = semiModification.merge({
-    pages: semiModification.pages.set('added', updatedAddedPages),
-    agents: semiModification.agents.set('added', updatedAddedAgents),
-    ports: semiModification.ports.set('added', updatedAddedPorts),
-    connections: semiModification.connections.set(
-      'added',
-      updatedAddedConnections,
-    ),
-  });
-
-  return [updatedSemiModification, stateAfterLastInternalIdUpdated];
-}
 
 // TODO: isn't this whole semi -> full modification idea a bit overkill?
 // user usually performs actions only on one page
@@ -667,7 +603,7 @@ const getAgentAllSubpages = (alvisProject: IAlvisProjectRecord) => (
   agentId: IInternalId,
 ): List<IPageRecord> => {
   const agent = getAgentById(alvisProject)(agentId);
-  const agentDirectSubpageId = agent.subPageInternalId;
+  const agentDirectSubpageId = agent.subPageInternalId; // TODO: I got agent as undefined - because of some bad modification - should we try/catch ?
 
   if (!agentDirectSubpageId) {
     return List();

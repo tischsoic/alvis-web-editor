@@ -1,11 +1,19 @@
-import { List } from "immutable";
-import { IAgentRecord, agentRecordFactory, IPortRecord, portRecordFactory, IConnectionRecord, connectionRecordFactory } from "../../models/alvisProject";
+import { List } from 'immutable';
+import {
+  IAgentRecord,
+  agentRecordFactory,
+  IPortRecord,
+  portRecordFactory,
+  IConnectionRecord,
+  connectionRecordFactory,
+} from '../../models/alvisProject';
+import { newUuid } from '../uuidGenerator';
 
 export function getBasicAgentRecordForTests(
   name: string,
   pageInternalId: string,
   subPageInternalId: string = null,
-  internalId: string = null,
+  internalId: string = newUuid(),
   portsInternalIds: List<string> = List(),
 ): IAgentRecord {
   return agentRecordFactory({
