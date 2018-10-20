@@ -58,6 +58,7 @@ import {
   getRecordByInternalId,
   AlvisProjectKeysLeadingToLists,
 } from '../../utils/alvisProject';
+import { newUuid } from '../../utils/uuidGenerator';
 
 describe('Project reducer', () => {
   const emptyState = initialState;
@@ -65,13 +66,12 @@ describe('Project reducer', () => {
 
   it('adds Alvis diagram elements', () => {
     const agentToAddRecord = getBasicAgentRecordForTests('A_x', '0');
-    const addedAgentInternalId = '35';
     // const portToAddRecord = getBasicPortRecordForTests(
     //   null,
     //   addedAgentInternalId, // TODO: we dont know unadded agent ID! e.g. there is no guaranteed order of assigning ids to added elements
     //   'p_x',
     // );
-    const addedPortInternalId = '36';
+    // const addedPortInternalId = '36';
     const stateAfterAgentWithPortAdded = project(
       notEmptyState,
       createAction(
@@ -96,9 +96,9 @@ describe('Project reducer', () => {
 
     expect(
       stateAfterAgentWithPortAdded.alvisProject.agents.find(
-        (el) => el.internalId === addedAgentInternalId,
+        (el) => el.internalId === agentToAddRecord.internalId,
       ),
-    ).toEqual(agentToAddRecord.set('internalId', addedAgentInternalId));
+    ).toEqual(agentToAddRecord.set('internalId', agentToAddRecord.internalId));
 
     // expect(
     //   stateAfterAgentWithPortAdded.alvisProject.ports.find(
@@ -292,55 +292,6 @@ describe('Project reducer', () => {
     expect(newAgent.subPageInternalId).toEqual(oldAgent.subPageInternalId);
   });
 
-  it("sets ID based on lastInternalId and updates 'lastInternalId' field after element was added", () => {
-    const initialState = notEmptyState;
-    const initialLastInternalId = initialState.lastInternalId;
-
-    const agentToAddRecord = getBasicAgentRecordForTests('A_x', '0');
-    const stateAfterAgentAdded = project(
-      initialState,
-      createAction(
-        projectActions.MODIFY_PROJECT,
-        (): IProjectModificationRecord => {
-          return projectModificationRecordFactoryPartial({
-            agents: {
-              added: List([agentToAddRecord]),
-            },
-          });
-        },
-      )(),
-    );
-    const properAddedAgentInternalId = initialLastInternalId + 1;
-
-    expect(stateAfterAgentAdded.lastInternalId).toEqual(
-      properAddedAgentInternalId,
-    );
-
-    const portToAddRecord = getBasicPortRecordForTests(
-      null,
-      String(properAddedAgentInternalId),
-      'p_x',
-    );
-    const stateAfterPortAdded = project(
-      stateAfterAgentAdded,
-      createAction(
-        projectActions.MODIFY_PROJECT,
-        (): IProjectModificationRecord => {
-          return projectModificationRecordFactoryPartial({
-            ports: {
-              added: List([portToAddRecord]),
-            },
-          });
-        },
-      )(),
-    );
-    const properAddedPortInternalId = stateAfterAgentAdded.lastInternalId + 1;
-
-    expect(stateAfterPortAdded.lastInternalId).toEqual(
-      properAddedPortInternalId,
-    );
-  });
-
   it("removes port and port's connections if port is removed", () => {
     const removedPortInternalId = '17';
     const stateAfterPortRemoved = project(
@@ -490,12 +441,7 @@ describe('Project reducer', () => {
   function getStatesModifications(
     state: IProjectRecord,
   ): [IProjectRecord, IOppositeModifications][] {
-    const agentToAddRecord = getBasicAgentRecordForTests(
-      'A_x',
-      '0',
-      null,
-      '35',
-    ); // TO DO: would't it be better to remove 'Record' from variable name -> information about this is already stored in type of variable
+    const agentToAddRecord = getBasicAgentRecordForTests('A_x', '0', null); // TODO: would't it be better to remove 'Record' from variable name -> information about this is already stored in type of variable
     const addAgentModifications = {
       modification: projectModificationRecordFactoryPartial({
         agents: {
@@ -504,7 +450,7 @@ describe('Project reducer', () => {
       }),
       antiModification: projectModificationRecordFactoryPartial({
         agents: {
-          deleted: List(['35']),
+          deleted: List([agentToAddRecord.internalId]),
         },
       }),
     };
@@ -517,11 +463,10 @@ describe('Project reducer', () => {
         },
       )(),
     );
-    const addedAgentInternalId = addAgentModifications.antiModification.agents.deleted.first();
 
     const portToAddRecord = getBasicPortRecordForTests(
-      '36',
-      addedAgentInternalId,
+      newUuid(),
+      agentToAddRecord.internalId,
       'p_x',
     );
     const addPortModifications = {
@@ -532,13 +477,13 @@ describe('Project reducer', () => {
       }),
       antiModification: projectModificationRecordFactoryPartial({
         ports: {
-          deleted: List(['36']),
+          deleted: List([portToAddRecord.internalId]),
         },
       }),
     };
     const addedAgentAfterPortAdded = agentToAddRecord.set(
       'portsInternalIds',
-      List(['36']),
+      List([portToAddRecord.internalId]),
     );
     const stateAfterPortAdded = project(
       stateAfterAgentAdded,
@@ -549,16 +494,15 @@ describe('Project reducer', () => {
         },
       )(),
     );
-    const addedPortInternalId = addPortModifications.antiModification.ports.deleted.first();
 
     const deleteAgentModifications = {
       modification: projectModificationRecordFactoryPartial({
         agents: {
-          deleted: List([addedAgentInternalId]),
+          deleted: List([agentToAddRecord.internalId]),
         },
         // Do not comment out 'ports', we assume it is full modification - we are not testing creation of full modification
         ports: {
-          deleted: List([addedPortInternalId]),
+          deleted: List([portToAddRecord.internalId]),
         },
       }),
       antiModification: projectModificationRecordFactoryPartial({
@@ -654,9 +598,7 @@ describe('Project reducer', () => {
 
   it('performs undo and redo', () => {
     const statesLastToInitial: IProjectRecord[] = [
-      ...getStatesModifications(notEmptyState)
-        .map((el) => el[0])
-        .reverse(),
+      ...stateModifications1.map((el) => el[0]).reverse(),
       notEmptyState,
     ];
 
@@ -673,7 +615,7 @@ describe('Project reducer', () => {
     expect(state.oppositeModificationCurrentIdx).toEqual(-1);
 
     const statesPostInitialToLast: IProjectRecord[] = [
-      ...getStatesModifications(notEmptyState).map((el) => el[0]),
+      ...stateModifications1.map((el) => el[0]),
       // ...statesLastToInitial,//.reverse(),//.splice(0, 1),
       // lastState,
     ];
@@ -693,7 +635,7 @@ describe('Project reducer', () => {
   it('deletes oppositeModifications for redo after change other than undo', () => {
     const statesInitialToLast: IProjectRecord[] = [
       notEmptyState,
-      ...getStatesModifications(notEmptyState).map((el) => el[0]),
+      ...stateModifications1.map((el) => el[0]),
     ];
 
     const lastState = statesInitialToLast.pop();
@@ -703,13 +645,7 @@ describe('Project reducer', () => {
     );
     const oppositeModificationsAfterUndo = stateAfterUndo.oppositeModifications;
 
-    const addedAgentInternalId = String(stateAfterUndo.lastInternalId + 1);
-    const agentToAddRecord = getBasicAgentRecordForTests(
-      'A_x2',
-      '0',
-      null,
-      addedAgentInternalId,
-    ); // TODO: is it OK to set ID here in context of future?
+    const agentToAddRecord = getBasicAgentRecordForTests('A_x2', '0', null); // TODO: is it OK to set ID here in context of future?
     const addAgentModifications = oppositeModificationsFactory({
       modification: projectModificationRecordFactoryPartial({
         agents: {
@@ -718,7 +654,7 @@ describe('Project reducer', () => {
       }),
       antiModification: projectModificationRecordFactoryPartial({
         agents: {
-          deleted: List([addedAgentInternalId]),
+          deleted: List([agentToAddRecord.internalId]),
         },
       }),
     });

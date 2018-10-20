@@ -120,3 +120,22 @@ INTERESTING IDEA:
   some quantity before (on the off-chance - na zapas)?;
   https://stackoverflow.com/questions/39771/is-a-guid-unique-100-of-the-time
 - what about storing Alvis diagram elements in maps, so that to get element by ID we basically need constant time?
+- maybe set UUIDs in constructor of every record automatically?
+- what about cases when you are adding connected items - e.g. agent with port - then agent will have id of the port
+  how we can ensure that during processing modification to agent, which already has assigned port, won't be assigned port again?
+  we should use Sets instead of lists, and we should use union, intersection etc. with set
+  Actually, we do not have this problem, we don't need to save in agent record information that it is connected to port.
+  We had problem, but it was caused by undefined ID of agent during creation of agent and port - this problem was
+  solved by using UUID.
+  We have small performance problem if during removing hierarchy we dont want to copy whole tree, but we dont need to copy
+  whole tree actually; we only need to change records of agents from subpage, the rest sub-pages of sub-page (and deeper)
+  stay unchanged and we don't need to modify them and Immutable should keep track of them - it won't duplicate them.
+  
+  One more problem, which we have is providing undo-redo for single page - so that you can undo-redo withing single page,
+  this can be solved by assuming that every change is happening within every page and by saving information about
+  which page is affected by given modification withing modification record.
+  Removing hierarchy would be cross-page modification but it should be fine - we delete page BUT! During modification like that 
+  (removing hierarchy) should we also remove subpage modifications from list of modifications?
+  We don't have to - they will disappear after closing of the application
+
+  When it comes to cross-page modifications we may mark them as global modifications, this should work.

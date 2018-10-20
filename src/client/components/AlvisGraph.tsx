@@ -33,6 +33,7 @@ import {
   IConnection,
 } from '../models/alvisProject';
 import { List } from 'immutable';
+import { newUuid } from '../utils/uuidGenerator';
 
 // TO DO: Problem with moving edeges between ports is because of
 // mxEdgeHandler.prototype.createMarker = function()
@@ -513,7 +514,7 @@ export class AlvisGraph extends React.Component<
     const { internalId } = connectionData;
     const connection = internalId
       ? this.getElementByInternalId(connections, internalId)
-      : connectionRecordFactory();
+      : connectionRecordFactory({ internalId: newUuid() });
 
     return connection.merge(connectionData);
   }
@@ -523,7 +524,7 @@ export class AlvisGraph extends React.Component<
     const { internalId } = portData;
     const port = internalId
       ? this.getElementByInternalId(ports, internalId)
-      : portRecordFactory();
+      : portRecordFactory({ internalId: newUuid() });
 
     return port.merge(portData);
   }
@@ -533,7 +534,7 @@ export class AlvisGraph extends React.Component<
     const { agents, pageInternalId } = this.props;
     const agent = internalId
       ? this.getElementByInternalId(agents, internalId)
-      : agentRecordFactory();
+      : agentRecordFactory({ internalId: newUuid() });
 
     return agent.merge({
       // default values:
@@ -550,7 +551,7 @@ export class AlvisGraph extends React.Component<
     return pageRecordFactory({
       supAgentInternalId,
       name,
-      internalId: null, // TODO: we can delete it probably, isn't it the default in factory?
+      internalId: newUuid(), // TODO: we can delete it probably, isn't it the default in factory?
       agentsInternalIds: List<string>(),
       subPagesInternalIds: List<string>(),
     });

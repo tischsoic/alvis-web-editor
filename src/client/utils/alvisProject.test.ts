@@ -22,6 +22,7 @@ import {
   getAllPagesDeleted,
 } from './alvisProject';
 import { sortProjectModification } from './test/sortHelper';
+import { newUuid } from './uuidGenerator';
 
 describe('Alvis project utils', () => {
   describe('generateFullModification', () => {
@@ -97,20 +98,12 @@ function getStateAndModifications1(): [
   //        so that they would guard against unintended assignment etc.
 
   const initialState = exampleState1;
-  let currentLastInternalId = initialState.lastInternalId;
-
   const agentToAddRecord = getBasicAgentRecordForTests('A_x', '0');
-  currentLastInternalId += 1;
-  const addedAgentInternalId = String(currentLastInternalId);
-
   const portToAddRecord = getBasicPortRecordForTests(
-    null,
-    addedAgentInternalId,
+    newUuid(),
+    agentToAddRecord.internalId,
     'p_x',
   );
-  currentLastInternalId += 1;
-  const addedPortInternalId = String(currentLastInternalId);
-
   const modifiedPage = pageRecordFactory({
     internalId: '2',
     name: 'SubSubSystem_modified',

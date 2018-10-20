@@ -239,7 +239,7 @@ const fetchProjects = (): ((
 
 const openProject = (
   projectId: number,
-  alvisProject: [IAlvisProjectRecord, number],
+  alvisProject: IAlvisProjectRecord,
 ): ((dispatch: redux.Dispatch<any>, getState: () => RootState) => void) => {
   return (dispatch, getState): void => {
     dispatch(projectActions.setAlvisProject(alvisProject));
@@ -252,7 +252,7 @@ const closeProject = (
 ): ((dispatch: redux.Dispatch<any>, getState: () => RootState) => void) => {
   return (dispatch, getState): void => {
     const emptyAlvisProject = getValidEmptyAlvisProject();
-    dispatch(projectActions.setAlvisProject([emptyAlvisProject, 3]));
+    dispatch(projectActions.setAlvisProject(emptyAlvisProject));
     dispatch(setOpenedProjectId(null));
   };
 };

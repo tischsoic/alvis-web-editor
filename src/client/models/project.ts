@@ -16,7 +16,6 @@ import {
 export interface IProject {
   xml: string | null;
   alvisProject: IAlvisProjectRecord | null;
-  lastInternalId: number;
   oppositeModifications: List<IOppositeModificationsRecord>;
   oppositeModificationCurrentIdx: number | null;
 }
@@ -24,7 +23,6 @@ export type IProjectRecord = ReturnType<Record.Factory<IProject>>;
 const defaultProjectRecord = {
   xml: null,
   alvisProject: null,
-  lastInternalId: -1,
   oppositeModifications: List<IOppositeModificationsRecord>(),
   oppositeModificationCurrentIdx: -1, // TODO: do we want -1, maybe 0/null would be better?
 };

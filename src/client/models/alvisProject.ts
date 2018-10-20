@@ -34,7 +34,7 @@ export interface IPort extends IIdentifiableElement {
 }
 export type IPortRecord = ReturnType<Record.Factory<IPort>>;
 const defaultPortRecord: IPort = {
-  internalId: null,
+  internalId: null, // TODO: change it to id
   agentInternalId: null,
   name: null,
   x: null,
@@ -46,7 +46,7 @@ export const portRecordFactory = Record<IPort>(defaultPortRecord);
 
 export interface IAgent extends IIdentifiableElement {
   internalId: string; // TODO: if it extends IInternalRecord it is not necessary to redefne internalId field here.
-  pageInternalId: string;
+  pageInternalId: string; // TODO: change it to pageId
   subPageInternalId: string;
   name: string;
   portsInternalIds: List<string>;
@@ -65,7 +65,7 @@ const defaultAgentRecord: IAgent = {
   pageInternalId: null,
   subPageInternalId: null,
   name: null,
-  portsInternalIds: List<string>([]),
+  portsInternalIds: List<string>([]), // TODO: It should be Set - https://www.quora.com/When-should-I-use-Lists-vs-Sets-in-Java
   index: null,
   active: null, // TO DO: maybe boolean
   running: null, // TO DO: maybe boolean
@@ -137,7 +137,7 @@ export interface IAlvisProject {
 }
 export type IAlvisProjectRecord = ReturnType<Record.Factory<IAlvisProject>>;
 const defaultAlvisProjectRecord: IAlvisProject = {
-  pages: List<IPageRecord>([]),
+  pages: List<IPageRecord>([]), // TODO: it should be Map or Set - map would be great when it comes to getting element by id
   agents: List<IAgentRecord>([]),
   ports: List<IPortRecord>([]),
   connections: List<IConnectionRecord>([]),

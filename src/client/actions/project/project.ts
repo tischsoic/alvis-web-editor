@@ -14,7 +14,6 @@ import {
 } from '../../models/alvisProject';
 import { List } from 'immutable';
 
-import parseAlvisProjectXML from '../../utils/alvisXmlParser';
 import {
   projectModificationRecordFactoryPartial,
   IProjectModification,
@@ -26,12 +25,9 @@ const setProjectXML = createAction<string, string>(
   (value: string) => value,
 );
 
-const setAlvisProject = createAction<
-  [IAlvisProjectRecord, number],
-  [IAlvisProjectRecord, number]
->(
+const setAlvisProject = createAction<IAlvisProjectRecord, IAlvisProjectRecord>(
   Actions.PROJECT_SET_ALVIS_PROJECT,
-  (value: [IAlvisProjectRecord, number]) => value,
+  (value: IAlvisProjectRecord) => value,
 );
 
 function createElementAction<T extends IAlvisElement>(
