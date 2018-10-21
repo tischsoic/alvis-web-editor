@@ -52,7 +52,7 @@ function createElementDeleteAction(elementsType: keyof IProjectModification) {
     (elementInternalId: string) =>
       projectModificationRecordFactoryPartial({
         [elementsType]: {
-          deleted: List(elementInternalId),
+          deleted: List([elementInternalId]),
         },
       }),
   );

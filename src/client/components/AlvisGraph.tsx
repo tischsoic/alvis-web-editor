@@ -40,6 +40,8 @@ import { newUuid } from '../utils/uuidGenerator';
 // marker.isValidState ....
 
 export interface AlvisGraphProps {
+  active: boolean;
+
   agents: List<IAgentRecord>;
   ports: List<IPortRecord>;
   connections: List<IConnectionRecord>;
@@ -308,7 +310,7 @@ export class AlvisGraph extends React.Component<
 
       this.props.onAgentClick(internalId);
 
-      event.consume(); // TODO: what it does?
+      // event.consume(); // TODO: what it does?
     });
 
     this.graph.addListener((mx as any).mxEvent.CELLS_ADDED, (sender, evt) => {
@@ -346,6 +348,8 @@ export class AlvisGraph extends React.Component<
         );
       }
     });
+
+    this.graph.setEnabled(this.props.active);
 
     this.instantiateOutline();
     this.restrictGraphViewToDivBoundries();
@@ -416,12 +420,29 @@ export class AlvisGraph extends React.Component<
     nextContext: any,
   ) {
     console.log('ATTENTION!!! shouldComponentUpdate');
-    return false;
+    return true;
   }
 
   // componentWillUpdate?(nextProps: P, nextState: S, nextContext: any): void;
-  // componentDidUpdate?(prevProps: P, prevState: S, prevContext: any): void;
-  // componentWillUnmount?(): void;
+  componentDidUpdate(prevProps) {
+    const { active } = this.props;
+
+    this.graph.setEnabled(this.props.active);
+
+    if (active && !prevProps.active) {
+      this.outline.refresh();
+    }
+
+    if (!active) {
+      this.graph.getSelectionModel().clear();
+    }
+  }
+
+  componentWillUnmount() {
+    this.graph.setEnabled(false);
+    this.outline.destroy();
+    this.graph.destroy();
+  }
 
   render() {
     console.log(this.props);

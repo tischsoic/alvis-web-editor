@@ -253,6 +253,7 @@ export class AlvisGraphPanel extends React.Component<
                 this.activeAlvisGraph = alvisGraph;
               }
             }}
+            active={pageInternalId === activePageInternalId}
             agents={agents}
             ports={ports}
             connections={connections}
@@ -313,7 +314,14 @@ export class AlvisGraphPanel extends React.Component<
         <div>
           <Tabs
             activeKey={activePageInternalId}
-            onSelect={onChangeActivePage}
+            animation={false}
+            onSelect={(pageInternalId) => {
+              onChangeActivePage(pageInternalId);
+
+              if (document.activeElement instanceof HTMLElement) {
+                document.activeElement.blur();
+              }
+            }}
             id="alvis-graph-panel"
           >
             {pagesTabs}
