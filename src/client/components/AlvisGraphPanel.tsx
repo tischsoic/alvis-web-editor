@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as mxClasses from 'mxgraphAllClasses';
 import {
   IAgentRecord,
   agentRecordFactory,
@@ -11,6 +12,7 @@ import {
   ConnectionDirection,
   IPageRecord,
   IAlvisProjectRecord,
+  IAgent,
 } from '../models/alvisProject';
 import { List, Record } from 'immutable';
 import {
@@ -30,6 +32,8 @@ import {
 import { ColorPicker } from './ColorPicker/ColorPicker';
 import { AlvisGraph } from './AlvisGraph';
 import { NamePicker } from './NamePicker';
+import { newUuid } from '../utils/uuidGenerator';
+import { mx } from '../utils/mx';
 
 export interface AlvisGraphPanelProps {
   alvisProject: IAlvisProjectRecord;
@@ -82,10 +86,15 @@ export class AlvisGraphPanel extends React.Component<
 
     this.getNameFromUser = this.getNameFromUser.bind(this);
     this.onColorSelect = this.onColorSelect.bind(this);
+
+    this.addActiveAgentBtn = React.createRef();
+    this.addStaticAgentBtn = React.createRef();
   }
 
   activeAlvisGraph: AlvisGraph | null = null;
   namePicker: NamePicker | null = null;
+  addActiveAgentBtn: React.RefObject<HTMLButtonElement>;
+  addStaticAgentBtn: React.RefObject<HTMLButtonElement>;
 
   componentWillReceiveProps(nextProps: AlvisGraphPanelProps) {
     const { projectId } = this.props;
@@ -121,6 +130,65 @@ export class AlvisGraphPanel extends React.Component<
     this.setState({
       openedPagesInternalIds: newOpenedPagesInternalIds,
     });
+  }
+
+  private getDragPreviewElement = (isActive: boolean) => {
+    const dragElt = document.createElement('div');
+
+    dragElt.style.border = 'dashed black 1px';
+    dragElt.style.borderRadius = isActive ? '15px' : '0px';
+    dragElt.style.width = '140px';
+    dragElt.style.height = '100px';
+
+    return dragElt;
+  };
+
+  private onAgentDrop = (x, y, isActive: boolean) => {
+    this.addAgent({ x, y, active: isActive ? 1 : 0 });
+  };
+
+  private addAgent = (agentData: Partial<IAgent>) => {
+    const { onMxGraphAgentAdded, activePageInternalId } = this.props;
+    const agent = agentRecordFactory({
+      // TODO: create util for creating objects like this.
+      internalId: newUuid(),
+      color: 'white',
+      pageInternalId: activePageInternalId,
+      running: 0,
+      height: 100,
+      width: 140,
+      ...agentData,
+    });
+
+    onMxGraphAgentAdded(agent);
+  };
+
+  private getActiveMxGraphInstance = () => {
+    return this.activeAlvisGraph.getMxGraphInstance();
+  };
+
+  componentDidMount() {
+    mx.mxUtils.makeDraggable(
+      this.addActiveAgentBtn.current,
+      this.getActiveMxGraphInstance as any,
+      (graph, evt, target, x, y) => this.onAgentDrop(x, y, true),
+      this.getDragPreviewElement(true),
+      null,
+      null,
+      null,
+      true as any, // TODO: `as any` is temp
+    );
+
+    mx.mxUtils.makeDraggable(
+      this.addStaticAgentBtn.current,
+      this.getActiveMxGraphInstance as any,
+      (graph, evt, target, x, y) => this.onAgentDrop(x, y, false),
+      this.getDragPreviewElement(false),
+      null,
+      null,
+      null,
+      true as any,
+    );
   }
 
   getElementByFn<T>(elements: List<T>, fn: (element: T) => boolean) {
@@ -310,6 +378,20 @@ export class AlvisGraphPanel extends React.Component<
               {isColoringModeEnabled ? 'Stop coloring' : 'Start coloring'}
             </Button>
           </ButtonGroup>
+          <button
+            ref={this.addActiveAgentBtn}
+            className="btn btn-default"
+            onClick={() => this.addAgent({ active: 1 })}
+          >
+            A
+          </button>
+          <button
+            ref={this.addStaticAgentBtn}
+            className="btn btn-default"
+            onClick={() => this.addAgent({ active: 0 })}
+          >
+            S
+          </button>
         </ButtonToolbar>
         <div>
           <Tabs

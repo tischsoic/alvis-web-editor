@@ -365,6 +365,10 @@ export class AlvisGraph extends React.Component<
     // this.graph.maximumGraphBounds = new mx.mxRectangle(0, 0, 500, 400);
   }
 
+  public getMxGraphInstance = () => {
+    return this.graph;
+  };
+
   instantiateOutline() {
     const outlineDiv = document.getElementById(
       'alvis-graph-outline-container-' + this.randomNumber,
