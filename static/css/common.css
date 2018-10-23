@@ -1,3 +1,8 @@
+body {
+	overflow-x: hidden;
+}
+
+
 div.mxRubberband {
 	position: absolute;
 	overflow: hidden;
