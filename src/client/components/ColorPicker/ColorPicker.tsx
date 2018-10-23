@@ -23,6 +23,16 @@ export class DraggableModalDialog extends React.Component {
   static onStop: DraggableEventHandler;
   static defaultPosition: ControlPosition;
 
+  componentDidMount() {
+    const colorPikerElement: HTMLDivElement = document.querySelector(
+      '.color-picker-dialog',
+    );
+    const modalDiv = colorPikerElement.parentElement;
+
+    modalDiv.style.width = `${colorPikerElement.offsetWidth}px`;
+    modalDiv.style.height = `${colorPikerElement.offsetHeight}px`;
+  }
+
   render() {
     return (
       <Draggable
