@@ -12,7 +12,7 @@ module.exports = merge.strategy({
     ],
 
     watchOptions: {
-        aggregateTimeout: 300,
+        aggregateTimeout: 2000,
         poll: 1000,
         ignored: /node_modules/
     },

@@ -28,12 +28,17 @@ import {
   ButtonGroup,
   ButtonToolbar,
 } from 'react-bootstrap';
+// TODO: add some TS types etc.
+import { saveAs } from 'file-saver';
 
 import { ColorPicker } from './ColorPicker/ColorPicker';
 import { AlvisGraph } from './AlvisGraph';
 import { NamePicker } from './NamePicker';
 import { newUuid } from '../utils/uuidGenerator';
 import { mx } from '../utils/mx';
+
+// TODO: add some TS types etc.
+declare let canvg: any;
 
 export interface AlvisGraphPanelProps {
   alvisProject: IAlvisProjectRecord;
@@ -167,10 +172,39 @@ export class AlvisGraphPanel extends React.Component<
     return this.activeAlvisGraph.getMxGraphInstance();
   };
 
+  private onGetGraphImage = () => {
+    const mxGraph = this.activeAlvisGraph.getMxGraphInstance();
+
+    mxGraph.fit(undefined, undefined, 10);
+    mxGraph.setSelectionCells([]);
+
+    const svg: SVGElement = mxGraph.container.querySelector('svg');
+    const svgG = svg.childNodes[0] as SVGElement;
+    const serializer = new XMLSerializer();
+    const gSerialized = serializer.serializeToString(svgG);
+    const { width, height } = svg.getBoundingClientRect();
+    const canvas = document.createElement('canvas');
+    const svgString = `<svg style="width: 100%; height: 100%; display: block; width: ${width}px; height: ${height}px;">
+      ${gSerialized}
+    </svg>`;
+
+    canvas.width = width;
+    canvas.height = height;
+    canvg(canvas, svgString, {
+      ignoreMouse: true,
+      ignoreAnimation: true,
+      renderCallback: () => {
+        canvas.toBlob((blob) => {
+          saveAs(blob, 'diagram.png');
+        });
+      },
+    });
+  };
+
   componentDidMount() {
     mx.mxUtils.makeDraggable(
       this.addActiveAgentBtn.current,
-      this.getActiveMxGraphInstance as any,
+      this.getActiveMxGraphInstance,
       (graph, evt, target, x, y) => this.onAgentDrop(x, y, true),
       this.getDragPreviewElement(true),
       null,
@@ -181,7 +215,7 @@ export class AlvisGraphPanel extends React.Component<
 
     mx.mxUtils.makeDraggable(
       this.addStaticAgentBtn.current,
-      this.getActiveMxGraphInstance as any,
+      this.getActiveMxGraphInstance,
       (graph, evt, target, x, y) => this.onAgentDrop(x, y, false),
       this.getDragPreviewElement(false),
       null,
@@ -392,6 +426,7 @@ export class AlvisGraphPanel extends React.Component<
           >
             S
           </button>
+          <Button onClick={this.onGetGraphImage}>PNG</Button>
         </ButtonToolbar>
         <div>
           <Tabs
