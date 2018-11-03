@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "outDir": "./dist",
+        "sourceMap": true,
+        "noImplicitAny": false,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "target": "es6",
+        "jsx": "react",
+        "experimentalDecorators": true
+    },
+    "include": [
+        "./src/**/*",
+        "./typings/**/*"
+    ]
+}

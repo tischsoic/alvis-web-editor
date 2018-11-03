@@ -1,0 +1,111 @@
+{
+  "name": "alvis-web-editor-client",
+  "version": "0.0.0",
+  "description": "Alvis Web Editor Client",
+  "main": "src/index.tsx",
+  "scripts": {
+    "precommit": "lint-staged",
+    "tslint-check": "tslint-config-prettier-check ./tslint.json",
+    "test": "jest",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "client:build": "webpack --config webpack.client.prod.js",
+    "client:builddev": "webpack --config webpack.client.dev.js",
+    "client:devserver": "node dev-server.js"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ]
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tischsoic/alvis-web-editor.git"
+  },
+  "keywords": [
+    "alvis"
+  ],
+  "author": "Jakub Brzegowski",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tischsoic/alvis-web-editor/issues"
+  },
+  "homepage": "https://github.com/tischsoic/alvis-web-editor#readme",
+  "resolutions": {
+    "@types/react": "16.4.18"
+  },
+  "dependencies": {
+    "@types/color": "^3.0.0",
+    "@types/node": "^10.12.2",
+    "@types/react": "16.4.18",
+    "@types/react-color": "^2.13.6",
+    "@types/react-dom": "^16.0.7",
+    "@types/react-redux": "^5.0.15",
+    "@types/react-router": "4.4.0",
+    "@types/react-router-dom": "4.2.3",
+    "@types/redux-actions": "^1.2.4",
+    "@types/redux-thunk": "^2.1.32",
+    "axios": "^0.17.1",
+    "brace": "^0.10.0",
+    "color": "^3.0.0",
+    "file-saver": "^2.0.0-rc.4",
+    "immutable": "4.0.0-rc.12",
+    "isemail": "^3.0.0",
+    "mxgraph": "git+https://github.com/jgraph/mxgraph.git",
+    "react": "^16.2.0",
+    "react-ace": "^5.5.0",
+    "react-bootstrap": "^0.31.5",
+    "react-color": "^2.13.8",
+    "react-dom": "^16.2.0",
+    "react-draggable": "^3.0.5",
+    "react-hot-loader": "^3.0.0-beta.7",
+    "react-redux": "^5.0.3",
+    "react-router": "^4.2.0",
+    "react-router-dom": "^4.2.2",
+    "redux": "4.0.0",
+    "redux-actions": "^2.0.3",
+    "redux-thunk": "^2.2.0",
+    "rxjs": "^5.5.6"
+  },
+  "devDependencies": {
+    "@types/jest": "^22.1.3",
+    "@types/react-test-renderer": "^16.0.1",
+    "awesome-typescript-loader": "^3.1.2",
+    "clean-webpack-plugin": "^0.1.17",
+    "connect-history-api-fallback": "^1.5.0",
+    "html-webpack-plugin": "^2.30.1",
+    "http-proxy-middleware": "^0.17.4",
+    "husky": "^0.14.3",
+    "jest": "^22.4.2",
+    "lint-staged": "^7.0.0",
+    "nodemon": "^1.11.0",
+    "prettier": "1.10.2",
+    "react-test-renderer": "^16.2.0",
+    "source-map-loader": "^0.2.1",
+    "ts-jest": "^22.4.0",
+    "tslint": "^5.9.1",
+    "tslint-config-airbnb": "^5.7.0",
+    "tslint-config-prettier": "^1.8.0",
+    "typescript": "^3.1.6",
+    "uglifyjs-webpack-plugin": "^1.1.6",
+    "webpack": "^2.3.3",
+    "webpack-dev-middleware": "^2.0.4",
+    "webpack-dev-server": "^2.4.2",
+    "webpack-hot-middleware": "^2.18.0",
+    "webpack-merge": "^4.1.1"
+  }
+}

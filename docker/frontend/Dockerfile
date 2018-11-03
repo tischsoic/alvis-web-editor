@@ -10,7 +10,7 @@ COPY package.json ${APP_DIR}/
 COPY yarn.lock ${APP_DIR}/
 
 WORKDIR ${APP_DIR}
-RUN yarn install
+RUN yarn install --verbose
 
 COPY docker/frontend/entrypoint.sh /
 RUN chmod +x /entrypoint.sh

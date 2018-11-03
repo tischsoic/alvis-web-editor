@@ -95,6 +95,12 @@ Default user, which is insertred into database during creation is:
 - email: admin@agh.edu.pl
 - password: admin (if you change salt for SHA-512 algorithm it will stop woriking)
 
+## Good to know
+
+When it comes to providing static files for website in dev-mode it is managed by dev-server.js from client; in case of production mode, static files are managed by server.
+
+Hmmmm, when you place `dist` directory for `server` bundle in root folder of the project, you would get errors because `require` does not find packages from `node_modules`. It's because `__dirname` points to directory in which the bundle is located and when it looks for `node_modules` it looks in `__dirname` directory and subderectories. So, if server `bundle` is located in `/home/b27/Documents/alvis-web-editor/dist/server/bundle.js` it looks for it in `/home/b27/Documents/alvis-web-editor/dist/server`, `/home/b27/Documents/alvis-web-editor/dist/`, `/home/b27/Documents/alvis-web-editor/` and so on... but node_modules for server are actually in another branch - `/home/b27/Documents/alvis-web-editor/server/node_modules`.
+I didn't tested it precisely but it seems to be right explanation to problem which I encountered.
 
 --------------------------------------
 

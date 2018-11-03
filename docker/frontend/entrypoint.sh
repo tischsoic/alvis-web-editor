@@ -3,5 +3,5 @@
 git submodule init
 git submodule update --recursive
 
-yarn run client:devserver
-# tail -f /dev/null
+# yarn run client:devserver
+tail -f /dev/null

@@ -1,3 +1,3 @@
 [submodule "node_modules/@types/mxgraph"]
-	path = node_modules/@types/mxgraph
+	path = client/node_modules/@types/mxgraph
 	url = https://github.com/tischsoic/mxGraph-typescript-types.git
