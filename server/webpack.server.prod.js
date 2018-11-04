@@ -6,16 +6,11 @@ const webpackServerCommon = require('./webpack.server.common.js');
 module.exports = merge.strategy({
     entry: 'prepend'
 })(webpackServerCommon, {
-
+    mode: 'production',
+    
     node: {
         __dirname: false,
         __filename: false
     },
-
-    plugins: [
-        new webpack.DefinePlugin({
-            'process.env.NODE_ENV': JSON.stringify('production')
-        })
-    ]
 
 });
