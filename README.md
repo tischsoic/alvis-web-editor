@@ -55,6 +55,7 @@ Database's config file for server application is ./src/server/config.ts
 
 ## Running the app
 
+PS ...> sudo docker exec --user 1000 -it alvis-web-editor_frontend_1 sh
 PS C:\Users\Jakub\Documents\alvis-web-editor> docker exec -it alviswebeditor_frontend_1 sh
 PS C:\Users\Jakub\Documents\alvis-web-editor> docker-compose up
 
