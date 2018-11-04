@@ -6,16 +6,6 @@ const webpackClientCommon = require('./webpack.client.common.js');
 
 module.exports = merge.strategy({
 })(webpackClientCommon, {
-
+    mode: 'production',
     // devtool: "source-map",
-
-    plugins: [
-        new UglifyJsPlugin({
-            // sourceMap: true
-        }),
-        new webpack.DefinePlugin({
-            'process.env.NODE_ENV': JSON.stringify('production')
-        })
-    ],
-
 });

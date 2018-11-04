@@ -10,6 +10,7 @@ module.exports = merge.strategy({
         'react-hot-loader/patch',
         'webpack-hot-middleware/client?path=/__webpack_hmr&timeout=20000'
     ],
+    mode: 'development',
 
     watchOptions: {
         aggregateTimeout: 2000,
