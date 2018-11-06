@@ -3,6 +3,34 @@ Alvis Web Editor is application for managing Alvis projects. Alvis is programmin
 - graphical - diagrams
 - normal code   
 
+## Running the app using Docker
+
+To start the application run: 
+```
+$>  git clone https://github.com/tischsoic/alvis-web-editor.git app
+$>  cd app
+$>  sudo docker-compose up
+```
+
+in another terminal session:
+```
+$>  sudo docker exec --user 1000 -it awe-docker-test_frontend_1 sh
+$>  yarn install
+$>  git submodule init
+$>  git submodule update --recursive
+$>  yarn client:devserver
+```
+
+in another terminal session:
+```
+$>  sudo docker exec --user 1000 -it awe-docker-test_backend_1 sh
+$>  yarn install
+$>  yarn server:builddev
+$>  yarn server:server
+```
+
+Now the app should be available at: http://localhost:3001/client/ (**remember about slash at the end**)
+
 ## Installation
 
 Applications needed to be installed before you can run the app: **Node.js, npm, webpack, typescript, PortgreSQL**. 
@@ -54,11 +82,6 @@ Database's config file for server application is ./src/server/config.ts
 **!!! Currently only developement config is being used from ./src/server/config.ts**
 
 ## Running the app
-
-PS ...> sudo docker exec --user 1000 -it alvis-web-editor_frontend_1 sh
-PS C:\Users\Jakub\Documents\alvis-web-editor> docker exec -it alviswebeditor_frontend_1 sh
-PS C:\Users\Jakub\Documents\alvis-web-editor> docker-compose up
-
 
 There are few npm commands and you run them by executing:
 ```
