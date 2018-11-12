@@ -4,13 +4,8 @@ LABEL mintainer="Jakub Brzegowski <symfiz@gmail.com>"
 RUN apk add --no-cache git 
 RUN apk add --no-cache yarn
 
-ENV APP_DIR=/home/alvis-editor
-
-COPY package.json ${APP_DIR}/
-COPY yarn.lock ${APP_DIR}/
-
+ENV APP_DIR=/home/alvis-editor/server
 WORKDIR ${APP_DIR}
-RUN yarn install --verbose
 
 COPY docker/backend/entrypoint.sh /
 RUN chmod +x /entrypoint.sh
