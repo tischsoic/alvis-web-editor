@@ -13,6 +13,7 @@
     "client:devserver": "node dev-server.js"
   },
   "jest": {
+    "setupTestFrameworkScriptFile": "./test/jestSetup.ts",
     "transform": {
       "^.+\\.tsx?$": "ts-jest"
     },
@@ -24,7 +25,8 @@
       "jsx",
       "json",
       "node"
-    ]
+    ],
+    "testURL": "http://localhost/"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
