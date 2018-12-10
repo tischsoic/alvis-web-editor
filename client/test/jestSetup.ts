@@ -72,9 +72,13 @@ expect.extend({
                 let diffString;
 
                 if (valueIsArray) {
-                  diffString = diff(Set(modelValue), Set(stateValue), {
-                    expand: (this as any).expand, // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/29578
-                  });
+                  diffString = diff(
+                    Set(modelValue),
+                    stateValue ? Set(stateValue) : stateValue,
+                    {
+                      expand: (this as any).expand, // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/29578
+                    },
+                  );
                 }
 
                 // TODO: use stripIndent: http://2ality.com/2016/05/template-literal-whitespace.html#dedenting-content
@@ -82,7 +86,7 @@ expect.extend({
                     ${this.utils.matcherHint('.toMatchModel')}
 
 
-                    Expected value to be:
+                    Expected value under key '${key}' to be:
                       ${this.utils.printExpected(modelValue)}
                     Received:
                       ${this.utils.printReceived(stateValue)}

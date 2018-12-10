@@ -73,6 +73,11 @@ export function getRecord(alvisProject: IAlvisProjectRecord) {
     const recordIndex = getListElementIndexWithInternalId(records)(
       recordInternalId,
     );
+
+    if (recordIndex === -1) {
+      return null;
+    }
+
     const record = records.get(recordIndex);
 
     return record;
@@ -120,9 +125,9 @@ function deleteRecord<K extends AlvisProjectKeysLeadingToLists>(
 ) {
   return (recordInternalId: string, key: K): IAlvisProjectRecord => {
     const projectWithDeletedRecord = alvisProject.update<K>(key, (records) => {
-      const recordIndex = getListElementIndexWithInternalId<IInternalRecord>(records)(
-        recordInternalId,
-      );
+      const recordIndex = getListElementIndexWithInternalId<IInternalRecord>(
+        records,
+      )(recordInternalId);
 
       if (recordIndex === -1) {
         return records;
@@ -747,6 +752,11 @@ const assignSubPageToPage = (alvisProject: IAlvisProjectRecord) => (
   pageInternalId: string,
 ): IAlvisProjectRecord => {
   const page = <IPageRecord>getRecord(alvisProject)(pageInternalId, 'pages');
+
+  if (!page) {
+    throw new Error('no page with given internalId - in assignSubPageToPage');
+  }
+
   const pageWithSubPageAdded = page.update(
     'subPagesInternalIds',
     (subPagesInternalIds) => subPagesInternalIds.push(subPageInternalId),
@@ -825,6 +835,11 @@ const assignAgentToPage = (alvisProject: IAlvisProjectRecord) => (
   pageInternalId: string,
 ): IAlvisProjectRecord => {
   const page = <IPageRecord>getRecord(alvisProject)(pageInternalId, 'pages');
+
+  if (!page) {
+    throw new Error('no page with given internalId - in assignAgentToPage');
+  }
+
   const pageWithAgentAssigned = page.update(
     'agentsInternalIds',
     (agentsInternalIds) => agentsInternalIds.push(agentInternalId),
@@ -864,13 +879,22 @@ const removeAgentFromPage = (alvisProject: IAlvisProjectRecord) => (
 export const addAgentToAlvisProject = (alvisProject: IAlvisProjectRecord) => (
   newAgent: IAgentRecord,
 ): IAlvisProjectRecord => {
-  const afterAgentAddedToProject = addAgentRecord(alvisProject)(
-    purifyAgent(newAgent),
-  );
-  const afterAgentAssignedToPage = assignAgentToPage(afterAgentAddedToProject)(
-    newAgent.internalId,
-    newAgent.pageInternalId,
-  );
+  let afterAgentAssignedToPage = null;
+
+  try {
+    const afterAgentAddedToProject = addAgentRecord(alvisProject)(
+      purifyAgent(newAgent),
+    );
+
+    afterAgentAssignedToPage = assignAgentToPage(afterAgentAddedToProject)(
+      newAgent.internalId,
+      newAgent.pageInternalId,
+    );
+  } catch (e) {
+    console.error(e);
+
+    return alvisProject;
+  }
 
   return afterAgentAssignedToPage;
 };
@@ -973,6 +997,11 @@ const assignPortToAgent = (alvisProject: IAlvisProjectRecord) => (
     agentInternalId,
     'agents',
   );
+
+  if (!agent) {
+    throw new Error('no agent with given internalId - in assignPortToAgent');
+  }
+
   const agentWithPortAssigned = agent.update(
     'portsInternalIds',
     (portsInternalIds) => portsInternalIds.push(portInternalId),

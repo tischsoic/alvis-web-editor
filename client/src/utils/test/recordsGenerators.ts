@@ -34,7 +34,7 @@ export function getBasicAgentRecordForTests(
 }
 
 export function getBasicPortRecordForTests(
-  internalId: string,
+  internalId: string = newUuid(),
   agentInternalId: string,
   name: string,
 ): IPortRecord {

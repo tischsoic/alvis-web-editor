@@ -55,13 +55,6 @@ function createProjectModificationAction(
   )();
 }
 
-const ad1 = {
-  pages: [{ internalId: 'System', agents: 'System_A' }],
-  agents: [{ internalId: 'System_A', ports: 'System_A_p1' }],
-  ports: [{ internalId: 'System_A_p1', name: 'System_A_p1' }],
-  connections: [],
-};
-
 /**
  * Tests Alvis project reducer
  */
@@ -76,8 +69,26 @@ describe('Project reducer', () => {
 
   expect(state).toMatchModel(initialStateModel);
 
-  it('Adds SystemPage_A agent to System page', () => {
-    const agent = getBasicAgentRecordForTests('A', '0', null, 'System_A');
+  // it('Adds agent to non-existing page', () => {
+  //   // TODO: make test with adding agent with wrong page ID - it should not be added
+  //   const agent = getBasicAgentRecordForTests('A', '0', null, 'System_A');
+  //   const action = createProjectModificationAction({
+  //     agents: {
+  //       added: List([agent]),
+  //     },
+  //   });
+  //   const stateModel = {
+  //     pages: [{ internalId: 'System', agentsInternalIds: ['System_A'] }],
+  //     agents: [{ internalId: 'System_A', pageInternalId: 'System' }],
+  //   };
+
+  //   state = project(state, action);
+
+  //   expect(state).toMatchModel(stateModel);
+  // });
+
+  it('Adds System_A agent to the System page', () => {
+    const agent = getBasicAgentRecordForTests('A', 'System', null, 'System_A');
     const action = createProjectModificationAction({
       agents: {
         added: List([agent]),
@@ -85,7 +96,136 @@ describe('Project reducer', () => {
     });
     const stateModel = {
       pages: [{ internalId: 'System', agentsInternalIds: ['System_A'] }],
-      agents: [{ internalId: 'System_A' }],
+      agents: [{ internalId: 'System_A', pageInternalId: 'System' }],
+    };
+
+    state = project(state, action);
+
+    expect(state).toMatchModel(stateModel);
+  });
+
+  it('Adds System_B agent to the System page', () => {
+    const agent = getBasicAgentRecordForTests('B', 'System', null, 'System_B');
+    const action = createProjectModificationAction({
+      agents: {
+        added: List([agent]),
+      },
+    });
+    const stateModel = {
+      pages: [
+        { internalId: 'System', agentsInternalIds: ['System_A', 'System_B'] },
+      ],
+      agents: [{ internalId: 'System_A' }, { internalId: 'System_B' }],
+    };
+
+    state = project(state, action);
+
+    expect(state).toMatchModel(stateModel);
+  });
+
+  it('Adds System_A_p1 port to the System_A agent', () => {
+    const port = getBasicPortRecordForTests('System_A_p1', 'System_A', 'p1');
+    const action = createProjectModificationAction({
+      ports: {
+        added: List([port]),
+      },
+    });
+    const stateModel = {
+      pages: [
+        { internalId: 'System', agentsInternalIds: ['System_A', 'System_B'] },
+      ],
+      agents: [
+        { internalId: 'System_A', portsInternalIds: ['System_A_p1'] },
+        { internalId: 'System_B' },
+      ],
+      ports: [{ internalId: 'System_A_p1' }],
+    };
+
+    state = project(state, action);
+
+    expect(state).toMatchModel(stateModel);
+  });
+
+  it('Adds System_B_p1 port to the System_B agent', () => {
+    const port = getBasicPortRecordForTests('System_B_p1', 'System_B', 'p1');
+    const action = createProjectModificationAction({
+      ports: {
+        added: List([port]),
+      },
+    });
+    const stateModel = {
+      pages: [
+        { internalId: 'System', agentsInternalIds: ['System_A', 'System_B'] },
+      ],
+      agents: [
+        { internalId: 'System_A', portsInternalIds: ['System_A_p1'] },
+        { internalId: 'System_B', portsInternalIds: ['System_B_p1'] },
+      ],
+      ports: [{ internalId: 'System_A_p1' }, { internalId: 'System_B_p1' }],
+    };
+
+    state = project(state, action);
+
+    expect(state).toMatchModel(stateModel);
+  });
+
+  it('Adds System_connection1 connection between System_A_p1 and System_B_p1', () => {
+    const connection = getBasicConnectionRecordForTest(
+      'System_connection1',
+      'System_A_p1',
+      'System_B_p1',
+    );
+    const action = createProjectModificationAction({
+      connections: {
+        added: List([connection]),
+      },
+    });
+    const stateModel = {
+      pages: [
+        { internalId: 'System', agentsInternalIds: ['System_A', 'System_B'] },
+      ],
+      agents: [
+        { internalId: 'System_A', portsInternalIds: ['System_A_p1'] },
+        { internalId: 'System_B', portsInternalIds: ['System_B_p1'] },
+      ],
+      ports: [
+        { internalId: 'System_A_p1', name: 'p1' },
+        { internalId: 'System_B_p1' },
+      ],
+      connections: [{ internalId: 'System_connection1' }],
+    };
+
+    state = project(state, action);
+
+    expect(state).toMatchModel(stateModel);
+  });
+
+  it('Adds SubpageA to the agent A', () => {
+    const page = pageRecordFactory({
+      internalId: 'SubpageA',
+      supAgentInternalId: 'System_A',
+      name: 'SubpageA',
+    });
+    const action = createProjectModificationAction({
+      pages: {
+        added: List([page]),
+      },
+    });
+    // prettier-ignore
+    const stateModel = {
+      pages: [
+        { internalId: 'System', agentsInternalIds: ['System_A', 'System_B'], subPagesInternalIds: ['SubpageA'] },
+        { internalId: 'SubpageA', agentsInternalIds: [], supAgentInternalId: 'System_A' },
+      ],
+      agents: [
+        { internalId: 'System_A', portsInternalIds: ['System_A_p1'], subPageInternalId: 'SubpageA' },
+        { internalId: 'System_B', portsInternalIds: ['System_B_p1'] },
+      ],
+      ports: [
+        { internalId: 'System_A_p1', name: 'p1' },
+        { internalId: 'System_B_p1' },
+      ],
+      connections: [{ internalId: 'System_connection1' }],
     };
 
     state = project(state, action);
