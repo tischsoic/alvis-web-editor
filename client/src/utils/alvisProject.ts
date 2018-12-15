@@ -326,6 +326,40 @@ export const applyModification = (alvisProject: IAlvisProjectRecord) => (
   return finalProject;
 };
 
+/**
+ * Returns [1), 2)]
+ * 
+ * 1) modification with elements which belong to current elements
+ * Does not return e.g. agent which belongs to page which will be added,
+ * or page which belong to agent which will be added
+ * 
+ * 2) complementary modification containing the rest of the modifications
+ * 
+ * TODO: should it discard deletions and modifications
+ * 
+ * @param alvisProject 
+ */
+export const getElementsBelongingToExistingElements = (alvisProject: IAlvisProjectRecord) => (
+  fullModification: IProjectModificationRecord,
+): [IProjectModificationRecord, IProjectModificationRecord] => {
+  // TODO: maybe it will be worth adding helper functions such as `getId = (el) => el.id`
+  // and then use it like that: `alvisProject.pages.map(getId);`
+  const currentPagesIds = alvisProject.pages.map((p) => p.internalId);
+  const currentAgentsIds =alvisProject.agents.map((p) => p.internalId);
+  const currentPortsIds =alvisProject.ports.map((p) => p.internalId);
+
+  const modification =projectModificationRecordFactoryPartial({
+    pages: {
+      added: fullModification.pages.added.filter((page) => currentAgentsIds.contains(page.supAgentInternalId))
+    },
+    // TODO: implement the rest...
+  })
+
+
+  return [fullModification, fullModification];
+}
+
+
 //
 //
 //
@@ -652,10 +686,13 @@ export const addPageToAlvisProject = (alvisProject: IAlvisProjectRecord) => (
   const afterPageAddedToProject = addPageRecord(alvisProject)(
     purifyPage(newPage),
   );
+  console.log(alvisProject)
   const supAgent = <IAgentRecord>getRecord(alvisProject)(
     newPage.supAgentInternalId,
     'agents',
   );
+  console.log(newPage)
+  console.log(supAgent)
   const afterAddedToSupPage = assignSubPageToPage(afterPageAddedToProject)(
     newPage.internalId,
     supAgent.pageInternalId,
@@ -891,7 +928,7 @@ export const addAgentToAlvisProject = (alvisProject: IAlvisProjectRecord) => (
       newAgent.pageInternalId,
     );
   } catch (e) {
-    console.error(e);
+    console.error(e.message);
 
     return alvisProject;
   }

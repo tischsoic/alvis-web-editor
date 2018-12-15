@@ -55,6 +55,14 @@ function createProjectModificationAction(
   )();
 }
 
+function createUndoAction() {
+  return createAction(projectActions.PROJECT_UNDO)();
+}
+
+function createRedoAction() {
+  return createAction(projectActions.PROJECT_REDO)();
+}
+
 /**
  * Tests Alvis project reducer
  */
@@ -69,23 +77,23 @@ describe('Project reducer', () => {
 
   expect(state).toMatchModel(initialStateModel);
 
-  // it('Adds agent to non-existing page', () => {
-  //   // TODO: make test with adding agent with wrong page ID - it should not be added
-  //   const agent = getBasicAgentRecordForTests('A', '0', null, 'System_A');
-  //   const action = createProjectModificationAction({
-  //     agents: {
-  //       added: List([agent]),
-  //     },
-  //   });
-  //   const stateModel = {
-  //     pages: [{ internalId: 'System', agentsInternalIds: ['System_A'] }],
-  //     agents: [{ internalId: 'System_A', pageInternalId: 'System' }],
-  //   };
+  it('Adds agent to non-existing page', () => {
+    // TODO: make test with adding agent with wrong page ID - it should not be added
+    const agent = getBasicAgentRecordForTests('A', '0', null, 'System_A');
+    const action = createProjectModificationAction({
+      agents: {
+        added: List([agent]),
+      },
+    });
+    // Agent should not be added
+    const stateModel = {
+      pages: [{ internalId: 'System' }],
+    };
 
-  //   state = project(state, action);
+    state = project(state, action);
 
-  //   expect(state).toMatchModel(stateModel);
-  // });
+    expect(state).toMatchModel(stateModel);
+  });
 
   it('Adds System_A agent to the System page', () => {
     const agent = getBasicAgentRecordForTests('A', 'System', null, 'System_A');
@@ -211,6 +219,59 @@ describe('Project reducer', () => {
         added: List([page]),
       },
     });
+    // prettier-ignore
+    const stateModel = {
+      pages: [
+        { internalId: 'System', agentsInternalIds: ['System_A', 'System_B'], subPagesInternalIds: ['SubpageA'] },
+        { internalId: 'SubpageA', agentsInternalIds: [], supAgentInternalId: 'System_A' },
+      ],
+      agents: [
+        { internalId: 'System_A', portsInternalIds: ['System_A_p1'], subPageInternalId: 'SubpageA' },
+        { internalId: 'System_B', portsInternalIds: ['System_B_p1'] },
+      ],
+      ports: [
+        { internalId: 'System_A_p1', name: 'p1' },
+        { internalId: 'System_B_p1' },
+      ],
+      connections: [{ internalId: 'System_connection1' }],
+    };
+
+    state = project(state, action);
+
+    expect(state).toMatchModel(stateModel);
+  });
+
+  // it('tries to remove non-existing page', () => {
+  //   // nothing should happen
+  // })
+
+  it('removes agent A', () => {
+    const action = createProjectModificationAction({
+      agents: {
+        deleted: List(['System_A']),
+      },
+    });
+    // prettier-ignore
+    const stateModel = {
+      pages: [
+        { internalId: 'System', agentsInternalIds: ['System_B'], subPagesInternalIds: [] },
+      ],
+      agents: [
+        { internalId: 'System_B', portsInternalIds: ['System_B_p1'] },
+      ],
+      ports: [
+        { internalId: 'System_B_p1' },
+      ],
+      connections: [],
+    };
+
+    state = project(state, action);
+
+    expect(state).toMatchModel(stateModel);
+  });
+
+  it('Undoes removal of agent A', () => {
+    const action = createUndoAction();
     // prettier-ignore
     const stateModel = {
       pages: [
