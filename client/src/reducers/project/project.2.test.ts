@@ -200,7 +200,13 @@ describe('Project reducer', () => {
         { internalId: 'System_A_p1', name: 'p1' },
         { internalId: 'System_B_p1' },
       ],
-      connections: [{ internalId: 'System_connection1' }],
+      connections: [
+        {
+          internalId: 'System_connection1',
+          sourcePortInternalId: 'System_A_p1',
+          targetPortInternalId: 'System_B_p1',
+        },
+      ],
     };
 
     state = project(state, action);
@@ -233,7 +239,13 @@ describe('Project reducer', () => {
         { internalId: 'System_A_p1', name: 'p1' },
         { internalId: 'System_B_p1' },
       ],
-      connections: [{ internalId: 'System_connection1' }],
+      connections: [
+        {
+          internalId: 'System_connection1',
+          sourcePortInternalId: 'System_A_p1',
+          targetPortInternalId: 'System_B_p1',
+        },
+      ],
     };
 
     state = project(state, action);
@@ -286,7 +298,13 @@ describe('Project reducer', () => {
         { internalId: 'System_A_p1', name: 'p1' },
         { internalId: 'System_B_p1' },
       ],
-      connections: [{ internalId: 'System_connection1' }],
+      connections: [
+        {
+          internalId: 'System_connection1',
+          sourcePortInternalId: 'System_A_p1',
+          targetPortInternalId: 'System_B_p1',
+        },
+      ],
     };
 
     state = project(state, action);
@@ -294,7 +312,177 @@ describe('Project reducer', () => {
     expect(state).toMatchModel(stateModel);
   });
 
-  // TODO: test nested pages in agents with more than one stage of nest.
+  it('Adds agent SubpageA_C and page SubpageC', () => {
+    const agent = getBasicAgentRecordForTests(
+      'C',
+      'SubpageA',
+      null,
+      'SubpageA_C',
+    );
+    const page = pageRecordFactory({
+      internalId: 'SubpageC',
+      supAgentInternalId: 'SubpageA_C',
+      name: 'SubpageC',
+    });
+    const action = createProjectModificationAction({
+      agents: {
+        added: List([agent]),
+      },
+      pages: {
+        added: List([page]),
+      },
+    });
+    // prettier-ignore
+    const stateModel = {
+      pages: [ // TODO: on second thought, wouldn't it be better to make models Immutable.JS records with type Record<any> and modify them from test to test? 
+                // correcting every model in case of mistake...
+                // ...but it would be harder to read and analyze. :/
+                // we may also store basic elements data in records and every time set such data as agentsInterlaIds, subPageInternaId etc.
+                // we wouldn't have to repeat everything
+        { internalId: 'System', agentsInternalIds: ['System_A', 'System_B'], subPagesInternalIds: ['SubpageA'] },
+        { internalId: 'SubpageA', agentsInternalIds: ['SubpageA_C'], subPagesInternalIds: ['SubpageC'], supAgentInternalId: 'System_A' },
+        { internalId: 'SubpageC', agentsInternalIds: [], subPagesInternalIds: [], supAgentInternalId: 'SubpageA_C' },
+      ],
+      agents: [
+        { internalId: 'System_A', portsInternalIds: ['System_A_p1'], subPageInternalId: 'SubpageA' },
+        { internalId: 'System_B', portsInternalIds: ['System_B_p1'], subPageInternalId: null },
+        { internalId: 'SubpageA_C', portsInternalIds: [], subPageInternalId: 'SubpageC' },
+      ],
+      ports: [
+        { internalId: 'System_A_p1', name: 'p1' },
+        { internalId: 'System_B_p1' },
+      ],
+      connections: [
+        {
+          internalId: 'System_connection1',
+          sourcePortInternalId: 'System_A_p1',
+          targetPortInternalId: 'System_B_p1',
+        },
+      ],
+    };
+
+    state = project(state, action);
+
+    expect(state).toMatchModel(stateModel);
+  });
+
+  it('removes agent A - once again', () => {
+    const action = createProjectModificationAction({
+      agents: {
+        deleted: List(['System_A']),
+      },
+    });
+    // prettier-ignore
+    const stateModel = {
+      pages: [
+        { internalId: 'System', agentsInternalIds: ['System_B'], subPagesInternalIds: [] },
+      ],
+      agents: [
+        { internalId: 'System_B', portsInternalIds: ['System_B_p1'] },
+      ],
+      ports: [
+        { internalId: 'System_B_p1' },
+      ],
+      connections: [],
+    };
+
+    state = project(state, action);
+
+    expect(state).toMatchModel(stateModel);
+  });
+
+  it('Undoes removal of agent A - once again', () => {
+    const action = createUndoAction();
+    // prettier-ignore
+    const stateModel = {
+      pages: [
+        { internalId: 'System', agentsInternalIds: ['System_A', 'System_B'], subPagesInternalIds: ['SubpageA'] },
+        { internalId: 'SubpageA', agentsInternalIds: ['SubpageA_C'], subPagesInternalIds: ['SubpageC'], supAgentInternalId: 'System_A' },
+        { internalId: 'SubpageC', agentsInternalIds: [], subPagesInternalIds: [], supAgentInternalId: 'SubpageA_C' },
+      ],
+      agents: [
+        { internalId: 'System_A', portsInternalIds: ['System_A_p1'], subPageInternalId: 'SubpageA' },
+        { internalId: 'System_B', portsInternalIds: ['System_B_p1'], subPageInternalId: null },
+        { internalId: 'SubpageA_C', portsInternalIds: [], subPageInternalId: 'SubpageC' },
+      ],
+      ports: [
+        { internalId: 'System_A_p1', name: 'p1' },
+        { internalId: 'System_B_p1' },
+      ],
+      connections: [
+        {
+          internalId: 'System_connection1',
+          sourcePortInternalId: 'System_A_p1',
+          targetPortInternalId: 'System_B_p1',
+        },
+      ],
+    };
+
+    state = project(state, action);
+
+    expect(state).toMatchModel(stateModel);
+  });
+
+  it('Removes port `System_B_p1`', () => {
+    const action = createProjectModificationAction({
+      ports: {
+        deleted: List(['System_B_p1']),
+      },
+    });
+    // prettier-ignore
+    const stateModel = {
+      pages: [
+        { internalId: 'System', agentsInternalIds: ['System_A', 'System_B'], subPagesInternalIds: ['SubpageA'] },
+        { internalId: 'SubpageA', agentsInternalIds: ['SubpageA_C'], subPagesInternalIds: ['SubpageC'], supAgentInternalId: 'System_A' },
+        { internalId: 'SubpageC', agentsInternalIds: [], subPagesInternalIds: [], supAgentInternalId: 'SubpageA_C' },
+      ],
+      agents: [
+        { internalId: 'System_A', portsInternalIds: ['System_A_p1'], subPageInternalId: 'SubpageA' },
+        { internalId: 'System_B', portsInternalIds: [], subPageInternalId: null },
+        { internalId: 'SubpageA_C', portsInternalIds: [], subPageInternalId: 'SubpageC' },
+      ],
+      ports: [
+        { internalId: 'System_A_p1', name: 'p1' },
+      ],
+      connections: [],
+    };
+
+    state = project(state, action);
+
+    expect(state).toMatchModel(stateModel);
+  });
+
+  it('Undoes removal of port `System_B_p1`', () => {
+    const action = createUndoAction();
+    // prettier-ignore
+    const stateModel = {
+      pages: [
+        { internalId: 'System', agentsInternalIds: ['System_A', 'System_B'], subPagesInternalIds: ['SubpageA'] },
+        { internalId: 'SubpageA', agentsInternalIds: ['SubpageA_C'], subPagesInternalIds: ['SubpageC'], supAgentInternalId: 'System_A' },
+        { internalId: 'SubpageC', agentsInternalIds: [], subPagesInternalIds: [], supAgentInternalId: 'SubpageA_C' },
+      ],
+      agents: [
+        { internalId: 'System_A', portsInternalIds: ['System_A_p1'], subPageInternalId: 'SubpageA' },
+        { internalId: 'System_B', portsInternalIds: ['System_B_p1'], subPageInternalId: null },
+        { internalId: 'SubpageA_C', portsInternalIds: [], subPageInternalId: 'SubpageC' },
+      ],
+      ports: [
+        { internalId: 'System_A_p1', name: 'p1' },
+        { internalId: 'System_B_p1' },
+      ],
+      connections: [
+        {
+          internalId: 'System_connection1',
+          sourcePortInternalId: 'System_A_p1',
+          targetPortInternalId: 'System_B_p1',
+        },
+      ],
+    };
+
+    state = project(state, action);
+
+    expect(state).toMatchModel(stateModel);
+  });
 
   // TODO:  test copy paste ???
 });
