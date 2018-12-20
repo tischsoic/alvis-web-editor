@@ -160,6 +160,7 @@ INTERESTING IDEA:
   We have small performance problem if during removing hierarchy we dont want to copy whole tree, but we dont need to copy
   whole tree actually; we only need to change records of agents from subpage, the rest sub-pages of sub-page (and deeper)
   stay unchanged and we don't need to modify them and Immutable should keep track of them - it won't duplicate them.
+- I should acquaint more carefully with Immutable.js to use its full potential
   
   One more problem, which we have is providing undo-redo for single page - so that you can undo-redo withing single page,
   this can be solved by assuming that every change is happening within every page and by saving information about

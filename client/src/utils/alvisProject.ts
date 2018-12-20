@@ -205,6 +205,17 @@ export function getListElementByInternalId<T extends IIdentifiableElement>(
   return elementIndex === -1 ? null : elements.get(elementIndex);
 }
 
+////////////////////////////////////////////////////
+// refactor functions - remove above functions
+////////////////////////////////////////////////////
+
+function getElementById<T extends IIdentifiableElement>(
+  id: string,
+  elements: List<T>,
+) {
+  return elements.findIndex((element) => element.internalId === id);
+}
+
 //
 //
 //
@@ -233,6 +244,7 @@ export const addOppositeModifications = (project: IProjectRecord) => (
   });
 };
 
+// TODO: I think that better name is popAntimofification
 export const shiftAntiModifications = (
   project: IProjectRecord,
   isUndo: boolean,
@@ -319,8 +331,8 @@ export const applyModification = (alvisProject: IAlvisProjectRecord) => (
 
 /**
  * Sometimes we have to add page to agent which is also need to be added and vice versa
- *  
- * @param alvisProject 
+ *
+ * @param alvisProject
  */
 export const addPagesAndAgents = (alvisProject: IAlvisProjectRecord) => (
   fullModification: IProjectModificationRecord,
@@ -399,6 +411,7 @@ export const addPagesAndAgents = (alvisProject: IAlvisProjectRecord) => (
 
 // NEW
 // TODO: Definitely think about shorter names for interfaces
+// TODO: Maybe we should purify records here, not during applying modification ???
 export function generateFullModification(
   semiModification: IProjectModificationRecord,
   alvisProject: IAlvisProjectRecord,
@@ -1017,25 +1030,6 @@ const deleteAgentPorts = (alvisProject: IAlvisProjectRecord) => (
   return afterPortsDeleted;
 };
 
-const deleteAgentPortsConnections = (alvisProject: IAlvisProjectRecord) => (
-  agentInternalId: string,
-): IAlvisProjectRecord => {
-  const agent = <IAgentRecord>getRecord(alvisProject)(
-    agentInternalId,
-    'agents',
-  );
-  const agentPortsInternalIds = agent.portsInternalIds;
-
-  let afterPortsConnectionsDeleted = alvisProject;
-  agentPortsInternalIds.forEach((portInternalId) => {
-    afterPortsConnectionsDeleted = deletePortConnections(
-      afterPortsConnectionsDeleted,
-    )(portInternalId);
-  });
-
-  return afterPortsConnectionsDeleted;
-};
-
 // TODO: this method should go to PORTS part, because agents can exist without ports not the other way around
 const assignPortToAgent = (alvisProject: IAlvisProjectRecord) => (
   portInternalId: string,
@@ -1065,6 +1059,7 @@ const assignPortToAgent = (alvisProject: IAlvisProjectRecord) => (
 const removePortFromAgent = (alvisProject: IAlvisProjectRecord) => (
   portInternalId: string,
 ): IAlvisProjectRecord => {
+  // TODO: what about sequential updates in Immutable.js ?? 
   const portAgent = getPortAgent(alvisProject)(portInternalId);
   const agentPortsInternalIds: List<string> = portAgent.get(
     'portsInternalIds',
@@ -1116,6 +1111,8 @@ export const addPortToAlvisProject = (alvisProject: IAlvisProjectRecord) => (
 };
 
 // TODO: similar methods exist for page, agent etc. - we should make one method or smth.
+// TODO: we are passing whole modified record, maybe better idea would be to pass only data we want to change with ID ?
+// it might be good idea in context of editing same diagram by many people - less data conflicts to resolve
 export const modifyPortInAlvisProject = (alvisProject: IAlvisProjectRecord) => (
   modifiedPort: IPortRecord,
 ): IAlvisProjectRecord => {
@@ -1141,22 +1138,6 @@ export const deletePortInAlvisProject = (alvisProject: IAlvisProjectRecord) => (
   return afterPortRemovedFromAgent;
 };
 
-const deletePortConnections = (alvisProject: IAlvisProjectRecord) => (
-  portInternalId: string,
-): IAlvisProjectRecord => {
-  const portConnections = getPortAllConnections(alvisProject)(portInternalId);
-
-  let afterPortConnectionsDeleted = alvisProject;
-  portConnections.forEach((portConnection) => {
-    afterPortConnectionsDeleted = deleteRecord(afterPortConnectionsDeleted)(
-      portConnection.internalId,
-      'connections',
-    );
-  });
-
-  return afterPortConnectionsDeleted;
-};
-
 export const getPortAgent = (alvisProject: IAlvisProjectRecord) => (
   portInternalId: string,
 ): IAgentRecord => {
@@ -1169,66 +1150,51 @@ export const getPortAgent = (alvisProject: IAlvisProjectRecord) => (
   return agent;
 };
 
-const getPortAllConnections = (alvisProject: IAlvisProjectRecord) => (
-  portInternalId: string,
-): List<IConnectionRecord> => {
-  const connections = alvisProject.connections;
-  const portConnections = connections.filter(
-    (connection) =>
-      connection.sourcePortInternalId === portInternalId ||
-      connection.targetPortInternalId === portInternalId,
-  );
-
-  return portConnections;
-};
-
 // CONNECTION ---------------------------------------------
 
-export const addConnectionToAlvisProject = (
-  alvisProject: IAlvisProjectRecord,
-) => (newConnection: IConnectionRecord): IAlvisProjectRecord => {
-  return addConnectionRecord(alvisProject)(purifyConnection(newConnection));
+export const addConnectionToAlvisProject = (project: IAlvisProjectRecord) => (
+  newConnection: IConnectionRecord,
+): IAlvisProjectRecord => {
+  const newConnectionPurified = purifyConnection(newConnection);
+
+  if (false) {
+    // TODO: check if ports exist etc. - or maybe we have already checked this in generateFullModification or in applyModification ???
+    throw new Error('addConnectionToAlvisProject: error!');
+  }
+
+  return project.updateIn(['connections'], (connections) =>
+    connections.push(newConnectionPurified),
+  );
 };
 
 export const modifyConnectionInAlvisProject = (
-  alvisProject: IAlvisProjectRecord,
+  project: IAlvisProjectRecord,
 ) => (modifiedConnection: IConnection): IAlvisProjectRecord => {
-  const afterConnectionModified = changeRecord(alvisProject)(
-    modifiedConnection,
-    'connections',
-  );
+  // TODO: change lists to maps === way simpler changing/deletion of records...
+  const { connections } = project;
+  const connectionId = modifiedConnection.internalId;
+  const connectionIndex = getElementById(connectionId, connections);
 
-  return afterConnectionModified;
+  if (connectionIndex === -1) {
+    throw new Error('modifyConnectionInAlvisProject: connection not found!');
+  }
+
+  return project.setIn(['connections', connectionId], modifiedConnection);
 };
 
 export const deleteConnectionInAlvisProject = (
-  alvisProject: IAlvisProjectRecord,
-) => (connectionToDeleteInternalId: string): IAlvisProjectRecord => {
-  const afterConnectionDeleted = deleteRecord(alvisProject)(
-    connectionToDeleteInternalId,
-    'connections',
-  );
+  // TODO: shorten name by 'InAlvisProject'
+  project: IAlvisProjectRecord, // TODO: maybe we should call it system (not project, or alvisProject) ???
+) => (connectionId: string): IAlvisProjectRecord => {
+  const { connections } = project;
+  const connectionIndex = getElementById(connectionId, connections);
 
-  return afterConnectionDeleted;
+  if (connectionIndex === -1) {
+    throw new Error('deleteConnectionInAlvisProject: connection not found!');
+  }
+
+  return project.deleteIn(['connections', connectionIndex]);
 };
-
-export function deleteConnectionsReletedToPortFromAlvisProject(
-  portInternalId: string,
-  alvisProject: IAlvisProjectRecord,
-): IAlvisProjectRecord {
-  const afterConnectionsRemoved = alvisProject.update(
-    'connections',
-    (connections: List<IConnectionRecord>) => {
-      return connections.filter(
-        (connection) =>
-          connection.sourcePortInternalId === portInternalId ||
-          connection.targetPortInternalId === portInternalId,
-      );
-    },
-  );
-
-  return afterConnectionsRemoved;
-}
 
 // --------------------------------------------------------------
 
