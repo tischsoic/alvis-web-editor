@@ -39,7 +39,7 @@ import {
   getBasicConnectionRecordForTest,
 } from '../../utils/test/recordsGenerators';
 import {
-  getRecordByInternalId,
+  getElementById,
   AlvisProjectKeysLeadingToLists,
 } from '../../utils/alvisProject';
 import { newUuid } from '../../utils/uuidGenerator';

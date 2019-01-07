@@ -55,7 +55,7 @@ import {
   getBasicConnectionRecordForTest,
 } from '../../utils/test/recordsGenerators';
 import {
-  getRecordByInternalId,
+  getElementById,
   AlvisProjectKeysLeadingToLists,
 } from '../../utils/alvisProject';
 import { newUuid } from '../../utils/uuidGenerator';
@@ -177,7 +177,7 @@ describe('Project reducer', () => {
       const modifiedRecord = modifiedRecAndKey[0];
       const keyInState = modifiedRecAndKey[1];
       expect(
-        getRecordByInternalId(
+        getElementById(
           modifiedState.alvisProject[keyInState] as List<IInternalRecord>, // TODO: is it good idea to cast it to List<IInternalRecordF>?
           modifiedRecord.internalId,
         ),
@@ -267,11 +267,11 @@ describe('Project reducer', () => {
       )(),
     );
 
-    const oldPage = getRecordByInternalId(
+    const oldPage = getElementById(
       notEmptyState.alvisProject.pages,
       modifiedPage.internalId,
     );
-    const newPage = getRecordByInternalId(
+    const newPage = getElementById(
       modifiedState.alvisProject.pages,
       modifiedPage.internalId,
     );
@@ -279,11 +279,11 @@ describe('Project reducer', () => {
     expect(newPage.subPagesInternalIds).toEqual(oldPage.subPagesInternalIds);
     expect(newPage.supAgentInternalId).toEqual(oldPage.supAgentInternalId);
 
-    const oldAgent = getRecordByInternalId(
+    const oldAgent = getElementById(
       notEmptyState.alvisProject.agents,
       modifiedAgent.internalId,
     );
-    const newAgent = getRecordByInternalId(
+    const newAgent = getElementById(
       modifiedState.alvisProject.agents,
       modifiedAgent.internalId,
     );

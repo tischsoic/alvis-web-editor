@@ -49,7 +49,7 @@ export interface IAgent extends IIdentifiableElement {
   pageInternalId: string; // TODO: change it to pageId
   subPageInternalId: string;
   name: string;
-  portsInternalIds: List<string>;
+  portsInternalIds: List<string>; // TODO: change it to Set
   index: string;
   active: number; // TO DO: maybe boolean
   running: number; // TO DO: maybe boolean
