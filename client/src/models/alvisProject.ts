@@ -1,4 +1,4 @@
-import { Record, List } from 'immutable';
+import { Record, List, Set, Map } from 'immutable';
 import { IProjectModification } from './project';
 
 export type IInternalId = string;
@@ -49,7 +49,7 @@ export interface IAgent extends IIdentifiableElement {
   pageInternalId: string; // TODO: change it to pageId
   subPageInternalId: string;
   name: string;
-  portsInternalIds: List<string>; // TODO: change it to Set
+  portsInternalIds: Set<string>; // TODO: change it to Set
   index: string;
   active: number; // TO DO: maybe boolean
   running: number; // TO DO: maybe boolean
@@ -65,7 +65,7 @@ const defaultAgentRecord: IAgent = {
   pageInternalId: null,
   subPageInternalId: null,
   name: null,
-  portsInternalIds: List<string>([]), // TODO: It should be Set - https://www.quora.com/When-should-I-use-Lists-vs-Sets-in-Java
+  portsInternalIds: Set(), // TODO: It should be Set - https://www.quora.com/When-should-I-use-Lists-vs-Sets-in-Java
   index: null,
   active: null, // TO DO: maybe boolean
   running: null, // TO DO: maybe boolean
@@ -101,8 +101,8 @@ export const connectionRecordFactory = Record<IConnection>(
 export interface IPage extends IIdentifiableElement {
   internalId: string;
   name: string;
-  agentsInternalIds: List<string>;
-  subPagesInternalIds: List<string>;
+  agentsInternalIds: Set<string>;
+  subPagesInternalIds: Set<string>;
   supAgentInternalId: string; // For first page it is set to `null`
   //  connectionsInternalIds: List<string>,
 }
@@ -110,8 +110,8 @@ export type IPageRecord = ReturnType<Record.Factory<IPage>>;
 const defaultPageRecord: IPage = {
   internalId: null,
   name: null,
-  agentsInternalIds: List<string>(),
-  subPagesInternalIds: List<string>(),
+  agentsInternalIds: Set(),
+  subPagesInternalIds: Set(),
   supAgentInternalId: null,
   // connectionsInternalIds: List<string>([]),
 };
@@ -129,18 +129,18 @@ export const alvisCodeRecordFactory = Record<IAlvisCode>(
 );
 
 export interface IAlvisProject {
-  pages: List<IPageRecord>;
-  agents: List<IAgentRecord>;
-  ports: List<IPortRecord>;
-  connections: List<IConnectionRecord>;
+  pages: Map<string, IPageRecord>;
+  agents: Map<string, IAgentRecord>;
+  ports: Map<string, IPortRecord>;
+  connections: Map<string, IConnectionRecord>;
   code: IAlvisCodeRecord;
 }
 export type IAlvisProjectRecord = ReturnType<Record.Factory<IAlvisProject>>;
 const defaultAlvisProjectRecord: IAlvisProject = {
-  pages: List<IPageRecord>([]), // TODO: it should be Map or Set - map would be great when it comes to getting element by id
-  agents: List<IAgentRecord>([]),
-  ports: List<IPortRecord>([]),
-  connections: List<IConnectionRecord>([]),
+  pages: Map(), // TODO: it should be Map or Set - map would be great when it comes to getting element by id
+  agents: Map(),
+  ports: Map(),
+  connections: Map(),
   code: null, // TODO: removing `code` from this record might simplify code
 };
 export const alvisProjectRecordFactory = Record<IAlvisProject>(

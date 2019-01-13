@@ -41,14 +41,14 @@ expect.extend({
       }
 
       const stateRecords: List<any> = orderByInternalId(
-        state.alvisProject[elementsKey],
+        state.alvisProject[elementsKey].toList(),
       );
       const modelRecords: any[] = orderByInternalId(model[elementsKey]);
 
       if (stateRecords.size !== modelRecords.length) {
         return {
           message: () =>
-            `The number of items in ${elementsKey} in is not equal to number of elements in model`,
+            `The number of items in ${elementsKey} is not equal to number of elements in model`,
           pass: false,
         };
       }

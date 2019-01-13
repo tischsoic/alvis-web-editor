@@ -40,7 +40,7 @@ import {
 } from '../../utils/test/recordsGenerators';
 import {
   getElementById,
-  AlvisProjectKeysLeadingToLists,
+  AlvisProjectKeysLeadingToElements,
 } from '../../utils/alvisProject';
 import { newUuid } from '../../utils/uuidGenerator';
 
@@ -70,7 +70,15 @@ describe('Project reducer', () => {
   let state = initialState;
 
   // We want to have IDs in form of: PageName_AgentName_portName
-  state = state.setIn(['alvisProject', 'pages', 0, 'internalId'], 'System');
+  const rootPage = state.alvisProject.pages
+    .get('0')
+    .set('internalId', 'System');
+  state = state
+    .setIn(['alvisProject', 'pages', 'System'], rootPage)
+    .deleteIn(['alvisProject', 'pages', '0']);
+  // TODO: TODO: Good idea would be to create state based on model and then compare them
+  // + it would be easier to check if states match
+  // + it would remove test dependency - currently later test depends on changes form previous test
   const initialStateModel = {
     pages: [{ internalId: 'System' }],
   };
@@ -258,6 +266,7 @@ describe('Project reducer', () => {
   // })
 
   it('removes agent A', () => {
+    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!START') 
     const action = createProjectModificationAction({
       agents: {
         deleted: List(['System_A']),
@@ -279,6 +288,7 @@ describe('Project reducer', () => {
 
     state = project(state, action);
 
+    console.log(JSON.stringify(state.alvisProject, null, 2));
     expect(state).toMatchModel(stateModel);
   });
 

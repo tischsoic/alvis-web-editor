@@ -225,29 +225,9 @@ export class AlvisGraphPanel extends React.Component<
     );
   }
 
-  getElementByFn<T>(elements: List<T>, fn: (element: T) => boolean) {
-    const elementIndex = elements.findIndex(fn);
-    const element = elementIndex !== -1 ? elements.get(elementIndex) : null;
-
-    return element;
-  }
-
-  getElementByInternalId<T extends IIdentifiableElement>(
-    elements: List<T>,
-    internalId: string,
-  ): T {
-    return this.getElementByFn(
-      elements,
-      (element) => element.internalId === internalId,
-    );
-  }
-
   getPageElements(pageInternalId: string) {
     const { alvisProject } = this.props;
-    const page = this.getElementByInternalId(
-      alvisProject.pages,
-      pageInternalId,
-    );
+    const page = alvisProject.pages.get(pageInternalId);
     const agents = alvisProject.agents.filter(
       (agent) => agent.pageInternalId === page.internalId,
     );
