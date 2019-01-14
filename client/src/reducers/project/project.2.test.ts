@@ -266,7 +266,6 @@ describe('Project reducer', () => {
   // })
 
   it('removes agent A', () => {
-    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!START') 
     const action = createProjectModificationAction({
       agents: {
         deleted: List(['System_A']),
@@ -288,7 +287,6 @@ describe('Project reducer', () => {
 
     state = project(state, action);
 
-    console.log(JSON.stringify(state.alvisProject, null, 2));
     expect(state).toMatchModel(stateModel);
   });
 

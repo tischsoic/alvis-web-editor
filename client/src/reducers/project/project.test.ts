@@ -126,7 +126,7 @@ describe('Project reducer', () => {
       name: 'SubSubSystem_modified',
       agentsInternalIds: Set(['9', '10']),
       subPagesInternalIds: Set(),
-      supAgentInternalId: '9',
+      supAgentInternalId: '8',
     });
     const modifiedAgent = getBasicAgentRecordForTests(
       'A8_modified',
@@ -396,7 +396,7 @@ describe('Project reducer', () => {
     );
 
     expect(
-      stateAfterPage1Removed.alvisProject.pages.map((page) => page.internalId),
+      stateAfterPage1Removed.alvisProject.pages.toList().map((page) => page.internalId),
     ).toEqual(
       List(['0', '1', '2', '3'].filter((el) => el !== pageToRemoveInternalId)),
     );
@@ -434,7 +434,7 @@ describe('Project reducer', () => {
     );
 
     expect(
-      stateAfterPage1Removed.alvisProject.pages.map((page) => page.internalId),
+      stateAfterPage1Removed.alvisProject.pages.toList().map((page) => page.internalId),
     ).toEqual(List(['0']));
   });
 

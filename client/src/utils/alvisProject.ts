@@ -572,7 +572,11 @@ export function getAllConnectionsDeleted(
         allPortsDeletedIds.contains(connection.sourcePortInternalId) ||
         allPortsDeletedIds.contains(connection.targetPortInternalId),
     );
-  const deletedConnectionsIds = semiModification.connections.deleted;
+  const deletedConnectionsIds = semiModification.connections.deleted.filter(
+    (connectionId) => alvisProject.connections.has(connectionId), // TODO: we filter because mxGraph triggers deletion of edge after it triggers deletion of agent
+    // refers to @up - so we have 1) modification (deletes agent so it deletes connection too), 2) modification which deletes only connection 
+    // current solution is not good solution to problem, I guess...
+  );
   const deletedConnections = deletedConnectionsIds.map(
     getConnectionById(alvisProject),
   );
@@ -797,7 +801,6 @@ const getPageAgent = (project: IAlvisProjectRecord) => (
   const page = pages.get(pageId);
   const supAgentId = page.supAgentInternalId;
   const supAgent = agents.get(supAgentId);
-
 
   return supAgent;
 };
