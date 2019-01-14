@@ -12,7 +12,7 @@ import {
   IProjectModificationRecord,
   IProjectRecord,
 } from '../models/project';
-import { List } from 'immutable';
+import { List, Set } from 'immutable';
 import * as projectActions from '../constants/projectActions';
 import { pageRecordFactory } from '../models/alvisProject';
 import {
@@ -107,8 +107,8 @@ function getStateAndModifications1(): [
   const modifiedPage = pageRecordFactory({
     internalId: '2',
     name: 'SubSubSystem_modified',
-    agentsInternalIds: List<string>(['9', '10']),
-    subPagesInternalIds: List<string>([]),
+    agentsInternalIds: Set(['9', '10']),
+    subPagesInternalIds: Set([]),
     supAgentInternalId: '9',
   });
   const modifiedPageOld = getElementById(
@@ -121,7 +121,7 @@ function getStateAndModifications1(): [
     '3',
     null,
     '11',
-    List(['23', '24']),
+    Set(['23', '24']),
   );
   const modifiedAgentOld = getElementById(
     initialState.alvisProject.agents,

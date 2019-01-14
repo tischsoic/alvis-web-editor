@@ -32,7 +32,7 @@ import {
   IPort,
   IConnection,
 } from '../models/alvisProject';
-import { List } from 'immutable';
+import { List, Map, Set } from 'immutable';
 import { newUuid } from '../utils/uuidGenerator';
 
 // TO DO: Problem with moving edeges between ports is because of
@@ -42,9 +42,9 @@ import { newUuid } from '../utils/uuidGenerator';
 export interface AlvisGraphProps {
   active: boolean;
 
-  agents: List<IAgentRecord>;
-  ports: List<IPortRecord>;
-  connections: List<IConnectionRecord>;
+  agents: Map<string, IAgentRecord>;
+  ports: Map<string, IPortRecord>;
+  connections: Map<string, IConnectionRecord>;
   pageInternalId: string;
 
   onChangeActivePage: (newActivePageInternalId: string) => void;
@@ -355,7 +355,7 @@ export class AlvisGraph extends React.Component<
     this.restrictGraphViewToDivBoundries();
 
     // TO DO: check why this: // because you may receive props on start, and then method componentWillReceiveProps is not called!
-    this.addChanges(agents, List(), ports, List(), connections, List());
+    this.addChanges(agents, Map(), ports, Map(), connections, Map());
 
     this.applyChanges();
   }
@@ -379,12 +379,12 @@ export class AlvisGraph extends React.Component<
   }
 
   addChanges(
-    nextAgents: List<IAgentRecord>,
-    agents: List<IAgentRecord>,
-    nextPorts: List<IPortRecord>,
-    ports: List<IPortRecord>,
-    nextConnections: List<IConnectionRecord>,
-    connections: List<IConnectionRecord>,
+    nextAgents: Map<string, IAgentRecord>,
+    agents: Map<string, IAgentRecord>,
+    nextPorts: Map<string, IPortRecord>,
+    ports: Map<string, IPortRecord>,
+    nextConnections: Map<string, IConnectionRecord>,
+    connections: Map<string, IConnectionRecord>,
   ) {
     const agentsChanges = this.getAgentsChanges(nextAgents, agents);
     const portsChanges = this.getPortsChanges(nextPorts, ports);
@@ -519,26 +519,11 @@ export class AlvisGraph extends React.Component<
     this.changesToApply = [];
   }
 
-  private getElementByInternalId<T extends IAlvisPageElement>(
-    elements: List<T>,
-    internalId: string,
-  ): T {
-    const elementIndex = elements.findIndex(
-      (element) => element.internalId === internalId,
-    );
-
-    if (elementIndex === -1) {
-      throw 'Element with given internalId does not exists!';
-    }
-
-    return elements.get(elementIndex);
-  }
-
   createConnection(connectionData: Partial<IConnection>): IConnectionRecord {
     const { connections } = this.props;
     const { internalId } = connectionData;
     const connection = internalId
-      ? this.getElementByInternalId(connections, internalId)
+      ? connections.get(internalId)
       : connectionRecordFactory({ internalId: newUuid() });
 
     return connection.merge(connectionData);
@@ -548,7 +533,7 @@ export class AlvisGraph extends React.Component<
     const { ports } = this.props;
     const { internalId } = portData;
     const port = internalId
-      ? this.getElementByInternalId(ports, internalId)
+      ? ports.get(internalId)
       : portRecordFactory({ internalId: newUuid() });
 
     return port.merge(portData);
@@ -558,7 +543,7 @@ export class AlvisGraph extends React.Component<
     const { internalId } = agentData;
     const { agents, pageInternalId } = this.props;
     const agent = internalId
-      ? this.getElementByInternalId(agents, internalId)
+      ? agents.get(internalId)
       : agentRecordFactory({ internalId: newUuid() });
 
     return agent.merge({
@@ -577,8 +562,8 @@ export class AlvisGraph extends React.Component<
       supAgentInternalId,
       name,
       internalId: newUuid(), // TODO: we can delete it probably, isn't it the default in factory?
-      agentsInternalIds: List<string>(),
-      subPagesInternalIds: List<string>(),
+      agentsInternalIds: Set(),
+      subPagesInternalIds: Set(),
     });
   }
 
@@ -678,7 +663,7 @@ export class AlvisGraph extends React.Component<
   private changeActivePageToAgentSubPage(agentVertexId: string) {
     const { agents, onChangeActivePage } = this.props;
     const agentInternalId = this.getInternalIdByMxGrpahId(agentVertexId);
-    const agentRecord = getListElementByInternalId(agents, agentInternalId);
+    const agentRecord = agents.get(agentInternalId);
     const newActivePageInternalId = agentRecord.subPageInternalId;
 
     onChangeActivePage(newActivePageInternalId);
@@ -1017,13 +1002,7 @@ export class AlvisGraph extends React.Component<
   // TO DO: look for optimizations
   private getBasicChanges<
     T extends IAgentRecord | IPortRecord | IConnectionRecord
-  >(next: List<T>, current: List<T>): GraphElementsChanges<T> {
-    const getByInternalId = (
-      elements: List<T>,
-      internalId: string,
-    ): T | null => {
-      return elements.find((el) => el.internalId === internalId);
-    };
+  >(next: Map<string, T>, current: Map<string, T>): GraphElementsChanges<T> {
     const nextInternalIds = next.map((el) => el.internalId);
     const currentInternalIds = current.map((el) => el.internalId);
     const newElements = next.filter(
@@ -1034,27 +1013,27 @@ export class AlvisGraph extends React.Component<
     );
     const notNewNextElements = next.filter((el) => el.internalId !== null);
     const modifiedElements = notNewNextElements.filter((el) => {
-      const currentElRecord = getByInternalId(current, el.internalId);
+      const currentElRecord = current.get(el.internalId);
       return currentElRecord != null && !currentElRecord.equals(el);
     });
 
     return {
-      new: newElements,
-      deleted: deletedElements,
-      modified: modifiedElements,
+      new: newElements.toList(),
+      deleted: deletedElements.toList(),
+      modified: modifiedElements.toList(),
     };
   }
 
   private getAgentsChanges<T extends IAgentRecord>(
-    next: List<T>,
-    current: List<T>,
+    next: Map<string, T>,
+    current: Map<string, T>,
   ): GraphElementsChanges<T> {
     return this.getBasicChanges(next, current);
   }
 
   private getConnectionsChanges<T extends IConnectionRecord>(
-    next: List<T>,
-    current: List<T>,
+    next: Map<string, T>,
+    current: Map<string, T>,
   ): GraphElementsChanges<T> {
     return this.getBasicChanges(next, current);
   }
@@ -1062,24 +1041,15 @@ export class AlvisGraph extends React.Component<
   // TO DO: look for optimizations
   // TO DO: check do we need something similar for connections?
   private getPortsChanges<T extends IPortRecord>(
-    next: List<T>,
-    current: List<T>,
+    next: Map<string, T>,
+    current: Map<string, T>,
   ): GraphElementsChanges<T> {
-    const getByInternalId = (
-      elements: List<T>,
-      internalId: string,
-    ): T | null => {
-      return elements.find((el) => el.internalId === internalId);
-    };
     const basicChanges = this.getBasicChanges(next, current);
     // Ports whose agentInternalId has changed and internalId has not changed
     // should be removed and then readded to new agent
     const portsIdsWhoseAgentChanged = basicChanges.modified
       .filter((modifiedPort) => {
-        const currentPortRecord = getByInternalId(
-          current,
-          modifiedPort.internalId,
-        );
+        const currentPortRecord = current.get(modifiedPort.internalId);
         return (
           modifiedPort.agentInternalId !== currentPortRecord.agentInternalId
         );
@@ -1093,8 +1063,10 @@ export class AlvisGraph extends React.Component<
     );
 
     return {
-      new: basicChanges.new.concat(portsWhoseAgentChangedToAdd),
-      deleted: basicChanges.deleted.concat(portsWhoseAgentChangedToDelete),
+      new: basicChanges.new.concat(portsWhoseAgentChangedToAdd.toList()),
+      deleted: basicChanges.deleted.concat(
+        portsWhoseAgentChangedToDelete.toList(),
+      ),
       modified: basicChanges.modified.filter(
         (port) => !portsIdsWhoseAgentChanged.contains(port.internalId),
       ),

@@ -133,7 +133,7 @@ describe('Project reducer', () => {
       '3',
       null,
       '11',
-      List(['23', '24']),
+      Set(['23', '24']),
     );
     const modifiedPort = getBasicPortRecordForTests('23', '11', 'p_10_mod');
     const modifiedConnection = getBasicConnectionRecordForTest(
@@ -247,7 +247,7 @@ describe('Project reducer', () => {
       '2', // <- should not be changed
       '2', // <- should not be changed
       '11',
-      List(['23', '24', '22', 'should not be changed']),
+      Set(['23', '24', '22', 'should not be changed']),
     );
 
     const modifiedState = project(

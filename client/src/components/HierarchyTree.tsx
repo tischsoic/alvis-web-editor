@@ -11,12 +11,12 @@ import {
   ConnectionDirection,
   IPageRecord,
 } from '../models/alvisProject';
-import { List } from 'immutable';
+import { List, Map } from 'immutable';
 import { Button, Glyphicon } from 'react-bootstrap';
 
 export interface HierarchyTreeProps {
-  pages: List<IPageRecord>;
-  agents: List<IAgentRecord>;
+  pages: Map<string, IPageRecord>;
+  agents: Map<string, IAgentRecord>;
   onPageClick: (page: IPageRecord) => void;
 
   onMxGraphPageDeleted: (pageInternalId: string) => any;
@@ -39,22 +39,23 @@ export class HierarchyTree extends React.Component<
     return element;
   }
 
-  getPageByInternalId(internalId: string) {
+  // TODO: start using strict-null
+  getPageByInternalId(internalId: string): IPageRecord {
     const { pages } = this.props;
-    return this.getElementByFn(pages, (page) => page.internalId === internalId);
+
+    return pages.get(internalId);
   }
 
-  getSystemPage() {
+  getSystemPage(): IPageRecord {
     const { pages } = this.props;
-    return this.getElementByFn(pages, (page) => page.name === 'System'); // TO DO: extract "System" as constant in some config
+
+    return pages.find((page) => page.name === 'System');
   }
 
   getPageSupAgent(page: IPageRecord) {
     const { agents } = this.props;
-    return this.getElementByFn(
-      agents,
-      (agent) => agent.internalId === page.supAgentInternalId,
-    );
+
+    return agents.find((agent) => agent.internalId === page.supAgentInternalId);
   }
 
   getPageTree(page: IPageRecord) {
