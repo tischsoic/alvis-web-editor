@@ -39,7 +39,6 @@ export const initialState: IProjectRecord = projectRecordFactory({
 
 export default handleActions<
   IProjectRecord,
-  // void | string | [IAlvisProjectRecord, number] | IProjectModification
   string | string[] | IAlvisProjectRecord | IProjectModificationRecord | void
 >(
   {

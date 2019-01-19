@@ -31,7 +31,6 @@ import {
   IOppositeModificationsRecord,
 } from '../models/project';
 import { separateBy } from './separateBy';
-import { string } from 'prop-types';
 import { newUuid } from './uuidGenerator';
 
 export function getValidEmptyAlvisProject(): IAlvisProjectRecord {
@@ -393,7 +392,7 @@ export function getCopyModification(
     .filter(
       (connection) =>
         copiedPortsMap.has(connection.sourcePortInternalId) &&
-        copiedPortsMap.has(connection.sourcePortInternalId),
+        copiedPortsMap.has(connection.targetPortInternalId),
     );
 
   // TODO: now we set agent subPageInternalId to null in changeIds function
@@ -417,8 +416,8 @@ export const setParentPage = (
   copyModification: IProjectModificationRecord,
   parentPageId: string,
 ): IProjectModificationRecord =>
-  copyModification.updateIn(['agents', 'added'], (agent: IAgentRecord) =>
-    agent.set('pageInternalId', parentPageId),
+  copyModification.updateIn(['agents', 'added'], (agents: List<IAgentRecord>) =>
+    agents.map((agent) => agent.set('pageInternalId', parentPageId)),
   );
 
 export const changeIds = (
