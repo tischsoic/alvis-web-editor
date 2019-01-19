@@ -63,6 +63,7 @@ function createRedoAction() {
   return createAction(projectActions.PROJECT_REDO)();
 }
 
+// TODO: add test with deleting unexisting elements of Alvis diagram
 /**
  * Tests Alvis project reducer
  */

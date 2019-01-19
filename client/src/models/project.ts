@@ -18,6 +18,7 @@ export interface IProject {
   alvisProject: IAlvisProjectRecord | null;
   oppositeModifications: List<IOppositeModificationsRecord>;
   oppositeModificationCurrentIdx: number | null;
+  copyModification: IProjectModificationRecord | null;
 }
 export type IProjectRecord = ReturnType<Record.Factory<IProject>>;
 const defaultProjectRecord = {
@@ -25,6 +26,7 @@ const defaultProjectRecord = {
   alvisProject: null,
   oppositeModifications: List<IOppositeModificationsRecord>(),
   oppositeModificationCurrentIdx: -1, // TODO: do we want -1, maybe 0/null would be better?
+  copyModification: null,
 };
 export const projectRecordFactory = Record<IProject>(defaultProjectRecord);
 

@@ -80,6 +80,19 @@ const deleteConnection = createElementDeleteAction('connections');
 const undo = createAction(Actions.PROJECT_UNDO);
 const redo = createAction(Actions.PROJECT_REDO);
 
+const copy = createAction<string[], string[]>(
+  Actions.PROJECT_COPY,
+  (elementsIds) => elementsIds,
+);
+const cut = createAction<string[], string[]>(
+  Actions.PROJECT_CUT,
+  (elementsIds) => elementsIds,
+);
+const paste = createAction<string, string>(
+  Actions.PROJECT_PASTE,
+  (pageId) => pageId,
+);
+
 export {
   setProjectXML,
   addPage,
@@ -97,4 +110,7 @@ export {
   setAlvisProject,
   undo,
   redo,
+  copy,
+  cut,
+  paste,
 };
