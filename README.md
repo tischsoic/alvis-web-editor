@@ -160,6 +160,8 @@ INTERESTING IDEA:
   We have small performance problem if during removing hierarchy we dont want to copy whole tree, but we dont need to copy
   whole tree actually; we only need to change records of agents from subpage, the rest sub-pages of sub-page (and deeper)
   stay unchanged and we don't need to modify them and Immutable should keep track of them - it won't duplicate them.
+- I should acquaint more carefully with Immutable.js to use its full potential
+- instead of making Electron app, for desktop, better solution might be PWA - Progressive Web App
   
   One more problem, which we have is providing undo-redo for single page - so that you can undo-redo withing single page,
   this can be solved by assuming that every change is happening within every page and by saving information about
@@ -169,3 +171,10 @@ INTERESTING IDEA:
   We don't have to - they will disappear after closing of the application
 
   When it comes to cross-page modifications we may mark them as global modifications, this should work.
+
+  No, better idea would be to mark each modification to which pages it belongs.
+  - Deleting agent with subpage will belong only to page with the agent, but
+  - modification of position of two agents from two different pages would belong to two different pages.
+
+  This makes sense to me, and
+  - removing hierarchy would belong to THE agent's page and modification would consist of removing old agent and replacing it with copied items from its subpage.

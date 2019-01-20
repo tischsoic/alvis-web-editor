@@ -12,12 +12,12 @@ import {
   IProjectModificationRecord,
   IProjectRecord,
 } from '../models/project';
-import { List } from 'immutable';
+import { List, Set } from 'immutable';
 import * as projectActions from '../constants/projectActions';
 import { pageRecordFactory } from '../models/alvisProject';
 import {
   generateAntiModification,
-  getRecordByInternalId,
+  getElementById,
   generateFullModification,
   getAllPagesDeleted,
 } from './alvisProject';
@@ -107,11 +107,11 @@ function getStateAndModifications1(): [
   const modifiedPage = pageRecordFactory({
     internalId: '2',
     name: 'SubSubSystem_modified',
-    agentsInternalIds: List<string>(['9', '10']),
-    subPagesInternalIds: List<string>([]),
+    agentsInternalIds: Set(['9', '10']),
+    subPagesInternalIds: Set([]),
     supAgentInternalId: '9',
   });
-  const modifiedPageOld = getRecordByInternalId(
+  const modifiedPageOld = getElementById(
     initialState.alvisProject.pages,
     modifiedPage.internalId,
   );
@@ -121,21 +121,21 @@ function getStateAndModifications1(): [
     '3',
     null,
     '11',
-    List(['23', '24']),
+    Set(['23', '24']),
   );
-  const modifiedAgentOld = getRecordByInternalId(
+  const modifiedAgentOld = getElementById(
     initialState.alvisProject.agents,
     modifiedAgent.internalId,
   );
 
   const modifiedPort = getBasicPortRecordForTests('23', '11', 'p_modified');
-  const modifiedPortOld = getRecordByInternalId(
+  const modifiedPortOld = getElementById(
     initialState.alvisProject.ports,
     modifiedPort.internalId,
   );
 
   const modifiedConnection = getBasicConnectionRecordForTest('33', '23', '24');
-  const modifiedConnectionOld = getRecordByInternalId(
+  const modifiedConnectionOld = getElementById(
     initialState.alvisProject.connections,
     modifiedConnection.internalId,
   );
@@ -184,18 +184,18 @@ function getStateAndModifications1(): [
   );
 
   const alvisProject = initialState.alvisProject;
-  const deletedPage2 = getRecordByInternalId(alvisProject.pages, '2');
-  const deletedAgent8 = getRecordByInternalId(alvisProject.agents, '8');
-  const deletedAgent9 = getRecordByInternalId(alvisProject.agents, '9');
-  const deletedAgent10 = getRecordByInternalId(alvisProject.agents, '10');
-  const deletedPort20 = getRecordByInternalId(alvisProject.ports, '20');
-  const deletedPort21 = getRecordByInternalId(alvisProject.ports, '21');
-  const deletedPort22 = getRecordByInternalId(alvisProject.ports, '22');
-  const deletedConnection31 = getRecordByInternalId(
+  const deletedPage2 = getElementById(alvisProject.pages, '2');
+  const deletedAgent8 = getElementById(alvisProject.agents, '8');
+  const deletedAgent9 = getElementById(alvisProject.agents, '9');
+  const deletedAgent10 = getElementById(alvisProject.agents, '10');
+  const deletedPort20 = getElementById(alvisProject.ports, '20');
+  const deletedPort21 = getElementById(alvisProject.ports, '21');
+  const deletedPort22 = getElementById(alvisProject.ports, '22');
+  const deletedConnection31 = getElementById(
     alvisProject.connections,
     '31',
   );
-  const deletedConnection32 = getRecordByInternalId(
+  const deletedConnection32 = getElementById(
     alvisProject.connections,
     '32',
   );

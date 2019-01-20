@@ -21,7 +21,7 @@ import {
   IAlvisElementRecord,
   IInternalRecord,
 } from '../models/alvisProject';
-import { List, Stack, Set } from 'immutable';
+import { List, Stack, Set, Map } from 'immutable';
 import {
   IProjectModificationRecord,
   IProjectRecord,
@@ -30,21 +30,25 @@ import {
   IOppositeModifications,
   IOppositeModificationsRecord,
 } from '../models/project';
+import { separateBy } from './separateBy';
 
 export function getValidEmptyAlvisProject(): IAlvisProjectRecord {
   return alvisProjectRecordFactory({
-    pages: List<IPageRecord>([
-      pageRecordFactory({
-        internalId: '0',
-        name: 'System',
-        agentsInternalIds: List<string>(),
-        subPagesInternalIds: List<string>(),
-        supAgentInternalId: null,
-      }),
+    pages: Map([
+      [
+        '0',
+        pageRecordFactory({
+          internalId: '0',
+          name: 'System',
+          agentsInternalIds: Set(),
+          subPagesInternalIds: Set(),
+          supAgentInternalId: null,
+        }),
+      ],
     ]),
-    agents: List<IAgentRecord>(),
-    ports: List<IPortRecord>(),
-    connections: List<IConnectionRecord>(),
+    agents: Map(),
+    ports: Map(),
+    connections: Map(),
     code: alvisCodeRecordFactory({
       text: '',
     }),
@@ -53,12 +57,12 @@ export function getValidEmptyAlvisProject(): IAlvisProjectRecord {
 
 // ABSTRACT --------------------------------------------
 
-export const getRecordByInternalId = <T extends IInternalRecord>(
-  list: List<T>,
-  internalId: string,
-): T => list.find((el) => el.internalId === internalId);
+export const getElementById = <T extends IInternalRecord>(
+  list: Map<string, T>,
+  id: string,
+): T => list.get(id);
 
-export type AlvisProjectKeysLeadingToLists =
+export type AlvisProjectKeysLeadingToElements =
   | 'pages'
   | 'agents'
   | 'ports'
@@ -67,111 +71,53 @@ export type AlvisProjectKeysLeadingToLists =
 export function getRecord(alvisProject: IAlvisProjectRecord) {
   return (
     recordInternalId: string,
-    key: AlvisProjectKeysLeadingToLists,
+    key: AlvisProjectKeysLeadingToElements,
   ): IIdentifiableElement => {
-    const records: List<IIdentifiableElement> = alvisProject[key];
-    const recordIndex = getListElementIndexWithInternalId(records)(
-      recordInternalId,
-    );
-    const record = records.get(recordIndex);
+    const records = alvisProject[key];
 
-    return record;
+    return records.get(recordInternalId);
   };
 }
 
 function addPageRecord(alvisProject: IAlvisProjectRecord) {
   return (page: IPageRecord): IAlvisProjectRecord =>
-    alvisProject.update('pages', (pages) => pages.push(page));
+    alvisProject.setIn(['pages', page.internalId], page);
 }
 
 function addAgentRecord(alvisProject: IAlvisProjectRecord) {
   return (agent: IAgentRecord): IAlvisProjectRecord =>
-    alvisProject.update('agents', (pages) => pages.push(agent));
+    alvisProject.setIn(['agents', agent.internalId], agent);
 }
 
 function addPortRecord(alvisProject: IAlvisProjectRecord) {
   return (port: IPortRecord): IAlvisProjectRecord =>
-    alvisProject.update('ports', (ports) => ports.push(port));
+    alvisProject.setIn(['ports', port.internalId], port);
 }
 
+// TODO: not used (currently)
 function addConnectionRecord(alvisProject: IAlvisProjectRecord) {
   return (connection: IConnectionRecord): IAlvisProjectRecord =>
-    alvisProject.update('connections', (connections) =>
-      connections.push(connection),
-    );
+    alvisProject.setIn(['connections', connection.internalId], connection);
 }
 
-function changeRecord(alvisProject: IAlvisProjectRecord) {
-  return (
-    record: IIdentifiableElement,
-    key: AlvisProjectKeysLeadingToLists,
-  ): IAlvisProjectRecord => {
-    const projectWithChangedRecord = alvisProject.update(
-      key,
-      (records: List<any>) => updateListElement(records)(record),
-    );
+const changeRecord = (project: IAlvisProjectRecord) => (
+  record: IIdentifiableElement,
+  key: AlvisProjectKeysLeadingToElements,
+): IAlvisProjectRecord => project.setIn([key, record.internalId], record);
 
-    return projectWithChangedRecord;
-  };
-}
-
-function deleteRecord<K extends AlvisProjectKeysLeadingToLists>(
-  alvisProject: IAlvisProjectRecord,
+function deleteRecord<K extends AlvisProjectKeysLeadingToElements>(
+  project: IAlvisProjectRecord,
 ) {
-  return (recordInternalId: string, key: K): IAlvisProjectRecord => {
-    const projectWithDeletedRecord = alvisProject.update<K>(key, (records) => {
-      const recordIndex = getListElementIndexWithInternalId<IInternalRecord>(records)(
-        recordInternalId,
+  return (recordId: string, key: K): IAlvisProjectRecord => {
+    const recordExists = !!project[key].get(recordId);
+
+    if (!recordExists) {
+      throw new Error(
+        `Internal error! Record does not exist! - record of id ${recordId} from ${key}`,
       );
-
-      if (recordIndex === -1) {
-        return records;
-      }
-
-      return records.delete(recordIndex);
-    });
-
-    return projectWithDeletedRecord;
-  };
-}
-
-function updateListElement<T extends IInternalRecord>(elements: List<T>) {
-  return (elementToUpdate: T): List<T> => {
-    return elements.update(
-      elements.findIndex(
-        (element) => element.internalId === elementToUpdate.internalId,
-      ),
-      (): T => elementToUpdate,
-    );
-  };
-}
-
-function updateListElementWithInternalId<
-  T extends IIdentifiableElement | IIdentifiableElement
->(elements: List<T>) {
-  return (elementInternalId: string, modifier: (elem: T) => T): List<T> => {
-    return elements.update(
-      elements.findIndex((element) => element.internalId === elementInternalId),
-      (element): T => {
-        return modifier(element);
-      },
-    );
-  };
-}
-
-function deleteListElementWithInternalId<T extends IIdentifiableElement>(
-  elements: List<T>,
-) {
-  return (elementInternalId: string): List<T> => {
-    const elementToDeleteIndex = getListElementIndexWithInternalId(elements)(
-      elementInternalId,
-    );
-
-    if (elementToDeleteIndex === -1) {
-      return elements;
     }
 
-    return elements.delete(elementToDeleteIndex);
+    return project.deleteIn([key, recordId]);
   };
 }
 
@@ -185,12 +131,6 @@ function getListElementIndexWithInternalId<T extends IIdentifiableElement>(
   };
 }
 
-function getListElementIndexWithFn<T>(elements: List<T>) {
-  return (predicate: (element: T) => boolean): number => {
-    return elements.findIndex(predicate);
-  };
-}
-
 export function getListElementByInternalId<T extends IIdentifiableElement>(
   elements: List<T>,
   internalId: string,
@@ -199,6 +139,10 @@ export function getListElementByInternalId<T extends IIdentifiableElement>(
 
   return elementIndex === -1 ? null : elements.get(elementIndex);
 }
+
+////////////////////////////////////////////////////
+// refactor functions - remove above functions
+////////////////////////////////////////////////////
 
 //
 //
@@ -228,6 +172,7 @@ export const addOppositeModifications = (project: IProjectRecord) => (
   });
 };
 
+// TODO: I think that better name is popAntimofification
 export const shiftAntiModifications = (
   project: IProjectRecord,
   isUndo: boolean,
@@ -258,65 +203,157 @@ export const shiftAntiModifications = (
   return [projectWithUpdatedIdx, oppositeModifications];
 };
 
-export const applyModification = (alvisProject: IAlvisProjectRecord) => (
+export const applyModification = (project: IAlvisProjectRecord) => (
   fullModification: IProjectModificationRecord,
 ): IAlvisProjectRecord => {
-  let finalProject = alvisProject;
+  let finalProject = project;
+
+  const { agents, connections, pages, ports } = fullModification;
+
+  let anythingChanged = false;
+
+  let pagesToAddNow: List<IPageRecord> = null;
+  let pagesToAddLater = pages.added;
+  let pagesToModifyNow: List<IPageRecord> = null;
+  let pagesToModifyLater = pages.modified;
+  let pagesToDeleteNow: List<string> = null;
+  let pagesToDeleteLater = pages.deleted;
+
+  let agentsToAddNow: List<IAgentRecord> = null;
+  let agentsToAddLater = agents.added;
+  let agentsToModifyNow: List<IAgentRecord> = null;
+  let agentsToModifyLater = agents.modified;
+  let agentsToDeleteNow: List<string> = null;
+  let agentsToDeleteLater = agents.deleted;
+
+  let portsToAddNow: List<IPortRecord> = null;
+  let portsToAddLater = ports.added;
+  let portsToModifyNow: List<IPortRecord> = null;
+  let portsToModifyLater = ports.modified;
+  let portsToDeleteNow: List<string> = null;
+  let portsToDeleteLater = ports.deleted;
+
+  let connectionsToAddNow: List<IConnectionRecord> = null;
+  let connectionsToAddLater = connections.added;
+  let connectionsToModifyNow: List<IConnectionRecord> = null;
+  let connectionsToModifyLater = connections.modified;
+  let connectionsToDeleteNow: List<string> = null;
+  let connectionsToDeleteLater = connections.deleted;
+
+  do {
+    anythingChanged = false;
+
+    [pagesToAddNow, pagesToAddLater] = separateBy(
+      pagesToAddLater,
+      canPageBeAdded(finalProject),
+    );
+    [pagesToModifyNow, pagesToModifyLater] = separateBy(
+      pagesToModifyLater,
+      canPageBeModified(finalProject),
+    );
+    [pagesToDeleteNow, pagesToDeleteLater] = separateBy(
+      pagesToDeleteLater,
+      canPageBeDeleted(finalProject),
+    );
+
+    [agentsToAddNow, agentsToAddLater] = separateBy(
+      agentsToAddLater,
+      canAgentBeAdded(finalProject),
+    );
+    [agentsToModifyNow, agentsToModifyLater] = separateBy(
+      agentsToModifyLater,
+      canAgentBeModified(finalProject),
+    );
+    [agentsToDeleteNow, agentsToDeleteLater] = separateBy(
+      agentsToDeleteLater,
+      canAgentBeDeleted(finalProject),
+    );
+
+    [portsToAddNow, portsToAddLater] = separateBy(
+      portsToAddLater,
+      canPortBeAdded(finalProject),
+    );
+    [portsToModifyNow, portsToModifyLater] = separateBy(
+      portsToModifyLater,
+      canPortBeModified(finalProject),
+    );
+    [portsToDeleteNow, portsToDeleteLater] = separateBy(
+      portsToDeleteLater,
+      canPortBeDeleted(finalProject),
+    );
+
+    [connectionsToAddNow, connectionsToAddLater] = separateBy(
+      connectionsToAddLater,
+      canConnectionBeAdded(finalProject),
+    );
+    [connectionsToModifyNow, connectionsToModifyLater] = separateBy(
+      connectionsToModifyLater,
+      canConnectionBeModified(finalProject),
+    );
+    [connectionsToDeleteNow, connectionsToDeleteLater] = separateBy(
+      connectionsToDeleteLater,
+      canConnectionBeDeleted(finalProject),
+    );
+
+    pagesToAddNow.forEach((page) => {
+      finalProject = addPageToAlvisProject(finalProject)(page);
+      anythingChanged = true;
+    });
+    agentsToAddNow.forEach((agent) => {
+      finalProject = addAgentToAlvisProject(finalProject)(agent);
+      anythingChanged = true;
+    });
+    portsToAddNow.forEach((port) => {
+      finalProject = addPortToAlvisProject(finalProject)(port);
+      anythingChanged = true;
+    });
+    connectionsToAddNow.forEach((connection) => {
+      finalProject = addConnectionToAlvisProject(finalProject)(connection);
+      anythingChanged = true;
+    });
+
+    pagesToModifyNow.forEach((page) => {
+      finalProject = modifyPageInAlvisProject(finalProject)(page);
+      anythingChanged = true;
+    });
+    agentsToModifyNow.forEach((agent) => {
+      finalProject = modifyAgentInAlvisProject(finalProject)(agent);
+      anythingChanged = true;
+    });
+    portsToModifyNow.forEach((port) => {
+      finalProject = modifyPortInAlvisProject(finalProject)(port);
+      anythingChanged = true;
+    });
+    connectionsToModifyNow.forEach((connection) => {
+      finalProject = modifyConnectionInAlvisProject(finalProject)(connection);
+      anythingChanged = true;
+    });
+
+    agentsToDeleteNow.forEach((agentId) => {
+      finalProject = deleteAgentInAlvisProject(finalProject)(agentId);
+      anythingChanged = true;
+    });
+    pagesToDeleteNow.forEach((pageId) => {
+      finalProject = deletePageInAlvisProject(finalProject)(pageId);
+      anythingChanged = true;
+    });
+    portsToDeleteNow.forEach((portId) => {
+      finalProject = deletePortInAlvisProject(finalProject)(portId);
+      anythingChanged = true;
+    });
+    connectionsToDeleteNow.forEach((connectionId) => {
+      finalProject = deleteConnectionInAlvisProject(finalProject)(connectionId);
+      anythingChanged = true;
+    });
+  } while (anythingChanged);
 
   // TODO: currently, when deleting, during each deletion we manage internal data such us supPageInternalId
   // this means that when we delete whole page we process unnecessarily e.g. agent's data while deleting port
   // in future it should be improved - maybe it would be worth to consider specialized functions
   // such as deletePage which would deal with it without IProjectModification?
-  fullModification.connections.deleted.forEach((connectionInternalId) => {
-    // TODO: shorten names such as deleteConnectionInAlvisProject
-    // to something like deleteConnection
-    finalProject = deleteConnectionInAlvisProject(finalProject)(
-      connectionInternalId,
-    );
-  });
-  fullModification.ports.deleted.forEach((portInternalId) => {
-    finalProject = deletePortInAlvisProject(finalProject)(portInternalId);
-  });
-  fullModification.agents.deleted.forEach((agentInternalId) => {
-    finalProject = deleteAgentInAlvisProject(finalProject)(agentInternalId);
-  });
-  fullModification.pages.deleted.forEach((agentInternalId) => {
-    finalProject = deletePageInAlvisProject(finalProject)(agentInternalId);
-  });
 
-  fullModification.pages.added.forEach((page) => {
-    finalProject = addPageToAlvisProject(finalProject)(page);
-    // TODO: what about adding subpages of page which is also being added?
-    // we can add more pages with preset internalIds
-    // but then we must care about order of new pages and agents if we want
-    // to check possible errors in functions responsible for adding elements
-  }); // TODO: IMPORTANT - what if page is subpage of agent which is being added !!!!!!!!!!!!!!!!!! Then we should add agent before adding page
-  fullModification.agents.added.forEach((agent) => {
-    finalProject = addAgentToAlvisProject(finalProject)(agent);
-  });
-  fullModification.ports.added.forEach((port) => {
-    finalProject = addPortToAlvisProject(finalProject)(port);
-  });
-  fullModification.connections.added.forEach((connection) => {
-    finalProject = addConnectionToAlvisProject(finalProject)(connection);
-  });
-
-  fullModification.pages.modified.forEach((page) => {
-    finalProject = modifyPageInAlvisProject(finalProject)(page);
-    // TODO: what about adding subpages of page which is also being added?
-    // we can add more pages with preset internalIds
-    // but then we must care about order of new pages and agents if we want
-    // to check possible errors in functions responsible for adding elements
-  });
-  fullModification.agents.modified.forEach((agent) => {
-    finalProject = modifyAgentInAlvisProject(finalProject)(agent);
-  });
-  fullModification.ports.modified.forEach((port) => {
-    finalProject = modifyPortInAlvisProject(finalProject)(port);
-  });
-  fullModification.connections.modified.forEach((connection) => {
-    finalProject = modifyConnectionInAlvisProject(finalProject)(connection);
-  });
+  // TODO: @up - this might be simplified if we start storing data in tree structure (?)
+  // TODO: what about storing each page elements in separate record? So that page record has agents,ports,connections inside (?)
 
   return finalProject;
 };
@@ -349,6 +386,7 @@ export const applyModification = (alvisProject: IAlvisProjectRecord) => (
 
 // NEW
 // TODO: Definitely think about shorter names for interfaces
+// TODO: Maybe we should purify records here, not during applying modification ???
 export function generateFullModification(
   semiModification: IProjectModificationRecord,
   alvisProject: IAlvisProjectRecord,
@@ -527,12 +565,18 @@ export function getAllConnectionsDeleted(
   // list of connections' ids
   const allPortsDeleted = getAllPortsDeleted(semiModification, alvisProject);
   const allPortsDeletedIds = allPortsDeleted.map((el) => el.internalId);
-  const deletedPortConnections = alvisProject.connections.filter(
-    (connection) =>
-      allPortsDeletedIds.contains(connection.sourcePortInternalId) ||
-      allPortsDeletedIds.contains(connection.targetPortInternalId),
+  const deletedPortConnections = alvisProject.connections
+    .toList()
+    .filter(
+      (connection) =>
+        allPortsDeletedIds.contains(connection.sourcePortInternalId) ||
+        allPortsDeletedIds.contains(connection.targetPortInternalId),
+    );
+  const deletedConnectionsIds = semiModification.connections.deleted.filter(
+    (connectionId) => alvisProject.connections.has(connectionId), // TODO: we filter because mxGraph triggers deletion of edge after it triggers deletion of agent
+    // refers to @up - so we have 1) modification (deletes agent so it deletes connection too), 2) modification which deletes only connection 
+    // current solution is not good solution to problem, I guess...
   );
-  const deletedConnectionsIds = semiModification.connections.deleted;
   const deletedConnections = deletedConnectionsIds.map(
     getConnectionById(alvisProject),
   );
@@ -590,13 +634,11 @@ export const getConnectionById = (alvisProject: IAlvisProjectRecord) => (
 };
 
 // prettier-ignore
-export const getElementByInternalId = (alvisProject: IAlvisProjectRecord) => <T extends IAlvisElementRecord>(
-  internalId: IInternalId,
+export const getElementByInternalId = (project: IAlvisProjectRecord) => <T extends IAlvisElementRecord>(
+  id: IInternalId,
   elementTag: IAlvisElementTag,
 ): T => {
-  return (alvisProject[elementTag] as List<T>).find(
-    (element) => element.internalId === internalId,
-  );
+  return project.getIn([elementTag, id])
 };
 
 const getAgentAllSubpages = (alvisProject: IAlvisProjectRecord) => (
@@ -623,7 +665,9 @@ const getPageAllSubpages = (alvisProject: IAlvisProjectRecord) => (
   // Shouldn't it be a set?
   const page = getPageById(alvisProject)(pageId);
   const directSubpagesIds = page.subPagesInternalIds;
-  const directSubpages = directSubpagesIds.map(getPageById(alvisProject));
+  const directSubpages = directSubpagesIds
+    .toList()
+    .map(getPageById(alvisProject));
   const directSubpagesAllSubpages = <List<IPageRecord>>directSubpages
     .map((page) => page.subPagesInternalIds)
     .flatten()
@@ -641,6 +685,7 @@ const getPageAllSubpages = (alvisProject: IAlvisProjectRecord) => (
 //
 // PAGE --------------------------------------------
 
+// TODO: change name to addPage() and distinguish between adding only page record to map by naming other function addPageRecord
 export const addPageToAlvisProject = (alvisProject: IAlvisProjectRecord) => (
   newPage: IPageRecord,
 ): IAlvisProjectRecord => {
@@ -666,223 +711,158 @@ export const addPageToAlvisProject = (alvisProject: IAlvisProjectRecord) => (
 export const modifyPageInAlvisProject = (alvisProject: IAlvisProjectRecord) => (
   modifiedPage: IPageRecord,
 ): IAlvisProjectRecord => {
-  const oldPage = getRecordByInternalId(
-    alvisProject.pages,
-    modifiedPage.internalId,
-  );
+  const oldPage = getElementById(alvisProject.pages, modifiedPage.internalId);
   const newPage = modifiedPage
     .set('agentsInternalIds', oldPage.agentsInternalIds)
-    .set('supAgentInternalId', oldPage.supAgentInternalId) // TODO: are we sure?
+    .set('supAgentInternalId', oldPage.supAgentInternalId) // TODO: are we sure? (are *we* sure XD)
     .set('subPagesInternalIds', oldPage.subPagesInternalIds);
   const afterPageModified = changeRecord(alvisProject)(newPage, 'pages'); // TODO: assure that you do not modify internal data such as subPagesInternalIds
 
   return afterPageModified;
 };
 
-export const deletePageInAlvisProject = (alvisProject: IAlvisProjectRecord) => (
-  pageToDeleteInternalId: string,
+export const deletePageInAlvisProject = (project: IAlvisProjectRecord) => (
+  pageToDeleteId: string,
 ): IAlvisProjectRecord => {
-  const afterPageRemovedFromSupPage = removeSubPageFromPage(alvisProject)(
-    pageToDeleteInternalId,
+  const afterPageRemovedFromSupPage = unassignPageFromSupPage(project)(
+    pageToDeleteId,
   );
   const afterPageRemovedFromAgent = removeSubPageFromAgent(
     afterPageRemovedFromSupPage,
-  )(pageToDeleteInternalId);
+  )(pageToDeleteId);
   const page = <IPageRecord>getRecord(afterPageRemovedFromAgent)(
-    pageToDeleteInternalId,
+    pageToDeleteId,
     'pages',
   );
 
   // let afterPageAgentsRemoved = afterPageRemovedFromAgent;
   // TODO: Assume that when deleting a page all page's agents should be deleted
   if (!page.agentsInternalIds.isEmpty()) {
-    throw new Error('Page has agents, page cannot be deleted!');
+    throw new Error('Page has agents assigned and cannot be deleted!');
   }
-  // TODO: delete this:
-  // page.agentsInternalIds.forEach((agentInternalId) => {
-  //   afterPageAgentsRemoved = deleteAgentInAlvisProject(afterPageAgentsRemoved)(
-  //     agentInternalId,
-  //   );
-  // });
 
   const afterPageRemoved = deleteRecord(afterPageRemovedFromAgent)(
-    pageToDeleteInternalId,
+    pageToDeleteId,
     'pages',
   );
 
   return afterPageRemoved;
 };
 
-const assignSubPageToAgent = (alvisProject: IAlvisProjectRecord) => (
+const assignSubPageToAgent = (project: IAlvisProjectRecord) => (
   supAgent: IAgentRecord,
-  pageInternalId: string,
+  pageId: string,
 ): IAlvisProjectRecord => {
   if (supAgent.subPageInternalId) {
     // TODO: implement handling of such error somewhere
     throw new Error('Agent already has subpage; cannot add another one!');
   }
 
-  const agentWithPageAssigned = supAgent.set(
-    'subPageInternalId',
-    pageInternalId,
+  return project.setIn(
+    ['agents', supAgent.internalId, 'subPageInternalId'],
+    pageId,
   );
-  const updatedProject = changeRecord(alvisProject)(
-    agentWithPageAssigned,
-    'agents',
-  );
-
-  return updatedProject;
 };
 
-// const removeSubPageFromAgent = (alvisProject: IAlvisProjectRecord) =>
-//     (supAgent: IAgentRecord, pageInternalId: string): IAlvisProjectRecord => {
-//         const agentWithPageAssigned = supAgent.set('subPageInternalId', pageInternalId),
-//             updatedProject = changeRecord(alvisProject)(agentWithPageAssigned, 'agents');
-
-//         return updatedProject;
-//     }
-
-const assignSubPageToPage = (alvisProject: IAlvisProjectRecord) => (
-  subPageInternalId: string,
-  pageInternalId: string,
+const assignSubPageToPage = (project: IAlvisProjectRecord) => (
+  subPageId: string,
+  pageId: string,
 ): IAlvisProjectRecord => {
-  const page = <IPageRecord>getRecord(alvisProject)(pageInternalId, 'pages');
-  const pageWithSubPageAdded = page.update(
-    'subPagesInternalIds',
-    (subPagesInternalIds) => subPagesInternalIds.push(subPageInternalId),
-  );
-  const updatedProject = changeRecord(alvisProject)(
-    pageWithSubPageAdded,
-    'pages',
-  );
+  if (false) {
+    throw new Error('no page with given internalId - in assignSubPageToPage');
+  }
 
-  return updatedProject;
+  return project.mergeIn(['pages', pageId, 'subPagesInternalIds'], [subPageId]);
 };
 
-const removeSubPageFromPage = (alvisProject: IAlvisProjectRecord) => (
-  subPageInternalId: string,
+const unassignPageFromSupPage = (project: IAlvisProjectRecord) => (
+  pageId: string,
 ): IAlvisProjectRecord => {
-  const supPage = getPageSupPage(alvisProject)(subPageInternalId);
-  // TODO: we should really, REALLY simplify this logic...
-  const subPageInternalIdIndex = getListElementIndexWithFn(
-    supPage.subPagesInternalIds,
-  )((id) => id === subPageInternalId);
-  const pageWithRemovedSubPage = supPage.update(
-    'subPagesInternalIds',
-    (subPagesInternalIds) =>
-      subPageInternalIdIndex !== -1
-        ? subPagesInternalIds.delete(subPageInternalIdIndex)
-        : subPagesInternalIds,
-  );
-  const updatedProject = changeRecord(alvisProject)(
-    pageWithRemovedSubPage,
-    'pages',
-  );
+  const supPage = getPageSupPage(project)(pageId);
+  const supPageId = supPage.internalId;
 
-  return updatedProject;
+  return project.deleteIn(['pages', supPageId, 'subPagesInternalIds', pageId]);
 };
 
-const removeSubPageFromAgent = (alvisProject: IAlvisProjectRecord) => (
-  subPageInternalId: string,
+// TODO: rename
+const removeSubPageFromAgent = (project: IAlvisProjectRecord) => (
+  subPageId: string,
 ): IAlvisProjectRecord => {
-  const pageAgent = getPageAgent(alvisProject)(subPageInternalId);
-  const pageAgentWithRemovedSubPage = pageAgent.set('subPageInternalId', null);
-  const updatedProject = changeRecord(alvisProject)(
-    pageAgentWithRemovedSubPage,
-    'agents',
-  );
+  const agent = getPageAgent(project)(subPageId);
+  const agentId = agent.internalId;
 
-  return updatedProject;
+  return project.setIn(['agents', agentId, 'subPageInternalId'], null);
 };
 
-const getPageAgent = (alvisProject: IAlvisProjectRecord) => (
-  pageInternalId: string,
+const getPageAgent = (project: IAlvisProjectRecord) => (
+  pageId: string,
 ): IAgentRecord => {
-  const agents = alvisProject.agents;
-  const pageAgentIndex = getListElementIndexWithFn(agents)(
-    (agent) => agent.subPageInternalId === pageInternalId,
-  );
-  const pageAgent = agents.get(pageAgentIndex);
+  const { agents, pages } = project;
+  const page = pages.get(pageId);
+  const supAgentId = page.supAgentInternalId;
+  const supAgent = agents.get(supAgentId);
 
-  return pageAgent;
+  return supAgent;
 };
 
-const getPageSupPage = (alvisProject: IAlvisProjectRecord) => (
-  subPageInternalId: string,
+const getPageSupPage = (project: IAlvisProjectRecord) => (
+  pageId: string,
 ): IPageRecord => {
-  const subPageAgent = getPageAgent(alvisProject)(subPageInternalId);
-  const supPageInternalId = subPageAgent.pageInternalId;
-  const supPageRecord = <IPageRecord>getRecord(alvisProject)(
-    supPageInternalId,
-    'pages',
-  );
+  const { pages } = project;
+  const supAgent = getPageAgent(project)(pageId);
+  const supPageId = supAgent.pageInternalId;
+  const supPage = pages.get(supPageId);
 
-  return supPageRecord;
+  return supPage;
 };
 
-const assignAgentToPage = (alvisProject: IAlvisProjectRecord) => (
-  agentInternalId: string,
-  pageInternalId: string,
+const assignAgentToPage = (project: IAlvisProjectRecord) => (
+  agentId: string,
+  pageId: string,
 ): IAlvisProjectRecord => {
-  const page = <IPageRecord>getRecord(alvisProject)(pageInternalId, 'pages');
-  const pageWithAgentAssigned = page.update(
-    'agentsInternalIds',
-    (agentsInternalIds) => agentsInternalIds.push(agentInternalId),
-  );
-  const updatedProject = changeRecord(alvisProject)(
-    pageWithAgentAssigned,
-    'pages',
-  );
+  if (false) {
+    throw new Error('no page with given internalId - in assignAgentToPage');
+  }
 
-  return updatedProject;
+  return project.mergeIn(['pages', pageId, 'agentsInternalIds'], [agentId]);
 };
 
-const removeAgentFromPage = (alvisProject: IAlvisProjectRecord) => (
-  agentInternalId: string,
+const removeAgentFromPage = (project: IAlvisProjectRecord) => (
+  agentId: string,
 ): IAlvisProjectRecord => {
-  const agentPage = getAgentPage(alvisProject)(agentInternalId);
-  const agentInternalIdToRemoveIndex = getListElementIndexWithFn(
-    agentPage.agentsInternalIds,
-  )((id) => id === agentInternalId);
-  const pageWithRemovedAgent = agentPage.update(
-    'agentsInternalIds',
-    (agentsInternalIds) =>
-      agentInternalIdToRemoveIndex !== -1
-        ? agentsInternalIds.delete(agentInternalIdToRemoveIndex)
-        : agentsInternalIds,
-  );
-  const updatedProject = changeRecord(alvisProject)(
-    pageWithRemovedAgent,
-    'pages',
-  );
+  const { agents } = project;
+  const agent = agents.get(agentId);
+  const pageId = agent.pageInternalId;
 
-  return updatedProject;
+  if (false) {
+    throw new Error('Internal error! Agent is not assigned to page!');
+  }
+
+  return project.deleteIn(['pages', pageId, 'agentsInternalIds', agentId]);
 };
 
 // AGENT --------------------------------------------
 
-export const addAgentToAlvisProject = (alvisProject: IAlvisProjectRecord) => (
-  newAgent: IAgentRecord,
+// TODO: TODO: TODO: rename `project` to `diagram` - it should be more accurate
+// NOOOOOO!!!!!!!!!!!!!!! it has `code` inside :/
+export const addAgentToAlvisProject = (project: IAlvisProjectRecord) => (
+  agent: IAgentRecord,
 ): IAlvisProjectRecord => {
-  const afterAgentAddedToProject = addAgentRecord(alvisProject)(
-    purifyAgent(newAgent),
-  );
-  const afterAgentAssignedToPage = assignAgentToPage(afterAgentAddedToProject)(
-    newAgent.internalId,
-    newAgent.pageInternalId,
-  );
+  const { internalId: agentId, pageInternalId: pageId } = agent;
+  const purifiedAgent = purifyAgent(agent);
+  let modifiedProject = project;
 
-  return afterAgentAssignedToPage;
+  modifiedProject = addAgentRecord(modifiedProject)(purifiedAgent);
+  modifiedProject = assignAgentToPage(modifiedProject)(agentId, pageId);
+
+  return modifiedProject;
 };
 
 // TODO: change na to more descriptive one, which would suggest that it should not modify such things as agent's page ID
 export const modifyAgentInAlvisProject = (
   alvisProject: IAlvisProjectRecord,
 ) => (modifiedAgent: IAgentRecord): IAlvisProjectRecord => {
-  const oldAgent = getRecordByInternalId(
-    alvisProject.agents,
-    modifiedAgent.internalId,
-  );
+  const oldAgent = alvisProject.agents.get(modifiedAgent.internalId);
   const newAgent = modifiedAgent
     .set('pageInternalId', oldAgent.pageInternalId)
     .set('portsInternalIds', oldAgent.portsInternalIds)
@@ -892,132 +872,67 @@ export const modifyAgentInAlvisProject = (
   return afterAgentModified;
 };
 
-export const deleteAgentInAlvisProject = (
-  alvisProject: IAlvisProjectRecord,
-) => (agentToDeleteInternalId: string): IAlvisProjectRecord => {
-  // const afterConnectionsRemoved = deleteAgentPortsConnections(alvisProject)(
-  //     agentToDeleteInternalId,
-  //   )
-  //   const afterPortsRemoved = deleteAgentPorts(afterConnectionsRemoved)(
-  //     agentToDeleteInternalId,
-  //   )
-  // TODO: subbpage was not being deleted in the past?
-  // TODO: add checking if agent can be removed - all ports, connection, subpages were deleted
-  const afterAgentRemovedFromPage = removeAgentFromPage(alvisProject)(
-    agentToDeleteInternalId,
-  );
+export const deleteAgentInAlvisProject = (project: IAlvisProjectRecord) => (
+  agentId: string,
+): IAlvisProjectRecord => {
+  const { agents } = project;
+  const agent = getElementById(agents, agentId);
+  const agentHasPorts = !agent.portsInternalIds.isEmpty();
+  const agentHasSubpage = !!agent.subPageInternalId;
+
+  // TODO: we should delete agents/pages in particular order in applyModification fn.
+  // if (agentHasPorts || agentHasSubpage) {
+  //   throw new Error(
+  //     'Internal error! Cannot delete agent - it has some ports or subpage!',
+  //   );
+  // }
+
+  const afterAgentRemovedFromPage = removeAgentFromPage(project)(agentId);
   const afterAgentRemoved = deleteRecord(afterAgentRemovedFromPage)(
-    agentToDeleteInternalId,
+    agentId,
     'agents',
   );
 
   return afterAgentRemoved;
 };
 
-// TO DO: delete agent subpage
-// export const deleteAgentSubPageIfExists = (alvisProject: IAlvisProjectRecord) =>
-//     (agent: IAgentRecord): IAlvisProjectRecord => {
-//         const afterConnectionsRemoved = deleteAgentPortsConnections(alvisProject)(agentToDeleteInternalId),
-//             afterPortsRemoved = deleteAgentPorts(afterConnectionsRemoved)(agentToDeleteInternalId),
-//             afterAgentRemovedFromPage = removeAgentFromPage(afterPortsRemoved)(agentToDeleteInternalId),
-//             afterAgentRemoved = deleteRecord(afterAgentRemovedFromPage)(agentToDeleteInternalId, 'agents');
-
-//         return afterAgentRemoved;
-//     }
-
-const deleteAgentPorts = (alvisProject: IAlvisProjectRecord) => (
-  agentInternalId: string,
-): IAlvisProjectRecord => {
-  const agent = <IAgentRecord>getRecord(alvisProject)(
-    agentInternalId,
-    'agents',
-  );
-  const agentPortsInternalIds = agent.portsInternalIds;
-
-  let afterPortsDeleted = alvisProject;
-  agentPortsInternalIds.forEach((portInternalId) => {
-    afterPortsDeleted = deleteRecord(afterPortsDeleted)(
-      portInternalId,
-      'ports',
-    );
-  });
-
-  return afterPortsDeleted;
-};
-
-const deleteAgentPortsConnections = (alvisProject: IAlvisProjectRecord) => (
-  agentInternalId: string,
-): IAlvisProjectRecord => {
-  const agent = <IAgentRecord>getRecord(alvisProject)(
-    agentInternalId,
-    'agents',
-  );
-  const agentPortsInternalIds = agent.portsInternalIds;
-
-  let afterPortsConnectionsDeleted = alvisProject;
-  agentPortsInternalIds.forEach((portInternalId) => {
-    afterPortsConnectionsDeleted = deletePortConnections(
-      afterPortsConnectionsDeleted,
-    )(portInternalId);
-  });
-
-  return afterPortsConnectionsDeleted;
-};
-
 // TODO: this method should go to PORTS part, because agents can exist without ports not the other way around
-const assignPortToAgent = (alvisProject: IAlvisProjectRecord) => (
-  portInternalId: string,
-  agentInternalId: string,
+// later: @up is it valid argument (~)
+const assignPortToAgent = (project: IAlvisProjectRecord) => (
+  portId: string,
+  agentId: string,
 ): IAlvisProjectRecord => {
-  const agent = <IAgentRecord>getRecord(alvisProject)(
-    agentInternalId,
-    'agents',
-  );
-  const agentWithPortAssigned = agent.update(
-    'portsInternalIds',
-    (portsInternalIds) => portsInternalIds.push(portInternalId),
-  );
-  const updatedProject = changeRecord(alvisProject)(
-    agentWithPortAssigned,
-    'agents',
-  );
+  if (false) {
+    throw new Error('Internal error! Port does not exist on agent!');
+  }
 
-  return updatedProject;
+  return project.mergeIn(['agents', agentId, 'portsInternalIds'], [portId]);
 };
 
 const removePortFromAgent = (alvisProject: IAlvisProjectRecord) => (
-  portInternalId: string,
+  portId: string,
 ): IAlvisProjectRecord => {
-  const portAgent = getPortAgent(alvisProject)(portInternalId);
-  const agentPortsInternalIds: List<string> = portAgent.get(
-    'portsInternalIds',
-    List(),
-  );
-  const portToRemoveIndex = getListElementIndexWithFn(agentPortsInternalIds)(
-    (id) => id === portInternalId,
-  );
-  const agentWithRemovedPort = portAgent.set(
-    'portsInternalIds',
-    portToRemoveIndex !== -1
-      ? agentPortsInternalIds.delete(portToRemoveIndex)
-      : agentPortsInternalIds,
-  );
-  const updatedProject = changeRecord(alvisProject)(
-    agentWithRemovedPort,
-    'agents',
-  );
+  // TODO: what about sequential updates in Immutable.js ??
+  // Sequential ???
+  const { ports } = alvisProject;
+  const port = ports.get(portId);
+  const agentId = port.agentInternalId;
 
-  return updatedProject;
+  if (false) {
+    // TODO: check it here - should we?
+    throw new Error('Internal error! Port does not exist on agent!'); // TODO: Internal error, because it should exists - we just found agent with this port above!
+  }
+
+  return alvisProject.deleteIn(['agents', agentId, 'portsInternalIds', portId]);
 };
 
-const getAgentPage = (alvisProject: IAlvisProjectRecord) => (
-  agentInternalId: string,
+const getAgentPage = (project: IAlvisProjectRecord) => (
+  agentId: string,
 ): IPageRecord => {
-  const pages = alvisProject.pages;
-  const pageIndex = getListElementIndexWithFn(pages)((page) =>
-    page.agentsInternalIds.contains(agentInternalId),
-  );
-  const page = pages.get(pageIndex);
+  const { agents, pages } = project;
+  const agent = agents.get(agentId);
+  const pageId = agent.pageInternalId;
+  const page = pages.get(pageId);
 
   return page;
 };
@@ -1039,6 +954,8 @@ export const addPortToAlvisProject = (alvisProject: IAlvisProjectRecord) => (
 };
 
 // TODO: similar methods exist for page, agent etc. - we should make one method or smth.
+// TODO: we are passing whole modified record, maybe better idea would be to pass only data we want to change with ID ?
+// it might be good idea in context of editing same diagram by many people - less data conflicts to resolve
 export const modifyPortInAlvisProject = (alvisProject: IAlvisProjectRecord) => (
   modifiedPort: IPortRecord,
 ): IAlvisProjectRecord => {
@@ -1047,111 +964,62 @@ export const modifyPortInAlvisProject = (alvisProject: IAlvisProjectRecord) => (
   return afterPortModified;
 };
 
-export const deletePortInAlvisProject = (alvisProject: IAlvisProjectRecord) => (
-  portToDeleteInternalId: string,
+export const deletePortInAlvisProject = (project: IAlvisProjectRecord) => (
+  portId: string,
 ): IAlvisProjectRecord => {
-  const afterPortDeleted = deleteRecord(alvisProject)(
-    portToDeleteInternalId,
+  const afterPortRemovedFromAgent = removePortFromAgent(project)(portId);
+  const afterPortDeleted = deleteRecord(afterPortRemovedFromAgent)(
+    portId,
     'ports',
   );
-  const afterPortRemovedFromAgent = removePortFromAgent(afterPortDeleted)(
-    portToDeleteInternalId,
-  );
-  // const afterPortConnectionsDeleted = deletePortConnections(
-  //   afterPortRemovedFromAgent,
-  // )(portToDeleteInternalId);
 
-  return afterPortRemovedFromAgent;
-};
-
-const deletePortConnections = (alvisProject: IAlvisProjectRecord) => (
-  portInternalId: string,
-): IAlvisProjectRecord => {
-  const portConnections = getPortAllConnections(alvisProject)(portInternalId);
-
-  let afterPortConnectionsDeleted = alvisProject;
-  portConnections.forEach((portConnection) => {
-    afterPortConnectionsDeleted = deleteRecord(afterPortConnectionsDeleted)(
-      portConnection.internalId,
-      'connections',
-    );
-  });
-
-  return afterPortConnectionsDeleted;
-};
-
-export const getPortAgent = (alvisProject: IAlvisProjectRecord) => (
-  portInternalId: string,
-): IAgentRecord => {
-  const agents = alvisProject.agents;
-  const agentIndex = getListElementIndexWithFn(agents)((agent) =>
-    agent.portsInternalIds.contains(portInternalId),
-  );
-  const agent = agents.get(agentIndex);
-
-  return agent;
-};
-
-const getPortAllConnections = (alvisProject: IAlvisProjectRecord) => (
-  portInternalId: string,
-): List<IConnectionRecord> => {
-  const connections = alvisProject.connections;
-  const portConnections = connections.filter(
-    (connection) =>
-      connection.sourcePortInternalId === portInternalId ||
-      connection.targetPortInternalId === portInternalId,
-  );
-
-  return portConnections;
+  return afterPortDeleted;
 };
 
 // CONNECTION ---------------------------------------------
 
-export const addConnectionToAlvisProject = (
-  alvisProject: IAlvisProjectRecord,
-) => (newConnection: IConnectionRecord): IAlvisProjectRecord => {
-  return addConnectionRecord(alvisProject)(purifyConnection(newConnection));
+export const addConnectionToAlvisProject = (project: IAlvisProjectRecord) => (
+  newConnection: IConnectionRecord,
+): IAlvisProjectRecord => {
+  const newConnectionPurified = purifyConnection(newConnection);
+
+  if (false) {
+    // TODO: check if ports exist etc. - or maybe we have already checked this in generateFullModification or in applyModification ???
+    throw new Error('addConnectionToAlvisProject: error!');
+  }
+
+  return project.setIn(
+    ['connections', newConnection.internalId],
+    newConnectionPurified,
+  );
 };
 
 export const modifyConnectionInAlvisProject = (
-  alvisProject: IAlvisProjectRecord,
+  project: IAlvisProjectRecord,
 ) => (modifiedConnection: IConnection): IAlvisProjectRecord => {
-  const afterConnectionModified = changeRecord(alvisProject)(
-    modifiedConnection,
-    'connections',
-  );
+  const connectionId = modifiedConnection.internalId;
+  const connectionExists = project.connections.has(connectionId);
 
-  return afterConnectionModified;
+  if (!connectionExists) {
+    // TODO: check if ports exists etc.
+    throw new Error('modifyConnectionInAlvisProject: connection not found!');
+  }
+
+  return project.setIn(['connections', connectionId], modifiedConnection);
 };
 
 export const deleteConnectionInAlvisProject = (
-  alvisProject: IAlvisProjectRecord,
-) => (connectionToDeleteInternalId: string): IAlvisProjectRecord => {
-  const afterConnectionDeleted = deleteRecord(alvisProject)(
-    connectionToDeleteInternalId,
-    'connections',
-  );
+  // TODO: shorten name by 'InAlvisProject'
+  project: IAlvisProjectRecord, // TODO: maybe we should call it system (not project, or alvisProject) ???
+) => (connectionId: string): IAlvisProjectRecord => {
+  const connectionExists = project.connections.has(connectionId);
 
-  return afterConnectionDeleted;
+  if (!connectionExists) {
+    throw new Error('deleteConnectionInAlvisProject: connection not found!');
+  }
+
+  return project.deleteIn(['connections', connectionId]);
 };
-
-export function deleteConnectionsReletedToPortFromAlvisProject(
-  portInternalId: string,
-  alvisProject: IAlvisProjectRecord,
-): IAlvisProjectRecord {
-  const afterConnectionsRemoved = alvisProject.update(
-    'connections',
-    (connections: List<IConnectionRecord>) => {
-      return connections.filter(
-        (connection) =>
-          connection.sourcePortInternalId === portInternalId ||
-          connection.targetPortInternalId === portInternalId,
-      );
-    },
-  );
-
-  return afterConnectionsRemoved;
-}
 
 // --------------------------------------------------------------
 
@@ -1218,6 +1086,7 @@ function purifyAgent(agent: IAgentRecord): IAgentRecord {
   // purifiedAgent = purifiedAgent.remove('internalId');
   // purifiedAgent = purifiedAgent.remove('pageInternalId');
   purifiedAgent = purifiedAgent.remove('portsInternalIds');
+  purifiedAgent = purifiedAgent.remove('subPageInternalId');
 
   return purifiedAgent;
 }
@@ -1270,3 +1139,59 @@ function purifyPage(page: IPageRecord): IPageRecord {
 //   readonly supAgentInternalId: string;    // For first page it is set to `null`
 //   // readonly connectionsInternalIds: List<string>,
 // }
+
+const canPageBeAdded = (project: IAlvisProject) => (page: IPageRecord) =>
+  project.agents.has(page.supAgentInternalId);
+
+const canPageBeDeleted = (project: IAlvisProject) => (pageId: string) => {
+  const page = project.pages.get(pageId);
+
+  return page && page.agentsInternalIds.isEmpty();
+};
+
+const canPageBeModified = (project: IAlvisProject) => (page: IPageRecord) =>
+  project.pages.has(page.internalId);
+
+const canAgentBeAdded = (project: IAlvisProject) => (agent: IAgentRecord) =>
+  project.pages.has(agent.pageInternalId);
+
+const canAgentBeDeleted = (project: IAlvisProject) => (agentId: string) => {
+  const agent = project.agents.get(agentId);
+
+  return (
+    agent &&
+    agent.portsInternalIds.isEmpty() &&
+    agent.subPageInternalId === null
+  );
+};
+
+const canAgentBeModified = (project: IAlvisProject) => (agent: IAgentRecord) =>
+  project.agents.has(agent.internalId);
+
+const canPortBeAdded = (project: IAlvisProject) => (port: IPortRecord) =>
+  project.agents.has(port.agentInternalId);
+
+const canPortBeDeleted = (project: IAlvisProject) => (portId: string) => {
+  return project.connections.every(
+    (connection) =>
+      connection.sourcePortInternalId !== portId &&
+      connection.targetPortInternalId !== portId,
+  );
+};
+
+const canPortBeModified = (project: IAlvisProject) => (port: IPortRecord) =>
+  project.ports.has(port.internalId);
+
+const canConnectionBeAdded = (project: IAlvisProject) => (
+  connection: IConnectionRecord,
+) =>
+  project.ports.has(connection.sourcePortInternalId) &&
+  project.ports.has(connection.targetPortInternalId);
+
+const canConnectionBeDeleted = (project: IAlvisProject) => (
+  connectionId: string,
+) => true;
+
+const canConnectionBeModified = (project: IAlvisProject) => (
+  connection: IConnectionRecord,
+) => project.connections.has(connection.internalId);

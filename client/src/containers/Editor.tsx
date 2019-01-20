@@ -58,7 +58,7 @@ import {
   agentRecordFactory,
   IAlvisProjectRecord,
 } from '../models/alvisProject';
-import { List } from 'immutable';
+import { List, Map } from 'immutable';
 import { LoginPanel } from '../components/LoginPanel';
 import { RegisterPanel } from '../components/RegisterPanel';
 
@@ -68,10 +68,10 @@ export namespace Editor {
     appData: IAppRecord;
     xml: string;
     alvisProject: IAlvisProjectRecord;
-    agents: List<IAgentRecord>;
-    ports: List<IPortRecord>;
-    pages: List<IPageRecord>;
-    connections: List<IConnectionRecord>;
+    agents: Map<string, IAgentRecord>;
+    ports: Map<string, IPortRecord>;
+    pages: Map<string, IPageRecord>;
+    connections: Map<string, IConnectionRecord>;
   }
 
   export interface DispatchProps {
@@ -155,8 +155,9 @@ export class EditorComponent extends React.Component<
     return element;
   }
 
-  getSystemPage(pages: List<IPageRecord>) {
-    return this.getElementByFn(pages, (page) => page.name === 'System');
+  getSystemPage(pages: Map<string, IPageRecord>) {
+    // TODO: store 'System' in some global variable
+    return pages.find((page) => page.name === 'System')
   }
 
   render() {

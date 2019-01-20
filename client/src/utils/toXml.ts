@@ -149,7 +149,7 @@ function appendPage(
   connections: List<IConnectionRecord>,
 ) {
   const pageElement = createPageElement(page);
-  const pageAgents = page.agentsInternalIds.map((agentInternalId) =>
+  const pageAgents = page.agentsInternalIds.toList().map((agentInternalId) =>
     getListElementByInternalId(agents, agentInternalId),
   );
   const pagePortsInternalIds = ports
@@ -188,7 +188,7 @@ function appendAgent(
   ports: List<IPortRecord>,
 ) {
   const agentElement = createAgentElement(agent);
-  const agentPorts: List<IPortRecord> = agent.portsInternalIds.map(
+  const agentPorts: List<IPortRecord> = agent.portsInternalIds.toList().map(
     (portInetrnalId) => getListElementByInternalId(ports, portInetrnalId),
   );
 
@@ -289,8 +289,8 @@ export function parseAlvisProjectToXml(alvisProject: IAlvisProjectRecord) {
   const connections = alvisProject.connections;
   const code = alvisProject.code;
 
-  appendHierarchy(alvisprojectDoc, pages, agents);
-  appendPages(alvisprojectDoc, pages, agents, ports, connections);
+  appendHierarchy(alvisprojectDoc, pages.toList(), agents.toList());
+  appendPages(alvisprojectDoc, pages.toList(), agents.toList(), ports.toList(), connections.toList());
   appendCode(alvisprojectDoc, code);
 
   const alvisProjectXml = new XMLSerializer().serializeToString(

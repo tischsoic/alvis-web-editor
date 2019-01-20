@@ -1,4 +1,4 @@
-import { List } from 'immutable';
+import { List, Set } from 'immutable';
 import {
   IAgentRecord,
   agentRecordFactory,
@@ -14,7 +14,7 @@ export function getBasicAgentRecordForTests(
   pageInternalId: string,
   subPageInternalId: string = null,
   internalId: string = newUuid(),
-  portsInternalIds: List<string> = List(),
+  portsInternalIds: Set<string> = Set(),
 ): IAgentRecord {
   return agentRecordFactory({
     internalId,
@@ -34,7 +34,7 @@ export function getBasicAgentRecordForTests(
 }
 
 export function getBasicPortRecordForTests(
-  internalId: string,
+  internalId: string = newUuid(),
   agentInternalId: string,
   name: string,
 ): IPortRecord {

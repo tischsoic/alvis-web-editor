@@ -28,7 +28,7 @@ const defaultProjectRecord = {
 };
 export const projectRecordFactory = Record<IProject>(defaultProjectRecord);
 
-type PartialPartial<T> = { [P in keyof T]?: Partial<T[P]> };
+export type PartialPartial<T> = { [P in keyof T]?: Partial<T[P]> };
 
 export interface IProjectElementModification<Element> {
   added: List<Element>;

@@ -46,7 +46,7 @@ import {
   IInternalRecord,
 } from '../../models/alvisProject';
 import * as projectActions from '../../constants/projectActions';
-import { List } from 'immutable';
+import { List, Set, Map } from 'immutable';
 import { createAction } from 'redux-actions';
 import { state as exampleState1 } from '../../utils/test/exampleState1';
 import {
@@ -55,8 +55,8 @@ import {
   getBasicConnectionRecordForTest,
 } from '../../utils/test/recordsGenerators';
 import {
-  getRecordByInternalId,
-  AlvisProjectKeysLeadingToLists,
+  getElementById,
+  AlvisProjectKeysLeadingToElements,
 } from '../../utils/alvisProject';
 import { newUuid } from '../../utils/uuidGenerator';
 
@@ -94,9 +94,10 @@ describe('Project reducer', () => {
     //   notEmptyState.alvisProject.pages,
     // );
 
+    console.log(stateAfterAgentWithPortAdded.alvisProject.agents)
     expect(
-      stateAfterAgentWithPortAdded.alvisProject.agents.find(
-        (el) => el.internalId === agentToAddRecord.internalId,
+      stateAfterAgentWithPortAdded.alvisProject.agents.get(
+        agentToAddRecord.internalId,
       ),
     ).toEqual(agentToAddRecord.set('internalId', agentToAddRecord.internalId));
 
@@ -123,16 +124,16 @@ describe('Project reducer', () => {
     const modifiedPage = pageRecordFactory({
       internalId: '2',
       name: 'SubSubSystem_modified',
-      agentsInternalIds: List<string>(['9', '10']),
-      subPagesInternalIds: List<string>([]),
-      supAgentInternalId: '9',
+      agentsInternalIds: Set(['9', '10']),
+      subPagesInternalIds: Set(),
+      supAgentInternalId: '8',
     });
     const modifiedAgent = getBasicAgentRecordForTests(
       'A8_modified',
       '3',
       null,
       '11',
-      List(['23', '24']),
+      Set(['23', '24']),
     );
     const modifiedPort = getBasicPortRecordForTests('23', '11', 'p_10_mod');
     const modifiedConnection = getBasicConnectionRecordForTest(
@@ -166,7 +167,7 @@ describe('Project reducer', () => {
 
     const modifiedRecsAndKeys: [
       IAlvisElement,
-      AlvisProjectKeysLeadingToLists
+      AlvisProjectKeysLeadingToElements
     ][] = [
       [modifiedPage, 'pages'],
       [modifiedAgent, 'agents'],
@@ -177,8 +178,11 @@ describe('Project reducer', () => {
       const modifiedRecord = modifiedRecAndKey[0];
       const keyInState = modifiedRecAndKey[1];
       expect(
-        getRecordByInternalId(
-          modifiedState.alvisProject[keyInState] as List<IInternalRecord>, // TODO: is it good idea to cast it to List<IInternalRecordF>?
+        getElementById(
+          modifiedState.alvisProject[keyInState] as Map<
+            string,
+            IInternalRecord
+          >, // TODO: is it good idea to cast it to List<IInternalRecordF>?
           modifiedRecord.internalId,
         ),
       ).toEqual(modifiedRecord);
@@ -189,14 +193,15 @@ describe('Project reducer', () => {
     let modifiedStateWithoutModifiedRecs = modifiedState;
     const removeModifiedRecord = (
       state: IProjectRecord,
-      keyInState: AlvisProjectKeysLeadingToLists,
+      keyInState: AlvisProjectKeysLeadingToElements,
       modifiedRecord: IAlvisElement,
     ): IProjectRecord =>
       state.update('alvisProject', (alvisProject: IAlvisProjectRecord) =>
         alvisProject.update(keyInState, (elements) => {
           // https://stackoverflow.com/questions/42427393/cannot-invoke-an-expression-whose-type-lacks-a-call-signature
           // https://github.com/Microsoft/TypeScript/issues/7294
-          return <IAlvisProjectRecord[AlvisProjectKeysLeadingToLists]>(elements as List<
+          return <IAlvisProjectRecord[AlvisProjectKeysLeadingToElements]>(elements as Map<
+            string,
             IInternalRecord
           >).filter((el) => el.internalId !== modifiedRecord.internalId);
         }),
@@ -233,13 +238,8 @@ describe('Project reducer', () => {
     const modifiedPage = pageRecordFactory({
       internalId: '2',
       name: 'SubSubSystem_modified',
-      agentsInternalIds: List<string>([
-        '9',
-        '10',
-        'should not be changed',
-        '11',
-      ]),
-      subPagesInternalIds: List<string>(['2', '<- should not be changed']),
+      agentsInternalIds: Set(['9', '10', 'should not be changed', '11']),
+      subPagesInternalIds: Set(['2', '<- should not be changed']),
       supAgentInternalId: '11', // <- should not be changed
     });
     const modifiedAgent = getBasicAgentRecordForTests(
@@ -247,7 +247,7 @@ describe('Project reducer', () => {
       '2', // <- should not be changed
       '2', // <- should not be changed
       '11',
-      List(['23', '24', '22', 'should not be changed']),
+      Set(['23', '24', '22', 'should not be changed']),
     );
 
     const modifiedState = project(
@@ -267,11 +267,11 @@ describe('Project reducer', () => {
       )(),
     );
 
-    const oldPage = getRecordByInternalId(
+    const oldPage = getElementById(
       notEmptyState.alvisProject.pages,
       modifiedPage.internalId,
     );
-    const newPage = getRecordByInternalId(
+    const newPage = getElementById(
       modifiedState.alvisProject.pages,
       modifiedPage.internalId,
     );
@@ -279,11 +279,11 @@ describe('Project reducer', () => {
     expect(newPage.subPagesInternalIds).toEqual(oldPage.subPagesInternalIds);
     expect(newPage.supAgentInternalId).toEqual(oldPage.supAgentInternalId);
 
-    const oldAgent = getRecordByInternalId(
+    const oldAgent = getElementById(
       notEmptyState.alvisProject.agents,
       modifiedAgent.internalId,
     );
-    const newAgent = getRecordByInternalId(
+    const newAgent = getElementById(
       modifiedState.alvisProject.agents,
       modifiedAgent.internalId,
     );
@@ -396,7 +396,7 @@ describe('Project reducer', () => {
     );
 
     expect(
-      stateAfterPage1Removed.alvisProject.pages.map((page) => page.internalId),
+      stateAfterPage1Removed.alvisProject.pages.toList().map((page) => page.internalId),
     ).toEqual(
       List(['0', '1', '2', '3'].filter((el) => el !== pageToRemoveInternalId)),
     );
@@ -434,7 +434,7 @@ describe('Project reducer', () => {
     );
 
     expect(
-      stateAfterPage1Removed.alvisProject.pages.map((page) => page.internalId),
+      stateAfterPage1Removed.alvisProject.pages.toList().map((page) => page.internalId),
     ).toEqual(List(['0']));
   });
 
@@ -483,7 +483,7 @@ describe('Project reducer', () => {
     };
     const addedAgentAfterPortAdded = agentToAddRecord.set(
       'portsInternalIds',
-      List([portToAddRecord.internalId]),
+      Set([portToAddRecord.internalId]),
     );
     const stateAfterPortAdded = project(
       stateAfterAgentAdded,

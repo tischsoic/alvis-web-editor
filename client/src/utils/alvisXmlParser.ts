@@ -12,8 +12,9 @@ import {
   alvisCodeRecordFactory,
   IAlvisCodeRecord,
   ConnectionDirection,
+  IIdentifiableElement,
 } from '../models/alvisProject';
-import { List, Map } from 'immutable';
+import { List, Map, Set } from 'immutable';
 import { newUuid } from './uuidGenerator';
 
 // class AlvisXmlParser {
@@ -69,7 +70,7 @@ function portToRecord(
 function agentToRecord(
   agent: Element,
   internalId: string,
-  portsInternalIds: List<string>,
+  portsInternalIds: Set<string>,
   pageInternalId: string,
   subPageInternalId: string,
 ): IAgentRecord {
@@ -123,9 +124,9 @@ function connectionToRecord(
 function pageToRecord(
   page: Element,
   internalId: string,
-  agentsInternalIds: List<string>,
-  connectionsInternalIds: List<string>,
-  subPagesInternalIds: List<string>,
+  agentsInternalIds: Set<string>,
+  connectionsInternalIds: Set<string>,
+  subPagesInternalIds: Set<string>,
   supAgentInternalId: string,
 ): IPageRecord {
   return pageRecordFactory({
@@ -208,7 +209,7 @@ function processHierarchyToGetPagesData(
   );
   pageData.page = pageData.page.set(
     'subPagesInternalIds',
-    List(agentNameSubPageInternalId.map((el) => el[1])),
+    Set(agentNameSubPageInternalId.map((el) => el[1])),
   );
 
   const allPagesData: IAllPagesData = {
@@ -326,7 +327,7 @@ function getSinglePageData(
     const agentRecord = agentToRecord(
       agentElement,
       agentInternalId,
-      List(agentPortsInternalIds),
+      Set(agentPortsInternalIds),
       pageInternalId,
       null, // Subpage not set!!
     );
@@ -352,8 +353,8 @@ function getSinglePageData(
   const pageRecord = pageToRecord(
     pageElement,
     pageInternalId,
-    List(pageAgentsInternalIds),
-    List(pageConnectionsInternalIds),
+    Set(pageAgentsInternalIds),
+    Set(pageConnectionsInternalIds),
     null,
     supAgentInternalId, // subPagesInternalIds not set!!
   );
@@ -383,15 +384,24 @@ function parseAlvisProjectXML(xmlDocument: XMLDocument): IAlvisProjectRecord {
   const pagesData = getPagesData(hierarchyNodes, pages);
 
   const alvisProjectRecord = alvisProjectRecordFactory({
-    pages: pagesData.pages,
-    agents: pagesData.agents,
-    ports: pagesData.ports,
-    connections: pagesData.connections,
+    pages: listToMapWithIdsAsKeys(pagesData.pages),
+    agents: listToMapWithIdsAsKeys(pagesData.agents),
+    ports: listToMapWithIdsAsKeys(pagesData.ports),
+    connections: listToMapWithIdsAsKeys(pagesData.connections),
     code: codeToRecord(code),
   });
   xmlDocument.getElementsByTagNameNS;
 
   return alvisProjectRecord;
+}
+
+function listToMapWithIdsAsKeys<T extends IIdentifiableElement>(
+  list: List<T>,
+): Map<string, T> {
+  return list.reduce(
+    (pages, page) => pages.set(page.internalId, page),
+    Map<string, T>(),
+  );
 }
 
 export default parseAlvisProjectXML;
