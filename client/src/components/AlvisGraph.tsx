@@ -67,6 +67,8 @@ export interface AlvisGraphProps {
   onAgentClick: (id: string) => void;
   onPortClick: (id: string) => void;
 
+  onHierarchyRemove: (agentId: string) => void;
+
   getNameFromUser: (callback: (chosenName: string) => void) => void;
 }
 

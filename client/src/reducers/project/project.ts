@@ -2,18 +2,10 @@ import { handleActions, Action } from 'redux-actions';
 import * as Actions from '../../constants/projectActions';
 import {
   IAlvisProjectRecord,
-  IAgentRecord,
-  IAgent,
-  IPortRecord,
-  IConnectionRecord,
-  IPageRecord,
-  IIdentifiableElement,
-  IInternalRecord,
 } from '../../models/alvisProject';
 import {
   IProjectRecord,
   projectRecordFactory,
-  IProjectModification,
   IOppositeModificationsRecord,
   IProjectModificationRecord,
   oppositeModificationsFactory,
@@ -203,6 +195,17 @@ export default handleActions<
       return afterDo
         .setIn(['alvisProject'], modifiedAlvisProject)
         .setIn(['copyModification'], copyModification);
+    },
+    [Actions.PROJECT_REMOVE_HIERARCHY]: (
+      state: IProjectRecord,
+      action: Action<string>,
+    ) => {
+      const alvisProject = state.alvisProject;
+      const agentId = action.payload;
+
+      console.log('REMOVE HIERARCHY from', agentId);
+
+      return state;
     },
   },
   initialState,

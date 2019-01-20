@@ -93,6 +93,11 @@ const paste = createAction<string, string>(
   (pageId) => pageId,
 );
 
+const removeHierarchy = createAction<string, string>(
+  Actions.PROJECT_REMOVE_HIERARCHY,
+  (agentId) => agentId,
+);
+
 export {
   setProjectXML,
   addPage,
@@ -113,4 +118,5 @@ export {
   copy,
   cut,
   paste,
+  removeHierarchy,
 };
