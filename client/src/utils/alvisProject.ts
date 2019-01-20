@@ -31,6 +31,7 @@ import {
   IOppositeModificationsRecord,
 } from '../models/project';
 import { separateBy } from './separateBy';
+import { newUuid } from './uuidGenerator';
 
 export function getValidEmptyAlvisProject(): IAlvisProjectRecord {
   return alvisProjectRecordFactory({
@@ -365,6 +366,201 @@ export const applyModification = (project: IAlvisProjectRecord) => (
 //
 //
 
+export function getCopyModification(
+  elementsIds: string[],
+  project: IAlvisProjectRecord,
+): IProjectModificationRecord {
+  const { agents, ports, connections } = getElementsByIds(elementsIds)(project);
+
+  const copiedAgents: List<IAgentRecord> = agents.toList();
+  const copiedAgentsPorts: Map<string, IPortRecord> = copiedAgents
+    .reduce(
+      (portsIds, agent) => portsIds.concat(agent.portsInternalIds),
+      List<string>(),
+    )
+    .reduce(
+      (ports, portId) => ports.set(portId, project.ports.get(portId)), // TODO: maybe we have more function like that - extract this to one helper function?
+      Map<string, IPortRecord>(),
+    );
+  const copiedPortsMap: Map<string, IPortRecord> = ports
+    .merge(copiedAgentsPorts)
+    .filter((port) => agents.has(port.agentInternalId));
+  const copiedConnections: List<
+    IConnectionRecord
+  > = connections
+    .toList()
+    .filter(
+      (connection) =>
+        copiedPortsMap.has(connection.sourcePortInternalId) &&
+        copiedPortsMap.has(connection.targetPortInternalId),
+    );
+
+  // TODO: now we set agent subPageInternalId to null in changeIds function
+  // is this what we want?
+  // TODO2: we may need to update `setParentPage` if we want to make deep copy
+
+  return projectModificationRecordFactoryPartial({
+    agents: {
+      added: copiedAgents,
+    },
+    ports: {
+      added: copiedPortsMap.toList(),
+    },
+    connections: {
+      added: copiedConnections,
+    },
+  });
+}
+
+export const setParentPage = (
+  copyModification: IProjectModificationRecord,
+  parentPageId: string,
+): IProjectModificationRecord =>
+  copyModification.updateIn(['agents', 'added'], (agents: List<IAgentRecord>) =>
+    agents.map((agent) => agent.set('pageInternalId', parentPageId)),
+  );
+
+export const changeIds = (
+  copyModification: IProjectModificationRecord,
+): IProjectModificationRecord => {
+  const allElements: List<IIdentifiableElement> = List()
+    .concat(copyModification.agents.added)
+    .concat(copyModification.ports.added)
+    .concat(copyModification.connections.added);
+  const allElementsIds = allElements.map((el) => el.internalId);
+  const oldIdToNewIdMap = allElementsIds.reduce(
+    (oldIdToNewIdMap, oldId) => oldIdToNewIdMap.set(oldId, newUuid()),
+    Map<string, string>(),
+  );
+  const updateId = (oldId: string): string => oldIdToNewIdMap.get(oldId);
+  const updateIdInSet = (oldIds: Set<string>) => oldIds.map(updateId);
+
+  return projectModificationRecordFactoryPartial({
+    agents: {
+      added: copyModification.agents.added.map((agent) =>
+        agent
+          .update('internalId', updateId)
+          .update('portsInternalIds', updateIdInSet)
+          .set('subPageInternalId', null),
+      ),
+    },
+    ports: {
+      added: copyModification.ports.added.map((port) =>
+        port.update('internalId', updateId).update('agentInternalId', updateId),
+      ),
+    },
+    connections: {
+      added: copyModification.connections.added.map((connection) =>
+        connection
+          .update('internalId', updateId)
+          .update('sourcePortInternalId', updateId)
+          .update('targetPortInternalId', updateId),
+      ),
+    },
+  });
+};
+
+export const shiftAgentsBy = (
+  copyModification: IProjectModificationRecord,
+  by: number,
+): IProjectModificationRecord => {
+  const updatePosition = (oldPosition: number) => oldPosition + by;
+
+  return copyModification.updateIn(
+    ['agents', 'added'],
+    (agents: List<IAgentRecord>) =>
+      agents.map((agent) =>
+        agent.update('x', updatePosition).update('y', updatePosition),
+      ),
+  );
+};
+
+// TODO: simplyfy this function
+// maybe better idea would be to make function getElementById: [record, TYPE]
+// which is searching for element with given ID in 4 project maps
+// where type is some constant, or maybe `instanceof` would be enough?
+const getElementsByIds = (ids: string[]) => (project: IAlvisProjectRecord) =>
+  ids.reduce(
+    (elementsIdsByType, id) => {
+      switch (getElementTypeById(id)(project)) {
+        case 'page':
+          elementsIdsByType.pages = elementsIdsByType.pages.set(
+            id,
+            project.pages.get(id),
+          );
+          break;
+        case 'agent':
+          elementsIdsByType.agents = elementsIdsByType.agents.set(
+            id,
+            project.agents.get(id),
+          );
+          break;
+        case 'port':
+          elementsIdsByType.ports = elementsIdsByType.ports.set(
+            id,
+            project.ports.get(id),
+          );
+          break;
+        case 'connection':
+          elementsIdsByType.connections = elementsIdsByType.connections.set(
+            id,
+            project.connections.get(id),
+          );
+          break;
+        default:
+          throw new Error(
+            'Element of other type than: agent, port, connection',
+          );
+      }
+      return elementsIdsByType;
+    },
+    {
+      pages: Map<string, IPageRecord>(),
+      agents: Map<string, IAgentRecord>(),
+      ports: Map<string, IPortRecord>(),
+      connections: Map<string, IConnectionRecord>(),
+    },
+  );
+
+const getElementTypeById = (id: string) => (
+  project: IAlvisProjectRecord,
+): 'page' | 'agent' | 'port' | 'connection' => {
+  if (isPage(id)(project)) {
+    return 'page';
+  }
+
+  if (isAgent(id)(project)) {
+    return 'agent';
+  }
+  if (isPort(id)(project)) {
+    return 'port';
+  }
+  if (isConnection(id)(project)) {
+    return 'connection';
+  }
+
+  throw new Error('Element with given id does not exist!');
+};
+
+const isPage = (id: string) => (project: IAlvisProjectRecord): boolean =>
+  project.pages.has(id);
+
+const isAgent = (id: string) => (project: IAlvisProjectRecord): boolean =>
+  project.agents.has(id);
+
+const isPort = (id: string) => (project: IAlvisProjectRecord): boolean =>
+  project.ports.has(id);
+
+const isConnection = (id: string) => (project: IAlvisProjectRecord): boolean =>
+  project.connections.has(id);
+
+//
+//
+//
+//
+//
+//
+
 // TODO: isn't this whole semi -> full modification idea a bit overkill?
 // user usually performs actions only on one page
 // TODO: check performance
@@ -574,7 +770,7 @@ export function getAllConnectionsDeleted(
     );
   const deletedConnectionsIds = semiModification.connections.deleted.filter(
     (connectionId) => alvisProject.connections.has(connectionId), // TODO: we filter because mxGraph triggers deletion of edge after it triggers deletion of agent
-    // refers to @up - so we have 1) modification (deletes agent so it deletes connection too), 2) modification which deletes only connection 
+    // refers to @up - so we have 1) modification (deletes agent so it deletes connection too), 2) modification which deletes only connection
     // current solution is not good solution to problem, I guess...
   );
   const deletedConnections = deletedConnectionsIds.map(

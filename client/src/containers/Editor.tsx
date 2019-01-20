@@ -247,6 +247,9 @@ export class EditorComponent extends React.Component<
             onMxGraphConnectionModified={projectBindedActions.modifyConnection}
             onUndo={projectBindedActions.undo}
             onRedo={projectBindedActions.redo}
+            onCopy={projectBindedActions.copy}
+            onCut={projectBindedActions.cut}
+            onPaste={projectBindedActions.paste}
           />
         </div>
       </div>

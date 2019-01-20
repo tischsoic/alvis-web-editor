@@ -39,8 +39,7 @@ export const initialState: IProjectRecord = projectRecordFactory({
 
 export default handleActions<
   IProjectRecord,
-  // void | string | [IAlvisProjectRecord, number] | IProjectModification
-  string | IAlvisProjectRecord | IProjectModificationRecord | void
+  string | string[] | IAlvisProjectRecord | IProjectModificationRecord | void
 >(
   {
     [Actions.MODIFY_PROJECT]: (
@@ -118,122 +117,93 @@ export default handleActions<
         alvisProject: action.payload,
       });
     },
-    // [Actions.PROJECT_ADD_PAGE]: (
-    //   state: IProjectRecord,
-    //   action: Action<IPageRecord>,
-    // ) => {
-    //   return addElementToState(
-    //     state,
-    //     action.payload,
-    //     apManager.addPageToAlvisProject,
-    //   );
-    // },
-    // [Actions.PROJECT_DELETE_PAGE]: (
-    //   state: IProjectRecord,
-    //   action: Action<string>,
-    // ) => {
-    //   return state.set(
-    //     'alvisProject',
-    //     apManager.deletePageInAlvisProject(state.alvisProject)(action.payload),
-    //   );
-    // },
-    // [Actions.PROJECT_MODIFY_PAGE]: (
-    //   state: IProjectRecord,
-    //   action: Action<IPageRecord>,
-    // ) => {
-    //   return state.set(
-    //     'alvisProject',
-    //     apManager.modifyPageInAlvisProject(state.alvisProject)(action.payload),
-    //   );
-    // },
-    // [Actions.PROJECT_ADD_AGENT]: (
-    //   state: IProjectRecord,
-    //   action: Action<IAgentRecord>,
-    // ) => {
-    //   return addElementToState(
-    //     state,
-    //     action.payload,
-    //     apManager.addAgentToAlvisProject,
-    //   );
-    // },
-    // [Actions.PROJECT_DELETE_AGENT]: (
-    //   state: IProjectRecord,
-    //   action: Action<string>,
-    // ) => {
-    //   return state.set(
-    //     'alvisProject',
-    //     apManager.deleteAgentInAlvisProject(state.alvisProject)(action.payload),
-    //   );
-    // },
-    // [Actions.PROJECT_MODIFY_AGENT]: (
-    //   state: IProjectRecord,
-    //   action: Action<IAgentRecord>,
-    // ) => {
-    //   return state.set(
-    //     'alvisProject',
-    //     apManager.modifyAgentInAlvisProject(state.alvisProject)(action.payload),
-    //   );
-    // },
-    // [Actions.PROJECT_ADD_PORT]: (
-    //   state: IProjectRecord,
-    //   action: Action<IPortRecord>,
-    // ) => {
-    //   return addElementToState(
-    //     state,
-    //     action.payload,
-    //     apManager.addPortToAlvisProject,
-    //   );
-    // },
-    // [Actions.PROJECT_DELETE_PORT]: (
-    //   state: IProjectRecord,
-    //   action: Action<string>,
-    // ) => {
-    //   return state.set(
-    //     'alvisProject',
-    //     apManager.deletePortInAlvisProject(state.alvisProject)(action.payload),
-    //   );
-    // },
-    // [Actions.PROJECT_MODIFY_PORT]: (
-    //   state: IProjectRecord,
-    //   action: Action<IPortRecord>,
-    // ) => {
-    //   return state.set(
-    //     'alvisProject',
-    //     apManager.modifyPortInAlvisProject(state.alvisProject)(action.payload),
-    //   );
-    // },
-    // [Actions.PROJECT_ADD_CONNECTION]: (
-    //   state: IProjectRecord,
-    //   action: Action<IConnectionRecord>,
-    // ) => {
-    //   return addElementToState(
-    //     state,
-    //     action.payload,
-    //     apManager.addConnectionToAlvisProject,
-    //   );
-    // },
-    // [Actions.PROJECT_DELETE_CONNECTION]: (
-    //   state: IProjectRecord,
-    //   action: Action<string>,
-    // ) => {
-    //   return state.set(
-    //     'alvisProject',
-    //     apManager.deleteConnectionInAlvisProject(state.alvisProject)(
-    //       action.payload,
-    //     ),
-    //   );
-    // },
-    // [Actions.PROJECT_MODIFY_CONNECTION]: (
-    //   state: IProjectRecord,
-    //   action: Action<IConnectionRecord>,
-    // ) => {
-    //   return state.set(
-    //     'alvisProject',
-    //     apManager.modifyConnectionInAlvisProject(state.alvisProject)(
-    //       action.payload,
-    //     ),
-    //   );
-    // },
+    [Actions.PROJECT_COPY]: (
+      state: IProjectRecord,
+      action: Action<string[]>,
+    ) => {
+      const elementsIds = action.payload;
+      const copyModification = apManager.getCopyModification(
+        elementsIds,
+        state.alvisProject,
+      );
+
+      return state.setIn(['copyModification'], copyModification);
+    },
+    [Actions.PROJECT_CUT]: (
+      state: IProjectRecord,
+      action: Action<string[]>,
+    ) => {
+      const alvisProject = state.alvisProject;
+      const elementsIds = action.payload;
+      const copyModification = apManager.getCopyModification(
+        elementsIds,
+        state.alvisProject,
+      );
+      const cutModification = apManager.generateAntiModification(
+        copyModification,
+        state.alvisProject,
+      );
+
+      const fullCutModification = apManager.generateFullModification(
+        cutModification,
+        alvisProject,
+      );
+      const antiCutModification = apManager.generateAntiModification(
+        cutModification,
+        alvisProject,
+      );
+
+      const modifiedAlvisProject = apManager.applyModification(alvisProject)(
+        fullCutModification,
+      );
+      const afterDo = apManager.addOppositeModifications(state)(
+        oppositeModificationsFactory({
+          antiModification: antiCutModification,
+          modification: fullCutModification,
+        }),
+      );
+
+      return afterDo
+        .setIn(['alvisProject'], modifiedAlvisProject)
+        .setIn(['copyModification'], copyModification);
+    },
+    [Actions.PROJECT_PASTE]: (
+      state: IProjectRecord,
+      action: Action<string>,
+    ) => {
+      const alvisProject = state.alvisProject;
+      const copyModification = state.copyModification;
+
+      const { setParentPage, changeIds, shiftAgentsBy } = apManager;
+      const parentPageId = action.payload;
+      const pasteModification = shiftAgentsBy(
+        changeIds(setParentPage(copyModification, parentPageId)),
+        20,
+      );
+
+      const fullPasteModification = apManager.generateFullModification(
+        pasteModification,
+        alvisProject,
+      );
+      const antiPasteModification = apManager.generateAntiModification(
+        pasteModification,
+        alvisProject,
+      );
+
+      const modifiedAlvisProject = apManager.applyModification(alvisProject)(
+        fullPasteModification,
+      );
+      const afterDo = apManager.addOppositeModifications(state)(
+        oppositeModificationsFactory({
+          antiModification: antiPasteModification,
+          modification: fullPasteModification,
+        }),
+      );
+
+      return afterDo
+        .setIn(['alvisProject'], modifiedAlvisProject)
+        .setIn(['copyModification'], copyModification);
+    },
   },
   initialState,
 );

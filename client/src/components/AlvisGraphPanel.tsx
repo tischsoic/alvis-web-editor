@@ -62,6 +62,10 @@ export interface AlvisGraphPanelProps {
 
   onUndo: () => any;
   onRedo: () => any;
+
+  onCopy: (elementsIds: string[]) => any;
+  onCut: (elementsIds: string[]) => any;
+  onPaste: (pageId: string) => any;
 }
 
 export interface AlvisGraphPanelState {
@@ -223,7 +227,34 @@ export class AlvisGraphPanel extends React.Component<
       null,
       true as any,
     );
+
+    document.addEventListener('keydown', this.handleKeyDown, false);
   }
+
+  private handleKeyDown = (event) => {
+    const { onCopy, onCut, onPaste } = this.props;
+    const cKey = 67;
+    const xKey = 88;
+    const vKey = 86;
+
+    if (event.ctrlKey && (event.keyCode === cKey || event.keyCode === xKey)) {
+      const mxGraph = this.activeAlvisGraph.getMxGraphInstance();
+      const selectedCells = mxGraph.getSelectionCells();
+      const elementsIds = selectedCells.map((cell) => cell.getId());
+
+      if (event.keyCode === cKey) {
+        onCopy(elementsIds);
+      } else {
+        onCut(elementsIds);
+      }
+    } else if (event.ctrlKey && event.keyCode === vKey) {
+      const { activePageInternalId } = this.props;
+
+      onPaste(activePageInternalId);
+    }
+  };
+
+  componentWillMount() {}
 
   getPageElements(pageInternalId: string) {
     const { alvisProject } = this.props;
