@@ -397,7 +397,6 @@ function addPopupMenu(
     cell,
     evt: PointerEvent,
   ) {
-    console.log(cell);
     const {
       onMxGraphAgentAdded,
       onMxGraphConnectionModified,
@@ -452,8 +451,6 @@ function addPopupMenu(
       // menu.addItem('Color', null, () => { });
       return;
     }
-
-    console.log(cell);
 
     menu.addItem('Add port', null, () => {
       const { ports } = alvisGraph.props;

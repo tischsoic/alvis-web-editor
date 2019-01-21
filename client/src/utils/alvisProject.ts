@@ -366,6 +366,105 @@ export const applyModification = (project: IAlvisProjectRecord) => (
 //
 //
 
+export function getRemoveHierarchyModification(
+  agentId: string,
+  project: IAlvisProjectRecord,
+): IProjectModificationRecord {
+  const agent = project.agents.get(agentId);
+  const pageId = agent.subPageInternalId;
+
+  if (!pageId) {
+    throw new Error('Cannot remove hierarchy form agent without subpage!');
+  }
+
+  const { pages, agents, ports, connections } = getPageElementsDeep(project)(
+    pageId,
+  );
+  const copySubpageModification = changeIds(
+    setParentPage(
+      projectModificationRecordFactoryPartial({
+        pages: {
+          added: pages.toList(),
+        },
+        agents: {
+          added: agents.toList(),
+        },
+        ports: {
+          added: ports.toList(),
+        },
+        connections: {
+          added: connections.toList(),
+        },
+      }),
+      agent.pageInternalId,
+      agent.subPageInternalId,
+    ),
+    agent.subPageInternalId,
+  );
+
+  return copySubpageModification.mergeIn(['agents', 'deleted'], agentId);
+}
+
+const getPageElementsDeep = (project: IAlvisProjectRecord) => (
+  pageId: string,
+): {
+  pages: Set<IPageRecord>;
+  agents: Set<IAgentRecord>;
+  ports: Set<IPortRecord>;
+  connections: Set<IConnectionRecord>;
+} => {
+  const page = project.pages.get(pageId);
+  const pageElements = getPageElements(page, project);
+  const subPagesIds = page.subPagesInternalIds;
+  const subPages = subPagesIds.map(getPageById(project));
+  const subPagesElements = subPagesIds.map(getPageElementsDeep(project));
+  const allElements = subPagesElements.reduce(
+    (allElements, pageElements) => {
+      const { pages, agents, ports, connections } = pageElements;
+
+      return {
+        pages: allElements.pages.merge(pages),
+        agents: allElements.agents.merge(agents),
+        ports: allElements.ports.merge(ports),
+        connections: allElements.connections.merge(connections),
+      };
+    },
+    { ...pageElements, pages: subPages },
+  );
+
+  return allElements;
+};
+
+const getPageElements = (
+  page: IPageRecord,
+  project: IAlvisProjectRecord,
+): {
+  agents: Set<IAgentRecord>;
+  ports: Set<IPortRecord>;
+  connections: Set<IConnectionRecord>;
+} => {
+  const agents = page.agentsInternalIds.map(getAgentById(project));
+  const portsIds = agents
+    .map((agent) => agent.portsInternalIds) // TODO: should we avoid using type casting ???
+    .reduce(
+      (portsIds, agentPortsIds) => portsIds.merge(agentPortsIds),
+      Set<string>(),
+    );
+  const ports = portsIds.map(getPortById(project));
+  const connections = project.connections
+    .filter((connection) => portsIds.contains(connection.sourcePortInternalId))
+    .toSet();
+
+  return { agents, ports, connections };
+};
+
+//
+//
+//
+//
+//
+//
+
 export function getCopyModification(
   elementsIds: string[],
   project: IAlvisProjectRecord,
@@ -415,23 +514,33 @@ export function getCopyModification(
 export const setParentPage = (
   copyModification: IProjectModificationRecord,
   parentPageId: string,
+  originalPageId?: string,
 ): IProjectModificationRecord =>
   copyModification.updateIn(['agents', 'added'], (agents: List<IAgentRecord>) =>
-    agents.map((agent) => agent.set('pageInternalId', parentPageId)),
+    agents.map((agent) => {
+      if (!originalPageId || originalPageId === agent.pageInternalId) {
+        return agent.set('pageInternalId', parentPageId);
+      }
+
+      return agent;
+    }),
   );
 
 export const changeIds = (
   copyModification: IProjectModificationRecord,
+  constantId?: string,
 ): IProjectModificationRecord => {
   const allElements: List<IIdentifiableElement> = List()
     .concat(copyModification.agents.added)
     .concat(copyModification.ports.added)
     .concat(copyModification.connections.added);
   const allElementsIds = allElements.map((el) => el.internalId);
-  const oldIdToNewIdMap = allElementsIds.reduce(
-    (oldIdToNewIdMap, oldId) => oldIdToNewIdMap.set(oldId, newUuid()),
-    Map<string, string>(),
-  );
+  const oldIdToNewIdMap = allElementsIds
+    .reduce(
+      (oldIdToNewIdMap, oldId) => oldIdToNewIdMap.set(oldId, newUuid()),
+      Map<string, string>(),
+    )
+    .delete(constantId);
   const updateId = (oldId: string): string => oldIdToNewIdMap.get(oldId);
   const updateIdInSet = (oldIds: Set<string>) => oldIds.map(updateId);
 
@@ -783,6 +892,7 @@ export function getAllConnectionsDeleted(
     .toList();
 }
 
+// TODO: during implementing remove hierarchy functions I realised how narrow functionality of this function is
 export function getAllPagesDeleted(
   semiModification: IProjectModificationRecord,
   alvisProject: IAlvisProjectRecord,
@@ -802,31 +912,31 @@ export function getAllPagesDeleted(
   return deletedPages.concat(deletedPagesAllSubpages, deletedAgentsAllSubpages);
 }
 
-export const getPageById = (alvisProject: IAlvisProjectRecord) => (
-  internalId: IInternalId,
+export const getPageById = (project: IAlvisProjectRecord) => (
+  id: string,
 ): IPageRecord => {
-  return getElementByInternalId(alvisProject)(internalId, 'pages');
+  return project.pages.get(id);
 };
 
 // TODO: check: why there is no need for casting it to IAgentRecord? It seems that TS is quite smart...
-export const getAgentById = (alvisProject: IAlvisProjectRecord) => (
-  internalId: IInternalId,
+export const getAgentById = (project: IAlvisProjectRecord) => (
+  id: string,
 ): IAgentRecord => {
-  return getElementByInternalId(alvisProject)(internalId, 'agents');
+  return project.agents.get(id);
 };
 
 // TODO: maybe we can generate methods: getPageById, getAgentById, get...
 // would it be clear enough for other programmers?
-export const getPortById = (alvisProject: IAlvisProjectRecord) => (
-  internalId: IInternalId,
+export const getPortById = (project: IAlvisProjectRecord) => (
+  id: string,
 ): IPortRecord => {
-  return getElementByInternalId(alvisProject)(internalId, 'ports');
+  return project.ports.get(id);
 };
 
-export const getConnectionById = (alvisProject: IAlvisProjectRecord) => (
-  internalId: IInternalId,
+export const getConnectionById = (project: IAlvisProjectRecord) => (
+  id: string,
 ): IConnectionRecord => {
-  return getElementByInternalId(alvisProject)(internalId, 'connections');
+  return project.connections.get(id);
 };
 
 // prettier-ignore

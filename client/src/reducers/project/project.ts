@@ -1,8 +1,6 @@
 import { handleActions, Action } from 'redux-actions';
 import * as Actions from '../../constants/projectActions';
-import {
-  IAlvisProjectRecord,
-} from '../../models/alvisProject';
+import { IAlvisProjectRecord } from '../../models/alvisProject';
 import {
   IProjectRecord,
   projectRecordFactory,
@@ -202,10 +200,33 @@ export default handleActions<
     ) => {
       const alvisProject = state.alvisProject;
       const agentId = action.payload;
+      const removeHierarchyModification = apManager.getRemoveHierarchyModification(
+        agentId,
+        alvisProject,
+      );
 
-      console.log('REMOVE HIERARCHY from', agentId);
+      const modification = removeHierarchyModification;
+      const project = state;
+      const fullModification = apManager.generateFullModification(
+        modification,
+        alvisProject,
+      );
+      const antiModification = apManager.generateAntiModification(
+        modification,
+        alvisProject,
+      );
 
-      return state;
+      const modifiedAlvisProject = apManager.applyModification(
+        project.alvisProject,
+      )(fullModification);
+      const afterDo = apManager.addOppositeModifications(project)(
+        oppositeModificationsFactory({
+          antiModification,
+          modification: fullModification,
+        }),
+      );
+
+      return afterDo.set('alvisProject', modifiedAlvisProject);
     },
   },
   initialState,
