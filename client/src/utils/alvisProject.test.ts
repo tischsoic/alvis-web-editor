@@ -165,6 +165,7 @@ function getStateAndModifications1(): [
     {
       pages: {
         deleted: List(['2']),
+        modified: List([modifiedPage]),
       },
       agents: {
         added: List([agentToAddRecord]),
@@ -204,7 +205,7 @@ function getStateAndModifications1(): [
     {
       pages: {
         added: List([deletedPage2]),
-        // modified: List([modifiedPageOld]),
+        modified: List([modifiedPageOld]),
       },
       agents: {
         added: List([deletedAgent8, deletedAgent9, deletedAgent10]),

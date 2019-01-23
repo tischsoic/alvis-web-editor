@@ -167,7 +167,7 @@ export default handleActions<
       const { setParentPage, changeIds, shiftAgentsBy } = apManager;
       const parentPageId = action.payload;
       const pasteModification = shiftAgentsBy(
-        changeIds(setParentPage(copyModification, parentPageId)),
+        changeIds(setParentPage(copyModification, parentPageId), parentPageId),
         20,
       );
 

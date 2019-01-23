@@ -380,27 +380,22 @@ export function getRemoveHierarchyModification(
   const { pages, agents, ports, connections } = getPageElementsDeep(project)(
     pageId,
   );
-  const copySubpageModification = changeIds(
-    setParentPage(
-      projectModificationRecordFactoryPartial({
-        pages: {
-          added: pages.toList(),
-        },
-        agents: {
-          added: agents.toList(),
-        },
-        ports: {
-          added: ports.toList(),
-        },
-        connections: {
-          added: connections.toList(),
-        },
-      }),
-      agent.pageInternalId,
-      agent.subPageInternalId,
-    ),
-    agent.subPageInternalId,
-  );
+  const a = projectModificationRecordFactoryPartial({
+    pages: {
+      added: pages.toList(),
+    },
+    agents: {
+      added: agents.toList(),
+    },
+    ports: {
+      added: ports.toList(),
+    },
+    connections: {
+      added: connections.toList(),
+    },
+  });
+  const b = setParentPage(a, agent.pageInternalId, agent.subPageInternalId);
+  const copySubpageModification = changeIds(b, agent.pageInternalId);
 
   return copySubpageModification.mergeIn(['agents', 'deleted'], agentId);
 }
@@ -531,6 +526,7 @@ export const changeIds = (
   constantId?: string,
 ): IProjectModificationRecord => {
   const allElements: List<IIdentifiableElement> = List()
+    .concat(copyModification.pages.added)
     .concat(copyModification.agents.added)
     .concat(copyModification.ports.added)
     .concat(copyModification.connections.added);
@@ -540,17 +536,28 @@ export const changeIds = (
       (oldIdToNewIdMap, oldId) => oldIdToNewIdMap.set(oldId, newUuid()),
       Map<string, string>(),
     )
-    .delete(constantId);
+    .set(constantId, constantId);
   const updateId = (oldId: string): string => oldIdToNewIdMap.get(oldId);
   const updateIdInSet = (oldIds: Set<string>) => oldIds.map(updateId);
 
+  // TODO: what about modified/deleted ?
   return projectModificationRecordFactoryPartial({
+    pages: {
+      added: copyModification.pages.added.map((page) =>
+        page
+          .update('internalId', updateId)
+          .update('supAgentInternalId', updateId)
+          .update('agentsInternalIds', updateIdInSet)
+          .update('subPagesInternalIds', updateIdInSet),
+      ),
+    },
     agents: {
       added: copyModification.agents.added.map((agent) =>
         agent
           .update('internalId', updateId)
+          .update('pageInternalId', updateId)
           .update('portsInternalIds', updateIdInSet)
-          .set('subPageInternalId', null),
+          .update('subPageInternalId', updateId),
       ),
     },
     ports: {
@@ -696,6 +703,63 @@ export function generateFullModification(
   semiModification: IProjectModificationRecord,
   alvisProject: IAlvisProjectRecord,
 ): IProjectModificationRecord {
+  const deletedAgentsIds = semiModification.agents.deleted;
+  const deletedAgents = deletedAgentsIds.map(getAgentById(alvisProject));
+  const deletedAgentsSubPagesIds = deletedAgents
+    .map((agent) => agent.subPageInternalId)
+    .filter((id) => !!id);
+  const deletedAgentsSubPages = deletedAgentsSubPagesIds.map(
+    getPageById(alvisProject),
+  );
+  const deletedPagesIds = semiModification.pages.deleted;
+  const subPagesElements = deletedPagesIds
+    .merge(deletedAgentsSubPagesIds)
+    .map(getPageElementsDeep(alvisProject));
+  const allElements = subPagesElements.reduce(
+    (allElements, pageElements) => {
+      const { pages, agents, ports, connections } = pageElements;
+
+      return {
+        pages: allElements.pages.merge(pages),
+        agents: allElements.agents.merge(agents),
+        ports: allElements.ports.merge(ports),
+        connections: allElements.connections.merge(connections),
+      };
+    },
+    {
+      pages: deletedAgentsSubPages,
+      agents: List<IAgentRecord>(),
+      ports: List<IPortRecord>(),
+      connections: List<IConnectionRecord>(),
+    },
+  );
+  const getId = (element: IIdentifiableElement) => element.internalId;
+
+  const agentsPortsIds = deletedAgents.reduce(
+    (ports, agent) => ports.merge(agent.portsInternalIds),
+    Set<string>(),
+  );
+  const deletedPortsIds = agentsPortsIds.merge(semiModification.ports.deleted);
+  const portsConnectionsIds = alvisProject.connections
+    .filter(
+      (connection) =>
+        deletedPortsIds.contains(connection.sourcePortInternalId) ||
+        deletedPortsIds.contains(connection.targetPortInternalId),
+    )
+    .toSet()
+    .map(getId);
+  const deletedConnectionsIds = portsConnectionsIds.merge(
+    semiModification.connections.deleted,
+  );
+
+  return semiModification
+    .mergeIn(['pages', 'deleted'], allElements.pages.map(getId))
+    .mergeIn(['agents', 'deleted'], allElements.agents.map(getId))
+    .setIn(['ports', 'deleted'], deletedPortsIds.toList())
+    .mergeIn(['ports', 'deleted'], allElements.ports.map(getId))
+    .setIn(['connections', 'deleted'], deletedConnectionsIds.toList())
+    .mergeIn(['connections', 'deleted'], allElements.connections.map(getId));
+
   // TODO: What if someone tries to add page to page which was deleted?
   // should we consider such cases? Do we want it to be THAT bulletproof?
   const allPagesDeleted = getAllPagesDeleted(semiModification, alvisProject);
