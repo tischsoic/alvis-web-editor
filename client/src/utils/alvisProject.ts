@@ -380,22 +380,27 @@ export function getRemoveHierarchyModification(
   const { pages, agents, ports, connections } = getPageElementsDeep(project)(
     pageId,
   );
-  const a = projectModificationRecordFactoryPartial({
-    pages: {
-      added: pages.toList(),
-    },
-    agents: {
-      added: agents.toList(),
-    },
-    ports: {
-      added: ports.toList(),
-    },
-    connections: {
-      added: connections.toList(),
-    },
-  });
-  const b = setParentPage(a, agent.pageInternalId, agent.subPageInternalId);
-  const copySubpageModification = changeIds(b, agent.pageInternalId);
+  const copySubpageModification = changeIds(
+    setParentPage(
+      projectModificationRecordFactoryPartial({
+        pages: {
+          added: pages.toList(),
+        },
+        agents: {
+          added: agents.toList(),
+        },
+        ports: {
+          added: ports.toList(),
+        },
+        connections: {
+          added: connections.toList(),
+        },
+      }),
+      agent.pageInternalId,
+      agent.subPageInternalId,
+    ),
+    agent.subPageInternalId,
+  );
 
   return copySubpageModification.mergeIn(['agents', 'deleted'], agentId);
 }
@@ -762,80 +767,14 @@ export function generateFullModification(
 
   // TODO: What if someone tries to add page to page which was deleted?
   // should we consider such cases? Do we want it to be THAT bulletproof?
-  const allPagesDeleted = getAllPagesDeleted(semiModification, alvisProject);
-  const allPagesDeletedInternalIds = allPagesDeleted.map((el) => el.internalId);
+
   // TODO: this is interesting: we may (1) pass `allPagesDeleted` to getAllAgentsDeleted
   // or we may (2) memoize getAllPagesDeleted and use it again in `getAllAgentsDeleted` to make code simpler to read
   // yet as efficient as in first way
-  const allAgentsDeleted = getAllAgentsDeleted(semiModification, alvisProject);
-  const allAgentsDeletedInternalIds = allAgentsDeleted.map(
-    (el) => el.internalId,
-  );
-
-  const allConnectionsDeleted = getAllConnectionsDeleted(
-    semiModification,
-    alvisProject,
-  );
-  const allConnectionsDeletedInternalIds = allConnectionsDeleted.map(
-    (el) => el.internalId,
-  );
-
-  const allPortsDeleted = getAllPortsDeleted(semiModification, alvisProject);
-  const allPortsDeletedInternalIds = allPortsDeleted.map((el) => el.internalId);
-
-  const allPagesModified = semiModification.pages.modified.filter(
-    (page) => !allPagesDeletedInternalIds.contains(page.internalId),
-  );
-  const allAgentsModified = semiModification.agents.modified.filter(
-    (agent) => !allAgentsDeletedInternalIds.contains(agent.internalId),
-  );
-  const allPortsModified = semiModification.ports.modified.filter(
-    (port) => !allPortsDeletedInternalIds.contains(port.internalId),
-  );
-  const allConnectionsModified = semiModification.connections.modified.filter(
-    (connection) =>
-      !allConnectionsDeletedInternalIds.contains(connection.internalId),
-  );
-
-  const allPagesAdded = semiModification.pages.added.filter(
-    (page) => !allAgentsDeletedInternalIds.contains(page.supAgentInternalId), // TODO: is it enough? what if agent have never existed (never will be in allAgentsDeletedInternalIds)
-  );
-  const allAgentsAdded = semiModification.agents.added.filter(
-    (agent) => !allPagesDeletedInternalIds.contains(agent.pageInternalId),
-  );
-  const allPortsAdded = semiModification.ports.added.filter(
-    (port) => !allAgentsDeletedInternalIds.contains(port.agentInternalId),
-  );
-  const allConnectionsAdded = semiModification.connections.added.filter(
-    (connection) =>
-      !allPortsDeletedInternalIds.contains(connection.sourcePortInternalId) &&
-      !allPortsDeletedInternalIds.contains(connection.targetPortInternalId),
-  );
-
-  return projectModificationRecordFactoryPartial({
-    pages: {
-      added: allPagesAdded, // TODO: I wonder, do we really need lists. Wouldn't it be more comfortable to store Itereble<> or something similar?
-      // Check differences between `List` and `Iterable`.
-      // After some time: I didn't check it but we should remember that the general type the better in this case
-      modified: allPagesModified,
-      deleted: allPagesDeletedInternalIds,
-    },
-    agents: {
-      added: allAgentsAdded,
-      modified: allAgentsModified,
-      deleted: allAgentsDeletedInternalIds,
-    },
-    ports: {
-      added: allPortsAdded,
-      modified: allPortsModified,
-      deleted: allPortsDeletedInternalIds,
-    },
-    connections: {
-      added: allConnectionsAdded,
-      modified: allConnectionsModified,
-      deleted: allConnectionsDeletedInternalIds,
-    },
-  });
+  // const allAgentsDeleted = getAllAgentsDeleted(semiModification, alvisProject);
+  // const allAgentsDeletedInternalIds = allAgentsDeleted.map(
+  //   (el) => el.internalId,
+  // );
 }
 
 export function generateAntiModification(
@@ -881,99 +820,6 @@ export function generateAntiModification(
       deleted: fullModification.connections.added.map((el) => el.internalId),
     },
   });
-}
-
-export function getAllAgentsDeleted(
-  semiModification: IProjectModificationRecord,
-  alvisProject: IAlvisProjectRecord,
-): List<IAgentRecord> {
-  // TODO: Later implement memoization
-  const allPagesDeleted = getAllPagesDeleted(semiModification, alvisProject);
-  const deletedPagesAgentsIds = allPagesDeleted
-    .map((page) => page.agentsInternalIds)
-    .flatten(true);
-  const deletedPagesAgents = deletedPagesAgentsIds.map(
-    getAgentById(alvisProject),
-  );
-  const deletedAgentsIds = semiModification.agents.deleted;
-  const deletedAgents = deletedAgentsIds.map(getAgentById(alvisProject));
-
-  return deletedPagesAgents
-    .concat(deletedAgents)
-    .toSet()
-    .toList();
-}
-
-export function getAllPortsDeleted(
-  semiModification: IProjectModificationRecord,
-  alvisProject: IAlvisProjectRecord,
-): List<IPortRecord> {
-  // TODO: Later implement memoization
-  const allAgentsDeleted = getAllAgentsDeleted(semiModification, alvisProject);
-  const deletedAgentsPortsIds = allAgentsDeleted
-    .map((agent) => agent.portsInternalIds)
-    .flatten(true);
-  const deletedAgentsPorts = deletedAgentsPortsIds.map(
-    getPortById(alvisProject),
-  );
-  const deletedPortsIds = semiModification.ports.deleted;
-  const deletedPorts = deletedPortsIds.map(getPortById(alvisProject));
-
-  return deletedAgentsPorts
-    .concat(deletedPorts)
-    .toSet()
-    .toList();
-}
-
-export function getAllConnectionsDeleted(
-  semiModification: IProjectModificationRecord,
-  alvisProject: IAlvisProjectRecord,
-): List<IConnectionRecord> {
-  // TODO: Later implement memoization
-  // TODO: read more about storing data in normalized structures - I think we should store in port record
-  // list of connections' ids
-  const allPortsDeleted = getAllPortsDeleted(semiModification, alvisProject);
-  const allPortsDeletedIds = allPortsDeleted.map((el) => el.internalId);
-  const deletedPortConnections = alvisProject.connections
-    .toList()
-    .filter(
-      (connection) =>
-        allPortsDeletedIds.contains(connection.sourcePortInternalId) ||
-        allPortsDeletedIds.contains(connection.targetPortInternalId),
-    );
-  const deletedConnectionsIds = semiModification.connections.deleted.filter(
-    (connectionId) => alvisProject.connections.has(connectionId), // TODO: we filter because mxGraph triggers deletion of edge after it triggers deletion of agent
-    // refers to @up - so we have 1) modification (deletes agent so it deletes connection too), 2) modification which deletes only connection
-    // current solution is not good solution to problem, I guess...
-  );
-  const deletedConnections = deletedConnectionsIds.map(
-    getConnectionById(alvisProject),
-  );
-
-  return deletedPortConnections
-    .concat(deletedConnections)
-    .toSet()
-    .toList();
-}
-
-// TODO: during implementing remove hierarchy functions I realised how narrow functionality of this function is
-export function getAllPagesDeleted(
-  semiModification: IProjectModificationRecord,
-  alvisProject: IAlvisProjectRecord,
-): List<IPageRecord> {
-  const deletedPagesIds = semiModification.pages.deleted;
-  const deletedAgentsIds = semiModification.agents.deleted;
-  const deletedPages = deletedPagesIds.map(getPageById(alvisProject));
-  const deletedPagesAllSubpages = <List<IPageRecord>>deletedPagesIds
-    .map(getPageAllSubpages(alvisProject))
-    .flatten(true); // TODO: flatten returns type: Iterable<any, any> --- change to something with better types
-  const deletedAgentsAllSubpages = <List<IPageRecord>>deletedAgentsIds
-    .map(getAgentAllSubpages(alvisProject))
-    .flatten(true);
-
-  // TODO: I guess we are not deleting duplicates, we may use set, or something,
-  // we should also check it in tests
-  return deletedPages.concat(deletedPagesAllSubpages, deletedAgentsAllSubpages);
 }
 
 export const getPageById = (project: IAlvisProjectRecord) => (
