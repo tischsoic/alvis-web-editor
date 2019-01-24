@@ -399,11 +399,78 @@ export function getRemoveHierarchyModification(
       agent.pageInternalId,
       agent.subPageInternalId,
     ),
-    agent.subPageInternalId,
+    agent.pageInternalId,
+  );
+  const connectionsForSubpageAgents = getConnectionsForHierarchyRemoval(
+    agentId,
+    project,
+    copySubpageModification,
   );
 
-  return copySubpageModification.mergeIn(['agents', 'deleted'], agentId);
+  return copySubpageModification
+    .mergeIn(['agents', 'deleted'], agentId)
+    .mergeIn(['connections', 'added'], connectionsForSubpageAgents);
 }
+
+const getConnectionsForHierarchyRemoval = (
+  agentId: string,
+  project: IAlvisProjectRecord,
+  copySubpageModification: IProjectModificationRecord,
+): Set<IConnectionRecord> => {
+  const agent = project.agents.get(agentId);
+  const agentPortsIds = agent.portsInternalIds;
+  const agentPorts = agent.portsInternalIds
+    .map(getPortById(project))
+    .reduce(
+      (agentPorts, port) => agentPorts.set(port.internalId, port),
+      Map<string, IPortRecord>(),
+    );
+  const agentConnections = project.connections.filter(
+    (connection) =>
+      agentPortsIds.contains(connection.sourcePortInternalId) ||
+      agentPortsIds.contains(connection.targetPortInternalId),
+  );
+  const subPageAgents = copySubpageModification.agents.added.filter(
+    (subpageAgent) => subpageAgent.pageInternalId === agent.pageInternalId,
+  );
+  const subPageAgentsPortsIds = subPageAgents.reduce(
+    (portsIds, agent) => portsIds.merge(agent.portsInternalIds),
+    Set<string>(),
+  );
+  const subPageAgentsPorts = subPageAgentsPortsIds.map((portId) =>
+    copySubpageModification.ports.added.find(
+      (port) => port.internalId === portId,
+    ),
+  );
+  const getConnectionsForSubPage = (
+    agentConnection: IConnectionRecord,
+  ): Set<IConnectionRecord> => {
+    const sourceOrTarget = agentPorts.has(agentConnection.sourcePortInternalId)
+      ? 'sourcePortInternalId'
+      : 'targetPortInternalId';
+    const agentConnectionPort =
+      sourceOrTarget === 'sourcePortInternalId'
+        ? agentPorts.get(agentConnection.sourcePortInternalId)
+        : agentPorts.get(agentConnection.targetPortInternalId);
+    const portName = agentConnectionPort.name;
+    const subPageAgentsPortsWithName = subPageAgentsPorts.filter(
+      (port) => port.name === portName,
+    );
+
+    return subPageAgentsPortsWithName.map((port) =>
+      agentConnection
+        .set(sourceOrTarget, port.internalId)
+        .set('internalId', newUuid()),
+    );
+  };
+  const connectionsToAdd = agentConnections.reduce(
+    (connectionsToAdd, connection) =>
+      connectionsToAdd.merge(getConnectionsForSubPage(connection)),
+    Set<IConnectionRecord>(),
+  );
+
+  return connectionsToAdd;
+};
 
 const getPageElementsDeep = (project: IAlvisProjectRecord) => (
   pageId: string,
@@ -1067,6 +1134,10 @@ export const addAgentToAlvisProject = (project: IAlvisProjectRecord) => (
   const { internalId: agentId, pageInternalId: pageId } = agent;
   const purifiedAgent = purifyAgent(agent);
   let modifiedProject = project;
+
+  if (purifiedAgent.pageInternalId === null) {
+    throw new Error('Cannot add agent with pageInternalId equal to null!');
+  }
 
   modifiedProject = addAgentRecord(modifiedProject)(purifiedAgent);
   modifiedProject = assignAgentToPage(modifiedProject)(agentId, pageId);
