@@ -458,9 +458,7 @@ const getConnectionsForHierarchyRemoval = (
     );
 
     return subPageAgentsPortsWithName.map((port) =>
-      agentConnection
-        .set(sourceOrTarget, port.internalId)
-        .set('internalId', newUuid()),
+      agentConnection.set(sourceOrTarget, port.internalId).set('internalId', newUuid()),
     );
   };
   const connectionsToAdd = agentConnections.reduce(
@@ -1301,7 +1299,7 @@ export const deleteConnectionInAlvisProject = (
 ) => (connectionId: string): IAlvisProjectRecord => {
   const connectionExists = project.connections.has(connectionId);
 
-  if (!connectionExists) {
+  if (!connectionExists) { // TODO: it may throw error because after deleting agent with connections mxGraph fires another event with deletion of only connection
     throw new Error('deleteConnectionInAlvisProject: connection not found!');
   }
 
