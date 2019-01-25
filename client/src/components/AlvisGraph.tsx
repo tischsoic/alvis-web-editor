@@ -1,18 +1,6 @@
 import * as React from 'react';
 import * as mxClasses from 'mxgraphAllClasses';
-import {
-  ButtonToolbar,
-  ButtonGroup,
-  Button,
-  Glyphicon,
-  Modal,
-  FormGroup,
-  FormControl,
-  ControlLabel,
-} from 'react-bootstrap';
-
 import modifyMxGraph from '../utils/mxGraphModifier';
-import { getListElementByInternalId } from '../utils/alvisProject';
 import { mx } from '../utils/mx';
 
 import {
@@ -66,6 +54,8 @@ export interface AlvisGraphProps {
 
   onAgentClick: (id: string) => void;
   onPortClick: (id: string) => void;
+
+  onHierarchyRemove: (agentId: string) => void;
 
   getNameFromUser: (callback: (chosenName: string) => void) => void;
 }

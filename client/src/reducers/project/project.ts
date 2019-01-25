@@ -1,19 +1,9 @@
 import { handleActions, Action } from 'redux-actions';
 import * as Actions from '../../constants/projectActions';
-import {
-  IAlvisProjectRecord,
-  IAgentRecord,
-  IAgent,
-  IPortRecord,
-  IConnectionRecord,
-  IPageRecord,
-  IIdentifiableElement,
-  IInternalRecord,
-} from '../../models/alvisProject';
+import { IAlvisProjectRecord } from '../../models/alvisProject';
 import {
   IProjectRecord,
   projectRecordFactory,
-  IProjectModification,
   IOppositeModificationsRecord,
   IProjectModificationRecord,
   oppositeModificationsFactory,
@@ -177,7 +167,7 @@ export default handleActions<
       const { setParentPage, changeIds, shiftAgentsBy } = apManager;
       const parentPageId = action.payload;
       const pasteModification = shiftAgentsBy(
-        changeIds(setParentPage(copyModification, parentPageId)),
+        changeIds(setParentPage(copyModification, parentPageId), parentPageId),
         20,
       );
 
@@ -203,6 +193,40 @@ export default handleActions<
       return afterDo
         .setIn(['alvisProject'], modifiedAlvisProject)
         .setIn(['copyModification'], copyModification);
+    },
+    [Actions.PROJECT_REMOVE_HIERARCHY]: (
+      state: IProjectRecord,
+      action: Action<string>,
+    ) => {
+      const alvisProject = state.alvisProject;
+      const agentId = action.payload;
+      const removeHierarchyModification = apManager.getRemoveHierarchyModification(
+        agentId,
+        alvisProject,
+      );
+
+      const modification = removeHierarchyModification;
+      const project = state;
+      const fullModification = apManager.generateFullModification(
+        modification,
+        alvisProject,
+      );
+      const antiModification = apManager.generateAntiModification(
+        modification,
+        alvisProject,
+      );
+
+      const modifiedAlvisProject = apManager.applyModification(
+        project.alvisProject,
+      )(fullModification);
+      const afterDo = apManager.addOppositeModifications(project)(
+        oppositeModificationsFactory({
+          antiModification,
+          modification: fullModification,
+        }),
+      );
+
+      return afterDo.set('alvisProject', modifiedAlvisProject);
     },
   },
   initialState,

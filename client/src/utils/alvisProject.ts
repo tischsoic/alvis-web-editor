@@ -366,6 +366,170 @@ export const applyModification = (project: IAlvisProjectRecord) => (
 //
 //
 
+export function getRemoveHierarchyModification(
+  agentId: string,
+  project: IAlvisProjectRecord,
+): IProjectModificationRecord {
+  const agent = project.agents.get(agentId);
+  const pageId = agent.subPageInternalId;
+
+  if (!pageId) {
+    throw new Error('Cannot remove hierarchy form agent without subpage!');
+  }
+
+  const { pages, agents, ports, connections } = getPageElementsDeep(project)(
+    pageId,
+  );
+  const copySubpageModification = changeIds(
+    setParentPage(
+      projectModificationRecordFactoryPartial({
+        pages: {
+          added: pages.toList(),
+        },
+        agents: {
+          added: agents.toList(),
+        },
+        ports: {
+          added: ports.toList(),
+        },
+        connections: {
+          added: connections.toList(),
+        },
+      }),
+      agent.pageInternalId,
+      agent.subPageInternalId,
+    ),
+    agent.pageInternalId,
+  );
+  const connectionsForSubpageAgents = getConnectionsForHierarchyRemoval(
+    agentId,
+    project,
+    copySubpageModification,
+  );
+
+  return copySubpageModification
+    .mergeIn(['agents', 'deleted'], agentId)
+    .mergeIn(['connections', 'added'], connectionsForSubpageAgents);
+}
+
+const getConnectionsForHierarchyRemoval = (
+  agentId: string,
+  project: IAlvisProjectRecord,
+  copySubpageModification: IProjectModificationRecord,
+): Set<IConnectionRecord> => {
+  const agent = project.agents.get(agentId);
+  const agentPortsIds = agent.portsInternalIds;
+  const agentPorts = agent.portsInternalIds
+    .map(getPortById(project))
+    .reduce(
+      (agentPorts, port) => agentPorts.set(port.internalId, port),
+      Map<string, IPortRecord>(),
+    );
+  const agentConnections = project.connections.filter(
+    (connection) =>
+      agentPortsIds.contains(connection.sourcePortInternalId) ||
+      agentPortsIds.contains(connection.targetPortInternalId),
+  );
+  const subPageAgents = copySubpageModification.agents.added.filter(
+    (subpageAgent) => subpageAgent.pageInternalId === agent.pageInternalId,
+  );
+  const subPageAgentsPortsIds = subPageAgents.reduce(
+    (portsIds, agent) => portsIds.merge(agent.portsInternalIds),
+    Set<string>(),
+  );
+  const subPageAgentsPorts = subPageAgentsPortsIds.map((portId) =>
+    copySubpageModification.ports.added.find(
+      (port) => port.internalId === portId,
+    ),
+  );
+  const getConnectionsForSubPage = (
+    agentConnection: IConnectionRecord,
+  ): Set<IConnectionRecord> => {
+    const sourceOrTarget = agentPorts.has(agentConnection.sourcePortInternalId)
+      ? 'sourcePortInternalId'
+      : 'targetPortInternalId';
+    const agentConnectionPort =
+      sourceOrTarget === 'sourcePortInternalId'
+        ? agentPorts.get(agentConnection.sourcePortInternalId)
+        : agentPorts.get(agentConnection.targetPortInternalId);
+    const portName = agentConnectionPort.name;
+    const subPageAgentsPortsWithName = subPageAgentsPorts.filter(
+      (port) => port.name === portName,
+    );
+
+    return subPageAgentsPortsWithName.map((port) =>
+      agentConnection.set(sourceOrTarget, port.internalId).set('internalId', newUuid()),
+    );
+  };
+  const connectionsToAdd = agentConnections.reduce(
+    (connectionsToAdd, connection) =>
+      connectionsToAdd.merge(getConnectionsForSubPage(connection)),
+    Set<IConnectionRecord>(),
+  );
+
+  return connectionsToAdd;
+};
+
+const getPageElementsDeep = (project: IAlvisProjectRecord) => (
+  pageId: string,
+): {
+  pages: Set<IPageRecord>;
+  agents: Set<IAgentRecord>;
+  ports: Set<IPortRecord>;
+  connections: Set<IConnectionRecord>;
+} => {
+  const page = project.pages.get(pageId);
+  const pageElements = getPageElements(page, project);
+  const subPagesIds = page.subPagesInternalIds;
+  const subPages = subPagesIds.map(getPageById(project));
+  const subPagesElements = subPagesIds.map(getPageElementsDeep(project));
+  const allElements = subPagesElements.reduce(
+    (allElements, pageElements) => {
+      const { pages, agents, ports, connections } = pageElements;
+
+      return {
+        pages: allElements.pages.merge(pages),
+        agents: allElements.agents.merge(agents),
+        ports: allElements.ports.merge(ports),
+        connections: allElements.connections.merge(connections),
+      };
+    },
+    { ...pageElements, pages: subPages },
+  );
+
+  return allElements;
+};
+
+const getPageElements = (
+  page: IPageRecord,
+  project: IAlvisProjectRecord,
+): {
+  agents: Set<IAgentRecord>;
+  ports: Set<IPortRecord>;
+  connections: Set<IConnectionRecord>;
+} => {
+  const agents = page.agentsInternalIds.map(getAgentById(project));
+  const portsIds = agents
+    .map((agent) => agent.portsInternalIds) // TODO: should we avoid using type casting ???
+    .reduce(
+      (portsIds, agentPortsIds) => portsIds.merge(agentPortsIds),
+      Set<string>(),
+    );
+  const ports = portsIds.map(getPortById(project));
+  const connections = project.connections
+    .filter((connection) => portsIds.contains(connection.sourcePortInternalId))
+    .toSet();
+
+  return { agents, ports, connections };
+};
+
+//
+//
+//
+//
+//
+//
+
 export function getCopyModification(
   elementsIds: string[],
   project: IAlvisProjectRecord,
@@ -415,33 +579,55 @@ export function getCopyModification(
 export const setParentPage = (
   copyModification: IProjectModificationRecord,
   parentPageId: string,
+  originalPageId?: string,
 ): IProjectModificationRecord =>
   copyModification.updateIn(['agents', 'added'], (agents: List<IAgentRecord>) =>
-    agents.map((agent) => agent.set('pageInternalId', parentPageId)),
+    agents.map((agent) => {
+      if (!originalPageId || originalPageId === agent.pageInternalId) {
+        return agent.set('pageInternalId', parentPageId);
+      }
+
+      return agent;
+    }),
   );
 
 export const changeIds = (
   copyModification: IProjectModificationRecord,
+  constantId?: string,
 ): IProjectModificationRecord => {
   const allElements: List<IIdentifiableElement> = List()
+    .concat(copyModification.pages.added)
     .concat(copyModification.agents.added)
     .concat(copyModification.ports.added)
     .concat(copyModification.connections.added);
   const allElementsIds = allElements.map((el) => el.internalId);
-  const oldIdToNewIdMap = allElementsIds.reduce(
-    (oldIdToNewIdMap, oldId) => oldIdToNewIdMap.set(oldId, newUuid()),
-    Map<string, string>(),
-  );
+  const oldIdToNewIdMap = allElementsIds
+    .reduce(
+      (oldIdToNewIdMap, oldId) => oldIdToNewIdMap.set(oldId, newUuid()),
+      Map<string, string>(),
+    )
+    .set(constantId, constantId);
   const updateId = (oldId: string): string => oldIdToNewIdMap.get(oldId);
   const updateIdInSet = (oldIds: Set<string>) => oldIds.map(updateId);
 
+  // TODO: what about modified/deleted ?
   return projectModificationRecordFactoryPartial({
+    pages: {
+      added: copyModification.pages.added.map((page) =>
+        page
+          .update('internalId', updateId)
+          .update('supAgentInternalId', updateId)
+          .update('agentsInternalIds', updateIdInSet)
+          .update('subPagesInternalIds', updateIdInSet),
+      ),
+    },
     agents: {
       added: copyModification.agents.added.map((agent) =>
         agent
           .update('internalId', updateId)
+          .update('pageInternalId', updateId)
           .update('portsInternalIds', updateIdInSet)
-          .set('subPageInternalId', null),
+          .update('subPageInternalId', updateId),
       ),
     },
     ports: {
@@ -587,82 +773,73 @@ export function generateFullModification(
   semiModification: IProjectModificationRecord,
   alvisProject: IAlvisProjectRecord,
 ): IProjectModificationRecord {
+  const deletedAgentsIds = semiModification.agents.deleted;
+  const deletedAgents = deletedAgentsIds.map(getAgentById(alvisProject));
+  const deletedAgentsSubPagesIds = deletedAgents
+    .map((agent) => agent.subPageInternalId)
+    .filter((id) => !!id);
+  const deletedAgentsSubPages = deletedAgentsSubPagesIds.map(
+    getPageById(alvisProject),
+  );
+  const deletedPagesIds = semiModification.pages.deleted;
+  const subPagesElements = deletedPagesIds
+    .merge(deletedAgentsSubPagesIds)
+    .map(getPageElementsDeep(alvisProject));
+  const allElements = subPagesElements.reduce(
+    (allElements, pageElements) => {
+      const { pages, agents, ports, connections } = pageElements;
+
+      return {
+        pages: allElements.pages.merge(pages),
+        agents: allElements.agents.merge(agents),
+        ports: allElements.ports.merge(ports),
+        connections: allElements.connections.merge(connections),
+      };
+    },
+    {
+      pages: deletedAgentsSubPages,
+      agents: List<IAgentRecord>(),
+      ports: List<IPortRecord>(),
+      connections: List<IConnectionRecord>(),
+    },
+  );
+  const getId = (element: IIdentifiableElement) => element.internalId;
+
+  const agentsPortsIds = deletedAgents.reduce(
+    (ports, agent) => ports.merge(agent.portsInternalIds),
+    Set<string>(),
+  );
+  const deletedPortsIds = agentsPortsIds.merge(semiModification.ports.deleted);
+  const portsConnectionsIds = alvisProject.connections
+    .filter(
+      (connection) =>
+        deletedPortsIds.contains(connection.sourcePortInternalId) ||
+        deletedPortsIds.contains(connection.targetPortInternalId),
+    )
+    .toSet()
+    .map(getId);
+  const deletedConnectionsIds = portsConnectionsIds.merge(
+    semiModification.connections.deleted,
+  );
+
+  return semiModification
+    .mergeIn(['pages', 'deleted'], allElements.pages.map(getId))
+    .mergeIn(['agents', 'deleted'], allElements.agents.map(getId))
+    .setIn(['ports', 'deleted'], deletedPortsIds.toList())
+    .mergeIn(['ports', 'deleted'], allElements.ports.map(getId))
+    .setIn(['connections', 'deleted'], deletedConnectionsIds.toList())
+    .mergeIn(['connections', 'deleted'], allElements.connections.map(getId));
+
   // TODO: What if someone tries to add page to page which was deleted?
   // should we consider such cases? Do we want it to be THAT bulletproof?
-  const allPagesDeleted = getAllPagesDeleted(semiModification, alvisProject);
-  const allPagesDeletedInternalIds = allPagesDeleted.map((el) => el.internalId);
+
   // TODO: this is interesting: we may (1) pass `allPagesDeleted` to getAllAgentsDeleted
   // or we may (2) memoize getAllPagesDeleted and use it again in `getAllAgentsDeleted` to make code simpler to read
   // yet as efficient as in first way
-  const allAgentsDeleted = getAllAgentsDeleted(semiModification, alvisProject);
-  const allAgentsDeletedInternalIds = allAgentsDeleted.map(
-    (el) => el.internalId,
-  );
-
-  const allConnectionsDeleted = getAllConnectionsDeleted(
-    semiModification,
-    alvisProject,
-  );
-  const allConnectionsDeletedInternalIds = allConnectionsDeleted.map(
-    (el) => el.internalId,
-  );
-
-  const allPortsDeleted = getAllPortsDeleted(semiModification, alvisProject);
-  const allPortsDeletedInternalIds = allPortsDeleted.map((el) => el.internalId);
-
-  const allPagesModified = semiModification.pages.modified.filter(
-    (page) => !allPagesDeletedInternalIds.contains(page.internalId),
-  );
-  const allAgentsModified = semiModification.agents.modified.filter(
-    (agent) => !allAgentsDeletedInternalIds.contains(agent.internalId),
-  );
-  const allPortsModified = semiModification.ports.modified.filter(
-    (port) => !allPortsDeletedInternalIds.contains(port.internalId),
-  );
-  const allConnectionsModified = semiModification.connections.modified.filter(
-    (connection) =>
-      !allConnectionsDeletedInternalIds.contains(connection.internalId),
-  );
-
-  const allPagesAdded = semiModification.pages.added.filter(
-    (page) => !allAgentsDeletedInternalIds.contains(page.supAgentInternalId), // TODO: is it enough? what if agent have never existed (never will be in allAgentsDeletedInternalIds)
-  );
-  const allAgentsAdded = semiModification.agents.added.filter(
-    (agent) => !allPagesDeletedInternalIds.contains(agent.pageInternalId),
-  );
-  const allPortsAdded = semiModification.ports.added.filter(
-    (port) => !allAgentsDeletedInternalIds.contains(port.agentInternalId),
-  );
-  const allConnectionsAdded = semiModification.connections.added.filter(
-    (connection) =>
-      !allPortsDeletedInternalIds.contains(connection.sourcePortInternalId) &&
-      !allPortsDeletedInternalIds.contains(connection.targetPortInternalId),
-  );
-
-  return projectModificationRecordFactoryPartial({
-    pages: {
-      added: allPagesAdded, // TODO: I wonder, do we really need lists. Wouldn't it be more comfortable to store Itereble<> or something similar?
-      // Check differences between `List` and `Iterable`.
-      // After some time: I didn't check it but we should remember that the general type the better in this case
-      modified: allPagesModified,
-      deleted: allPagesDeletedInternalIds,
-    },
-    agents: {
-      added: allAgentsAdded,
-      modified: allAgentsModified,
-      deleted: allAgentsDeletedInternalIds,
-    },
-    ports: {
-      added: allPortsAdded,
-      modified: allPortsModified,
-      deleted: allPortsDeletedInternalIds,
-    },
-    connections: {
-      added: allConnectionsAdded,
-      modified: allConnectionsModified,
-      deleted: allConnectionsDeletedInternalIds,
-    },
-  });
+  // const allAgentsDeleted = getAllAgentsDeleted(semiModification, alvisProject);
+  // const allAgentsDeletedInternalIds = allAgentsDeleted.map(
+  //   (el) => el.internalId,
+  // );
 }
 
 export function generateAntiModification(
@@ -710,123 +887,31 @@ export function generateAntiModification(
   });
 }
 
-export function getAllAgentsDeleted(
-  semiModification: IProjectModificationRecord,
-  alvisProject: IAlvisProjectRecord,
-): List<IAgentRecord> {
-  // TODO: Later implement memoization
-  const allPagesDeleted = getAllPagesDeleted(semiModification, alvisProject);
-  const deletedPagesAgentsIds = allPagesDeleted
-    .map((page) => page.agentsInternalIds)
-    .flatten(true);
-  const deletedPagesAgents = deletedPagesAgentsIds.map(
-    getAgentById(alvisProject),
-  );
-  const deletedAgentsIds = semiModification.agents.deleted;
-  const deletedAgents = deletedAgentsIds.map(getAgentById(alvisProject));
-
-  return deletedPagesAgents
-    .concat(deletedAgents)
-    .toSet()
-    .toList();
-}
-
-export function getAllPortsDeleted(
-  semiModification: IProjectModificationRecord,
-  alvisProject: IAlvisProjectRecord,
-): List<IPortRecord> {
-  // TODO: Later implement memoization
-  const allAgentsDeleted = getAllAgentsDeleted(semiModification, alvisProject);
-  const deletedAgentsPortsIds = allAgentsDeleted
-    .map((agent) => agent.portsInternalIds)
-    .flatten(true);
-  const deletedAgentsPorts = deletedAgentsPortsIds.map(
-    getPortById(alvisProject),
-  );
-  const deletedPortsIds = semiModification.ports.deleted;
-  const deletedPorts = deletedPortsIds.map(getPortById(alvisProject));
-
-  return deletedAgentsPorts
-    .concat(deletedPorts)
-    .toSet()
-    .toList();
-}
-
-export function getAllConnectionsDeleted(
-  semiModification: IProjectModificationRecord,
-  alvisProject: IAlvisProjectRecord,
-): List<IConnectionRecord> {
-  // TODO: Later implement memoization
-  // TODO: read more about storing data in normalized structures - I think we should store in port record
-  // list of connections' ids
-  const allPortsDeleted = getAllPortsDeleted(semiModification, alvisProject);
-  const allPortsDeletedIds = allPortsDeleted.map((el) => el.internalId);
-  const deletedPortConnections = alvisProject.connections
-    .toList()
-    .filter(
-      (connection) =>
-        allPortsDeletedIds.contains(connection.sourcePortInternalId) ||
-        allPortsDeletedIds.contains(connection.targetPortInternalId),
-    );
-  const deletedConnectionsIds = semiModification.connections.deleted.filter(
-    (connectionId) => alvisProject.connections.has(connectionId), // TODO: we filter because mxGraph triggers deletion of edge after it triggers deletion of agent
-    // refers to @up - so we have 1) modification (deletes agent so it deletes connection too), 2) modification which deletes only connection
-    // current solution is not good solution to problem, I guess...
-  );
-  const deletedConnections = deletedConnectionsIds.map(
-    getConnectionById(alvisProject),
-  );
-
-  return deletedPortConnections
-    .concat(deletedConnections)
-    .toSet()
-    .toList();
-}
-
-export function getAllPagesDeleted(
-  semiModification: IProjectModificationRecord,
-  alvisProject: IAlvisProjectRecord,
-): List<IPageRecord> {
-  const deletedPagesIds = semiModification.pages.deleted;
-  const deletedAgentsIds = semiModification.agents.deleted;
-  const deletedPages = deletedPagesIds.map(getPageById(alvisProject));
-  const deletedPagesAllSubpages = <List<IPageRecord>>deletedPagesIds
-    .map(getPageAllSubpages(alvisProject))
-    .flatten(true); // TODO: flatten returns type: Iterable<any, any> --- change to something with better types
-  const deletedAgentsAllSubpages = <List<IPageRecord>>deletedAgentsIds
-    .map(getAgentAllSubpages(alvisProject))
-    .flatten(true);
-
-  // TODO: I guess we are not deleting duplicates, we may use set, or something,
-  // we should also check it in tests
-  return deletedPages.concat(deletedPagesAllSubpages, deletedAgentsAllSubpages);
-}
-
-export const getPageById = (alvisProject: IAlvisProjectRecord) => (
-  internalId: IInternalId,
+export const getPageById = (project: IAlvisProjectRecord) => (
+  id: string,
 ): IPageRecord => {
-  return getElementByInternalId(alvisProject)(internalId, 'pages');
+  return project.pages.get(id);
 };
 
 // TODO: check: why there is no need for casting it to IAgentRecord? It seems that TS is quite smart...
-export const getAgentById = (alvisProject: IAlvisProjectRecord) => (
-  internalId: IInternalId,
+export const getAgentById = (project: IAlvisProjectRecord) => (
+  id: string,
 ): IAgentRecord => {
-  return getElementByInternalId(alvisProject)(internalId, 'agents');
+  return project.agents.get(id);
 };
 
 // TODO: maybe we can generate methods: getPageById, getAgentById, get...
 // would it be clear enough for other programmers?
-export const getPortById = (alvisProject: IAlvisProjectRecord) => (
-  internalId: IInternalId,
+export const getPortById = (project: IAlvisProjectRecord) => (
+  id: string,
 ): IPortRecord => {
-  return getElementByInternalId(alvisProject)(internalId, 'ports');
+  return project.ports.get(id);
 };
 
-export const getConnectionById = (alvisProject: IAlvisProjectRecord) => (
-  internalId: IInternalId,
+export const getConnectionById = (project: IAlvisProjectRecord) => (
+  id: string,
 ): IConnectionRecord => {
-  return getElementByInternalId(alvisProject)(internalId, 'connections');
+  return project.connections.get(id);
 };
 
 // prettier-ignore
@@ -1048,6 +1133,10 @@ export const addAgentToAlvisProject = (project: IAlvisProjectRecord) => (
   const purifiedAgent = purifyAgent(agent);
   let modifiedProject = project;
 
+  if (purifiedAgent.pageInternalId === null) {
+    throw new Error('Cannot add agent with pageInternalId equal to null!');
+  }
+
   modifiedProject = addAgentRecord(modifiedProject)(purifiedAgent);
   modifiedProject = assignAgentToPage(modifiedProject)(agentId, pageId);
 
@@ -1210,7 +1299,7 @@ export const deleteConnectionInAlvisProject = (
 ) => (connectionId: string): IAlvisProjectRecord => {
   const connectionExists = project.connections.has(connectionId);
 
-  if (!connectionExists) {
+  if (!connectionExists) { // TODO: it may throw error because after deleting agent with connections mxGraph fires another event with deletion of only connection
     throw new Error('deleteConnectionInAlvisProject: connection not found!');
   }
 

@@ -397,7 +397,6 @@ function addPopupMenu(
     cell,
     evt: PointerEvent,
   ) {
-    console.log(cell);
     const {
       onMxGraphAgentAdded,
       onMxGraphConnectionModified,
@@ -477,17 +476,33 @@ function addPopupMenu(
       }
     });
 
-    menu.addItem('Add page', null, () => {
-      const { onMxGraphPageAdded, getNameFromUser } = alvisGraph.props;
-      const agentInternalId = alvisGraph.getInternalIdByMxGrpahId(cell.getId());
+    const agentId = cell.getId();
+    const agent = alvisGraph.props.agents.get(agentId); // TODO: reading from props here is not a good idea - refactor later
+    const agentHasSubpage = !!agent.subPageInternalId;
 
-      getNameFromUser((chosenName: string) => {
-        if (chosenName === null) {
-          return;
-        }
-        onMxGraphPageAdded(alvisGraph.createPage(chosenName, agentInternalId));
+    if (agentHasSubpage) {
+      const { onHierarchyRemove } = alvisGraph.props;
+
+      menu.addItem('Remove hierarchy', null, () => {
+        onHierarchyRemove(agentId);
       });
-    });
+    } else {
+      menu.addItem('Add page', null, () => {
+        const { onMxGraphPageAdded, getNameFromUser } = alvisGraph.props;
+        const agentInternalId = alvisGraph.getInternalIdByMxGrpahId(
+          cell.getId(),
+        );
+
+        getNameFromUser((chosenName: string) => {
+          if (chosenName === null) {
+            return;
+          }
+          onMxGraphPageAdded(
+            alvisGraph.createPage(chosenName, agentInternalId),
+          );
+        });
+      });
+    }
 
     const alignSubmenu = menu.addItem('Align', null, null);
     const getAlignFn = (align: string): (() => void) => {

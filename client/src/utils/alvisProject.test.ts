@@ -19,7 +19,6 @@ import {
   generateAntiModification,
   getElementById,
   generateFullModification,
-  getAllPagesDeleted,
 } from './alvisProject';
 import { sortProjectModification } from './test/sortHelper';
 import { newUuid } from './uuidGenerator';
@@ -42,26 +41,6 @@ describe('Alvis project utils', () => {
 
       expect(sortProjectModification(generatedFullModification)).toEqual(
         sortProjectModification(fullModification),
-      );
-    });
-  });
-
-  describe('getAllPagesAndAgentsToDelete', () => {
-    it('returns all pages and agents to delete based on semi-modification', () => {
-      const [
-        state,
-        { semiModification, fullModification },
-      ] = getStateAndModifications1();
-
-      // TODO: make getAllPagesAndAgentsToDelete function private and test it as private
-      // https://github.com/speedskater/babel-plugin-rewire/issues/183
-      const pagesToDelete = getAllPagesDeleted(
-        semiModification,
-        state.alvisProject,
-      );
-
-      expect(pagesToDelete.map((page) => page.internalId)).toEqual(
-        fullModification.pages.deleted,
       );
     });
   });
@@ -165,6 +144,7 @@ function getStateAndModifications1(): [
     {
       pages: {
         deleted: List(['2']),
+        modified: List([modifiedPage]),
       },
       agents: {
         added: List([agentToAddRecord]),
@@ -204,7 +184,7 @@ function getStateAndModifications1(): [
     {
       pages: {
         added: List([deletedPage2]),
-        // modified: List([modifiedPageOld]),
+        modified: List([modifiedPageOld]),
       },
       agents: {
         added: List([deletedAgent8, deletedAgent9, deletedAgent10]),

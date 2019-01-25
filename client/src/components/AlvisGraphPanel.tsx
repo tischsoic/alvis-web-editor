@@ -60,6 +60,8 @@ export interface AlvisGraphPanelProps {
   onMxGraphConnectionDeleted: (connectionInternalId: string) => any;
   onMxGraphConnectionModified: (connection: IConnectionRecord) => any;
 
+  onHierarchyRemove: (agentId: string) => void;
+
   onUndo: () => any;
   onRedo: () => any;
 
@@ -339,6 +341,7 @@ export class AlvisGraphPanel extends React.Component<
       onMxGraphConnectionAdded,
       onMxGraphConnectionDeleted,
       onMxGraphConnectionModified,
+      onHierarchyRemove,
       onUndo,
       onRedo,
     } = this.props;
@@ -382,6 +385,7 @@ export class AlvisGraphPanel extends React.Component<
             onMxGraphConnectionAdded={onMxGraphConnectionAdded}
             onMxGraphConnectionDeleted={onMxGraphConnectionDeleted}
             onMxGraphConnectionModified={onMxGraphConnectionModified}
+            onHierarchyRemove={onHierarchyRemove}
             onAgentClick={this.onAgentClick}
             onPortClick={this.onPortClick}
             getNameFromUser={this.getNameFromUser}

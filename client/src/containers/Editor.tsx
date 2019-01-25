@@ -157,7 +157,7 @@ export class EditorComponent extends React.Component<
 
   getSystemPage(pages: Map<string, IPageRecord>) {
     // TODO: store 'System' in some global variable
-    return pages.find((page) => page.name === 'System')
+    return pages.find((page) => page.name === 'System');
   }
 
   render() {
@@ -245,6 +245,7 @@ export class EditorComponent extends React.Component<
             onMxGraphConnectionAdded={projectBindedActions.addConnection}
             onMxGraphConnectionDeleted={projectBindedActions.deleteConnection}
             onMxGraphConnectionModified={projectBindedActions.modifyConnection}
+            onHierarchyRemove={projectBindedActions.removeHierarchy}
             onUndo={projectBindedActions.undo}
             onRedo={projectBindedActions.redo}
             onCopy={projectBindedActions.copy}
