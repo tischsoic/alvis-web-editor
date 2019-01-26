@@ -1,0 +1,14 @@
+.c-app {
+  display: grid;
+  grid-template-columns: 150px auto;
+  grid-template-rows: auto;
+  grid-template-areas: 'menu-panel editor' 'menu-panel editor';
+}
+
+.c-app__menu-panel {
+  grid-area: menu-panel;
+}
+
+.c-app__editor {
+  grid-area: editor;
+}

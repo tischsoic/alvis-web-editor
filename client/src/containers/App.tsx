@@ -104,7 +104,7 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
     const appOpened = appData.appOpened;
 
     const app = (
-      <div>
+      <div className="c-app">
         <Modal
           bsSize="large"
           aria-labelledby="contained-modal-title-lg"
@@ -144,32 +144,26 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
           onEmptyProjectCreate={appBindedActions.createEmptyProject as any}
           onProjectDelete={appBindedActions.deleteProject as any}
         />
-        <Grid fluid={true}>
-          <Row>
-            <Col>
-              <ButtonToolbar>
-                <Button onClick={this.openAdministrationPanel}>
-                  Administration
-                </Button>
-                <Button onClick={this.openOpenProjectModal}>
-                  <Glyphicon glyph="open" />Projects Manager
-                </Button>
-                <ButtonGroup>
-                  <Button onClick={appBindedActions.saveProjectToServer}>
-                    <Glyphicon glyph="save" />Save
-                  </Button>
-                  {/* <Button><Glyphicon glyph='refresh' />Autosave</Button> */}
-                </ButtonGroup>
-                <Button onClick={appBindedActions.signOut}>Sign out</Button>
-              </ButtonToolbar>
-            </Col>
-          </Row>
-          <Row>
-            <Col>
-              <Editor />
-            </Col>
-          </Row>
-        </Grid>
+        <div className="c-app__menu-panel">
+          <ButtonToolbar>
+            <Button onClick={this.openAdministrationPanel}>
+              Administration
+            </Button>
+            <Button onClick={this.openOpenProjectModal}>
+              <Glyphicon glyph="open" />Projects Manager
+            </Button>
+            <ButtonGroup>
+              <Button onClick={appBindedActions.saveProjectToServer}>
+                <Glyphicon glyph="save" />Save
+              </Button>
+              {/* <Button><Glyphicon glyph='refresh' />Autosave</Button> */}
+            </ButtonGroup>
+            <Button onClick={appBindedActions.signOut}>Sign out</Button>
+          </ButtonToolbar>
+        </div>
+        <div className="c-app__editor">
+          <Editor />
+        </div>
       </div>
     );
 
