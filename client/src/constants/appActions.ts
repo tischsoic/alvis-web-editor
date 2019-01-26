@@ -1,3 +1,7 @@
+// TODO: change to enum type from TypeScript ???
+
+export const APP_INITIALIZE = 'APP_INITIALIZE';
+
 export const APP_SET_BEARER_TOKEN = 'APP_SET_BEARER_TOKEN';
 export const APP_SET_DURING_SIGNINGIN = 'APP_SET_DURING_SIGNINGIN';
 export const APP_SET_DURING_REGISTRATION = 'APP_SET_DURING_REGISTRATION';

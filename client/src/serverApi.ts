@@ -15,10 +15,24 @@ export const urlBase = isDevelopment
   ? 'http://localhost:3000/server'
   : 'http://localhost:3001/server';
 
+export function getServerPublicApi() {
+  const api = {
+    verifyToken: (token: string) =>
+      axios.head(`${urlBase}/system/auth/verify-token`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }),
+  };
+
+  return api;
+}
+
 export function getServerApi(state: RootState) {
+  const token = state.app.bearerToken;
   const baseConfig = {
     headers: {
-      Authorization: 'Bearer ' + state.app.bearerToken,
+      Authorization: `Bearer ${token}`,
     },
   };
 

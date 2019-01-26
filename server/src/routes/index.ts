@@ -20,18 +20,18 @@ export class IndexRoute extends BaseRoute {
     });
 
     const projectsRouter: Router = Router();
-    const regirsterRouter = Router();
+    const registerRouter = Router();
     const authRouter = Router();
     const accountPublicRouter = Router();
 
     AlvisProjectRoute.create(projectsRouter);
-    RegisterRoute.create(regirsterRouter);
+    RegisterRoute.create(registerRouter);
     AuthRoute.create(authRouter);
     AccountsRoute.createPublic(accountPublicRouter);
 
     router.use('/projects', projectsRouter);
     router.use('/auth', authRouter);
-    router.use('/register', regirsterRouter);
+    router.use('/register', registerRouter);
     router.use('/account', accountPublicRouter);
 
     router.use('/system', (req, res, next) => {
@@ -49,12 +49,15 @@ export class IndexRoute extends BaseRoute {
     const systemRouter = Router();
     const accountsRouter = Router();
     const projectRouter = Router();
+    const authPrivateRouter = Router();
 
     AccountsRoute.create(accountsRouter);
     ProjectRoute.create(projectRouter);
+    AuthRoute.createPrivate(authPrivateRouter);
 
     systemRouter.use('/account', accountsRouter);
     systemRouter.use('/project', projectRouter);
+    systemRouter.use('/auth', authPrivateRouter);
     router.use('/system', systemRouter);
   }
 

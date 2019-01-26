@@ -10,6 +10,17 @@ export class AuthRoute extends BaseRoute {
     super();
   }
 
+  public static createPrivate(router: Router) {
+    console.log('[AuthRoute::createPrivate]');
+
+    router.head(
+      '/verify-token',
+      (req: Request, res: Response, next: NextFunction) => {
+        new AuthRoute().verifyToken(req, res, next);
+      },
+    );
+  }
+
   public static create(router: Router) {
     console.log('[AuthRoute::create] asdf');
 
@@ -55,5 +66,15 @@ export class AuthRoute extends BaseRoute {
     } catch (e) {
       next(e);
     }
+  }
+
+  private async verifyToken(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    // If we are here, token should be correct
+    // TODO: What if user account was deleted/deactivated? Then user token should also be deleted
+    res.sendStatus(200);
   }
 }

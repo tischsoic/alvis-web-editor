@@ -18,6 +18,8 @@ import { getValidEmptyAlvisProject } from '../utils/alvisProject';
 import { IAlvisProjectRecord } from '../models/alvisProject';
 import { urlBase, getServerApi } from '../serverApi';
 
+const initializeApp = createAction(Actions.APP_INITIALIZE);
+
 const openApp = createAction<boolean, boolean>(
   Actions.APP_OPEN_APP,
   (value: boolean) => value,
@@ -67,6 +69,13 @@ const setOpenedProjectId = createAction<number, number>(
   Actions.APP_SET_OPENED_PROJECT_ID,
   (value: number) => value,
 );
+
+const signOut = () => {
+  return (dispatch: redux.Dispatch<any>): void => {
+    dispatch(setBearerToken(null));
+    dispatch(openApp(false));
+  };
+};
 
 const signIn = (email: string, password: string) => {
   return (
@@ -434,6 +443,7 @@ export {
   setDuringSigningIn,
   setDuringRegistration,
   signIn,
+  signOut,
   register,
   fetchProjects,
   setProjects,
@@ -447,4 +457,5 @@ export {
   createProjectFromFile,
   createEmptyProject,
   deleteProject,
+  initializeApp,
 };
