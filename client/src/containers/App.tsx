@@ -66,6 +66,10 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
     this.openAdministrationPanel = this.openAdministrationPanel.bind(this);
   }
 
+  componentDidMount() {
+    this.props.appBindedActions.initializeApp();
+  }
+
   private showOpenProjectModal(show: boolean) {
     this.setState({
       showOpenProjectModal: show,
@@ -156,6 +160,7 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
                   </Button>
                   {/* <Button><Glyphicon glyph='refresh' />Autosave</Button> */}
                 </ButtonGroup>
+                <Button onClick={appBindedActions.signOut}>Sign out</Button>
               </ButtonToolbar>
             </Col>
           </Row>

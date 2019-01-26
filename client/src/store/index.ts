@@ -1,6 +1,6 @@
 import { createStore, applyMiddleware, Store } from 'redux';
 import thunk from 'redux-thunk';
-import { logger } from '../middlewares';
+import { logger, tokenPersister } from '../middlewares';
 import rootReducer, { RootState } from '../reducers';
 
 export function configureStore(initialState?: RootState): Store<RootState> {
@@ -8,7 +8,9 @@ export function configureStore(initialState?: RootState): Store<RootState> {
     ? (window as any).devToolsExtension()(createStore)
     : createStore;
 
-  const createStoreWithMiddleware = applyMiddleware(thunk)(create);
+  const createStoreWithMiddleware = applyMiddleware(thunk, tokenPersister)(
+    create,
+  );
 
   const store = createStoreWithMiddleware(rootReducer, initialState) as Store<
     RootState
