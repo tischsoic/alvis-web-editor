@@ -61,6 +61,7 @@ import {
 import { List, Map } from 'immutable';
 import { LoginPanel } from '../components/LoginPanel';
 import { RegisterPanel } from '../components/RegisterPanel';
+import { SplitPane } from '../components/SplitPane/SplitPane';
 
 export namespace Editor {
   export interface StateProps {
@@ -183,51 +184,51 @@ export class EditorComponent extends React.Component<
 
     return (
       <div>
-        <div style={{ width: '33%', float: 'left' }}>
-          <Nav bsStyle="tabs" activeKey={codeEditorOpened ? '1' : '2'}>
-            <NavItem
-              eventKey="1"
-              onClick={() => {
-                this.showCodeEditor();
-              }}
-            >
-              Editor
-            </NavItem>
-            <NavItem
-              eventKey="2"
-              onClick={() => {
-                this.showHierarchyTree();
-              }}
-            >
-              Hierarchy
-            </NavItem>
-          </Nav>
-          {codeEditorOpened ? (
-            <AceEditor
-              mode="alvis"
-              theme="xcode"
-              onChange={onEditorChange}
-              name="alvisCode_1"
-              value={alvisProject.code.text}
-              editorProps={{ $blockScrolling: true }}
-              setOptions={{
-                enableBasicAutocompletion: true,
-                enableLiveAutocompletion: true,
-              }}
-              width="100%"
-            />
-          ) : (
-            <HierarchyTree
-              pages={pages}
-              agents={agents}
-              onPageClick={(page) =>
-                this.setActivePageInternalId(page.internalId)
-              }
-              onMxGraphPageDeleted={projectBindedActions.deletePage}
-            />
-          )}
-        </div>
-        <div style={{ width: '67%', float: 'left' }}>
+        <SplitPane>
+          <div>
+            <Nav bsStyle="tabs" activeKey={codeEditorOpened ? '1' : '2'}>
+              <NavItem
+                eventKey="1"
+                onClick={() => {
+                  this.showCodeEditor();
+                }}
+              >
+                Editor
+              </NavItem>
+              <NavItem
+                eventKey="2"
+                onClick={() => {
+                  this.showHierarchyTree();
+                }}
+              >
+                Hierarchy
+              </NavItem>
+            </Nav>
+            {codeEditorOpened ? (
+              <AceEditor
+                mode="alvis"
+                theme="xcode"
+                onChange={onEditorChange}
+                name="alvisCode_1"
+                value={alvisProject.code.text}
+                editorProps={{ $blockScrolling: true }}
+                setOptions={{
+                  enableBasicAutocompletion: true,
+                  enableLiveAutocompletion: true,
+                }}
+                width="100%"
+              />
+            ) : (
+              <HierarchyTree
+                pages={pages}
+                agents={agents}
+                onPageClick={(page) =>
+                  this.setActivePageInternalId(page.internalId)
+                }
+                onMxGraphPageDeleted={projectBindedActions.deletePage}
+              />
+            )}
+          </div>
           <AlvisGraphPanel
             alvisProject={alvisProject}
             projectId={0}
@@ -252,7 +253,7 @@ export class EditorComponent extends React.Component<
             onCut={projectBindedActions.cut}
             onPaste={projectBindedActions.paste}
           />
-        </div>
+        </SplitPane>
       </div>
     );
   }

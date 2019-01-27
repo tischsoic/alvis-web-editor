@@ -1,6 +1,8 @@
 import * as React from 'react';
 
-export interface MenuPanelProps {}
+export interface MenuPanelProps {
+  // opened: boolean;
+}
 
 export interface MenuPanelState {}
 
@@ -12,6 +14,14 @@ export class MenuPanel extends React.Component<MenuPanelProps, MenuPanelState> {
   }
 
   render() {
-    return <div />;
+    const { children } = this.props;
+    const baseClassName = 'c-menu-panel';
+    const className = baseClassName;
+
+    // if (opened) {
+    //   className = `${className} ${baseClassName}--opened`;
+    // }
+
+    return <div className={className}>{children}</div>;
   }
 }

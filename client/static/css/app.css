@@ -1,6 +1,7 @@
 .c-app {
+  height: 100vh;
   display: grid;
-  grid-template-columns: 150px auto;
+  grid-template-columns: 75px auto;
   grid-template-rows: auto;
   grid-template-areas: 'menu-panel editor' 'menu-panel editor';
 }
@@ -11,4 +12,58 @@
 
 .c-app__editor {
   grid-area: editor;
+}
+
+.c-menu__menu-panel {
+  position: absolute;
+  top: 0;
+  left: 76px;
+  z-index: 100;
+  background: white;
+  padding: 30px;
+  border-style: solid;
+  border-color: #8c8c8c;
+  border-width: 0 3px 0 0;
+  height: 100%;
+}
+
+.c-menu-panel {
+}
+
+.c-menu-button {
+  display: inline-block; /* ? */
+  color: #333;
+  background-color: #fff;
+  border-color: #ccc;
+  border-width: 1px 0;
+  border-style: solid;
+  width: 75px;
+  height: 50px;
+}
+
+.c-menu-button--pressed {
+  background-color: #e6e6e6;
+  border-color: #8c8c8c;
+}
+
+.c-menu-button:hover,
+.c-menu-button:focus,
+.c-menu-button--pressed {
+  background-color: #e6e6e6;
+  border-color: #8c8c8c;
+}
+
+.c-split-pane {
+  display: flex;
+}
+
+.c-split-pane__first-container,
+.c-split-pane__second-container {
+  flex: 1 1 auto;
+}
+
+.c-split-pane__dragbar {
+  width: 5px;
+  background: #ccc;
+  cursor: ew-resize;
 }

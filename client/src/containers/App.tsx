@@ -28,8 +28,9 @@ import {
 import { LoginPanel } from '../components/LoginPanel';
 import { RegisterPanel } from '../components/RegisterPanel';
 import { OpenProjectModal } from '../components/OpenProjectModal';
-import { AdministrationPanel } from '../components/AdministrationPanel';
+import  MenuUsersPanel  from '../components/MenuUsersPanel/MenuUsersPanel';
 import { Editor } from './Editor';
+import { Menu } from '../components/Menu/Menu';
 
 export namespace App {
   export interface StateProps {
@@ -105,30 +106,6 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
 
     const app = (
       <div className="c-app">
-        <Modal
-          bsSize="large"
-          aria-labelledby="contained-modal-title-lg"
-          show={showAdministrationPanel}
-          onHide={this.closeAdministrationPanel}
-        >
-          <Modal.Header closeButton>
-            <Modal.Title id="contained-modal-title-lg">
-              Administration
-            </Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <AdministrationPanel
-              users={appData.users}
-              usersAlreadyFetched={appData.usersAlreadyFetched}
-              usersDuringFetching={appData.usersAlreadyFetched}
-              fetchUsers={appBindedActions.fetchUsers as any}
-              onUserSetActivated={appBindedActions.activateUser as any}
-            />
-          </Modal.Body>
-          <Modal.Footer>
-            <Button onClick={this.closeAdministrationPanel}>Close</Button>
-          </Modal.Footer>
-        </Modal>
         <OpenProjectModal
           showModal={showOpenProjectModal}
           projects={appData.projects}
@@ -145,7 +122,8 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
           onProjectDelete={appBindedActions.deleteProject as any}
         />
         <div className="c-app__menu-panel">
-          <ButtonToolbar>
+          <Menu /> 
+          {/* <ButtonToolbar>
             <Button onClick={this.openAdministrationPanel}>
               Administration
             </Button>
@@ -156,10 +134,9 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
               <Button onClick={appBindedActions.saveProjectToServer}>
                 <Glyphicon glyph="save" />Save
               </Button>
-              {/* <Button><Glyphicon glyph='refresh' />Autosave</Button> */}
             </ButtonGroup>
             <Button onClick={appBindedActions.signOut}>Sign out</Button>
-          </ButtonToolbar>
+          </ButtonToolbar> */}
         </div>
         <div className="c-app__editor">
           <Editor />
