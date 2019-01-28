@@ -183,8 +183,8 @@ export class EditorComponent extends React.Component<
     };
 
     return (
-      <div>
-        <SplitPane>
+      <>
+        <SplitPane additionalClassName="c-editor__split-pane">
           <div>
             <Nav bsStyle="tabs" activeKey={codeEditorOpened ? '1' : '2'}>
               <NavItem
@@ -254,7 +254,7 @@ export class EditorComponent extends React.Component<
             onPaste={projectBindedActions.paste}
           />
         </SplitPane>
-      </div>
+      </>
     );
   }
 }

@@ -14,6 +14,20 @@
   grid-area: editor;
 }
 
+.c-editor__split-pane {
+  height: 100vh;
+}
+
+.c-alvis-graph__graph {
+  touch-action: none;
+  overflow: hidden;
+}
+
+.c-alvis-graph__outline {
+  touch-action: none;
+  overflow: hidden;
+}
+
 .c-menu__menu-panel {
   position: absolute;
   top: 0;
@@ -55,11 +69,17 @@
 
 .c-split-pane {
   display: flex;
+  flex: 1 1 0%;
+  width: calc(100vw - 75px);
 }
 
-.c-split-pane__first-container,
+.c-split-pane__first-container {
+  flex: 0 0 auto;
+}
+
 .c-split-pane__second-container {
-  flex: 1 1 auto;
+  overflow: hidden;
+  flex: 1 1 0%;
 }
 
 .c-split-pane__dragbar {

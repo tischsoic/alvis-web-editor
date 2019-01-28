@@ -445,12 +445,12 @@ export class AlvisGraph extends React.Component<
     return (
       <div className="modal-container">
         <div
+          className="c-alvis-graph__graph"
           id={'alvis-graph-container-' + this.randomNumber}
-          style={{ overflow: 'hidden', height: '400px' }}
         />
         <div
+          className="c-alvis-graph__outline"
           id={'alvis-graph-outline-container-' + this.randomNumber}
-          style={{ height: '200px' }}
         />
       </div>
     );
