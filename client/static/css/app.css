@@ -31,6 +31,7 @@
 
 .c-editor__top-container-content {
   flex: 1 1 0;
+  overflow: hidden;
 }
 
 .c-alvis-graph__graph {

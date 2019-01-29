@@ -112,7 +112,8 @@ export class EditorComponent extends React.Component<
     };
   }
 
-  private topContainerContent = React.createRef<HTMLDivElement>();
+  private topContainerContentRef = React.createRef<HTMLDivElement>();
+  private aceEditorRef = React.createRef<AceEditor>();
 
   componentWillReceiveProps(nextProps: Editor.AllProps) {
     const { activePageInternalId } = this.state;
@@ -137,7 +138,7 @@ export class EditorComponent extends React.Component<
 
   componentDidUpdate() {
     const { aceEditorWidth, aceEditorHeight } = this.state;
-    const aceEditorContainer = this.topContainerContent.current;
+    const aceEditorContainer = this.topContainerContentRef.current;
     const { offsetWidth, offsetHeight } = aceEditorContainer;
 
     if (aceEditorWidth !== offsetWidth || aceEditorHeight !== offsetHeight) {
@@ -180,6 +181,18 @@ export class EditorComponent extends React.Component<
     return pages.find((page) => page.name === 'System');
   }
 
+  // TODO: to avoid using forceUpdate we should store SplitPane width/height not in SplitPane but in this component
+  // and pass this width/height to SplitPane
+  private onSplitPaneResize = (): void => {
+    const aceEditor = this.aceEditorRef.current;
+
+    if (aceEditor) {
+      this.forceUpdate();
+      // console.log(aceEditor);
+      // aceEditor.editor
+    }
+  };
+
   render() {
     const {
       xml,
@@ -205,8 +218,11 @@ export class EditorComponent extends React.Component<
 
     return (
       <>
-        <SplitPane additionalClassName="c-editor__split-pane">
-          <SplitPane vertical={false}>
+        <SplitPane
+          additionalClassName="c-editor__split-pane"
+          onResize={this.onSplitPaneResize}
+        >
+          <SplitPane vertical={false} onResize={this.onSplitPaneResize}>
             <div className="c-editor__top-container-wrapper">
               <Nav bsStyle="tabs" activeKey={codeEditorOpened ? '1' : '2'}>
                 <NavItem
@@ -228,7 +244,7 @@ export class EditorComponent extends React.Component<
               </Nav>
               <div
                 className="c-editor__top-container-content"
-                ref={this.topContainerContent}
+                ref={this.topContainerContentRef}
               >
                 {codeEditorOpened ? (
                   <AceEditor
@@ -244,6 +260,7 @@ export class EditorComponent extends React.Component<
                     }}
                     width={`${aceEditorWidth}px`}
                     height={`${aceEditorHeight}px`}
+                    ref={this.aceEditorRef}
                   />
                 ) : (
                   <HierarchyTree

@@ -5,15 +5,24 @@ export interface SplitPaneProps {
   vertical?: boolean; // maybe also clreate horizontal and require set to set only one of them
   minSpan?: number;
   initialSpan?: number;
+  onResize?: () => void;
 }
 
-export interface SplitPaneState {}
+export interface SplitPaneState {
+  size: number | null; // TODO: rename to `span` or maybe vive versa?
+  isDuringResize: boolean;
+}
 
 export class SplitPane extends React.Component<SplitPaneProps, SplitPaneState> {
   constructor(props: SplitPaneProps) {
     super(props);
 
-    this.state = {};
+    const { initialSpan } = this.props;
+
+    this.state = {
+      size: initialSpan ? initialSpan : null,
+      isDuringResize: false,
+    };
   }
 
   static defaultProps = {
@@ -28,34 +37,51 @@ export class SplitPane extends React.Component<SplitPaneProps, SplitPaneState> {
   private firstContainerRef = React.createRef<HTMLDivElement>();
 
   componentDidMount() {
-    const { vertical, minSpan } = this.props;
+    const { vertical, minSpan, initialSpan } = this.props;
     const dragbar = this.dragbarRef.current;
     const firstContainer = this.firstContainerRef.current;
 
-    if (vertical) {
-      const { offsetWidth } = firstContainer;
-      const firstContainerWidth = Math.max(offsetWidth, minSpan);
+    if (!initialSpan) {
+      if (vertical) {
+        const { offsetWidth } = firstContainer;
+        const firstContainerWidth = Math.max(offsetWidth, minSpan);
 
-      firstContainer.style.width = `${firstContainerWidth}px`;
-      firstContainer.style.flexGrow = String(0);
-    } else {
-      const { offsetHeight } = firstContainer;
-      const firstContainerHeight = Math.max(offsetHeight, minSpan);
+        this.setState({
+          size: firstContainerWidth,
+        });
+      } else {
+        const { offsetHeight } = firstContainer;
+        const firstContainerHeight = Math.max(offsetHeight, minSpan);
 
-      firstContainer.style.height = `${firstContainerHeight}px`;
-      firstContainer.style.flexGrow = String(0);
+        this.setState({
+          size: firstContainerHeight,
+        });
+      }
     }
 
     dragbar.addEventListener('mousedown', this.startDrag, false);
     document.addEventListener('mouseup', this.endDrag, false);
   }
 
+  componentDidUpdate(prevProps, prevState) {
+    const { isDuringResize } = this.state;
+    const { onResize } = this.props;
+
+    if (!isDuringResize && prevState.isDuringResize && onResize) {
+      onResize();
+    }
+  }
+
   private startDrag = () => {
-    document.addEventListener('mousemove', this.handleMouseMove, false);
+    this.setState({ isDuringResize: true }, () => {
+      document.addEventListener('mousemove', this.handleMouseMove, false);
+    });
   };
 
   private endDrag = () => {
-    document.removeEventListener('mousemove', this.handleMouseMove, false); // TODO: Now it is called every time we release mouse over document
+    this.setState({ isDuringResize: false }, () => {
+      document.removeEventListener('mousemove', this.handleMouseMove, false); // TODO: Now it is called every time we release mouse over document
+    });
   };
 
   private handleMouseMove: EventListener = (event: MouseEvent) => {
@@ -73,8 +99,9 @@ export class SplitPane extends React.Component<SplitPaneProps, SplitPaneState> {
       console.log(minSpan);
       console.log(firstContainerWidth);
 
-      this.firstContainerRef.current.style.width = `${firstContainerWidth}px`;
-      this.firstContainerRef.current.style.flexGrow = String(0);
+      this.setState({
+        size: firstContainerWidth,
+      });
     } else {
       const pointerRelativeYPos = event.clientY - splitPane.offsetTop;
       const dragbarHeight = 5;
@@ -86,13 +113,15 @@ export class SplitPane extends React.Component<SplitPaneProps, SplitPaneState> {
       console.log(minSpan);
       console.log(firstContainerHeight);
 
-      this.firstContainerRef.current.style.height = `${firstContainerHeight}px`;
-      this.firstContainerRef.current.style.flexGrow = String(0);
+      this.setState({
+        size: firstContainerHeight,
+      });
     }
   };
 
   render() {
     const { children, additionalClassName, vertical } = this.props;
+    const { size } = this.state;
     const positionClassName = vertical
       ? 'c-split-pane--vertical'
       : 'c-split-pane--horizontal';
@@ -101,6 +130,15 @@ export class SplitPane extends React.Component<SplitPaneProps, SplitPaneState> {
       : 'c-split-pane__dragbar--horizontal';
 
     console.log(children); // TODO: should we filter out nulls, '' etc?
+    const style: { height?: number; width?: number } = {};
+
+    if (size) {
+      if (vertical) {
+        style.width = size;
+      } else {
+        style.height = size;
+      }
+    }
 
     return (
       <div
@@ -110,6 +148,7 @@ export class SplitPane extends React.Component<SplitPaneProps, SplitPaneState> {
         <div
           className="c-split-pane__first-container"
           ref={this.firstContainerRef}
+          style={style}
         >
           {children[0]}
         </div>
