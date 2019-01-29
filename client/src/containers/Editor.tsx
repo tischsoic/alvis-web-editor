@@ -87,6 +87,8 @@ export namespace Editor {
     codeEditorOpened: boolean;
     hierarchyTreeOpened: boolean;
     activePageInternalId: string;
+    aceEditorWidth: number;
+    aceEditorHeight: number;
   }
 }
 
@@ -105,8 +107,12 @@ export class EditorComponent extends React.Component<
       codeEditorOpened: true,
       hierarchyTreeOpened: false,
       activePageInternalId: systemPage ? systemPage.internalId : null,
+      aceEditorWidth: 0,
+      aceEditorHeight: 0,
     };
   }
+
+  private topContainerContent = React.createRef<HTMLDivElement>();
 
   componentWillReceiveProps(nextProps: Editor.AllProps) {
     const { activePageInternalId } = this.state;
@@ -127,6 +133,19 @@ export class EditorComponent extends React.Component<
     this.setState({
       activePageInternalId: nextActivePageInternalId,
     });
+  }
+
+  componentDidUpdate() {
+    const { aceEditorWidth, aceEditorHeight } = this.state;
+    const aceEditorContainer = this.topContainerContent.current;
+    const { offsetWidth, offsetHeight } = aceEditorContainer;
+
+    if (aceEditorWidth !== offsetWidth || aceEditorHeight !== offsetHeight) {
+      this.setState({
+        aceEditorWidth: offsetWidth,
+        aceEditorHeight: offsetHeight,
+      });
+    }
   }
 
   showHierarchyTree() {
@@ -175,6 +194,8 @@ export class EditorComponent extends React.Component<
       codeEditorOpened,
       hierarchyTreeOpened,
       activePageInternalId,
+      aceEditorWidth,
+      aceEditorHeight,
     } = this.state;
     const { appData } = this.props;
 
@@ -185,50 +206,59 @@ export class EditorComponent extends React.Component<
     return (
       <>
         <SplitPane additionalClassName="c-editor__split-pane">
-          <div>
-            <Nav bsStyle="tabs" activeKey={codeEditorOpened ? '1' : '2'}>
-              <NavItem
-                eventKey="1"
-                onClick={() => {
-                  this.showCodeEditor();
-                }}
+          <SplitPane vertical={false}>
+            <div className="c-editor__top-container-wrapper">
+              <Nav bsStyle="tabs" activeKey={codeEditorOpened ? '1' : '2'}>
+                <NavItem
+                  eventKey="1"
+                  onClick={() => {
+                    this.showCodeEditor();
+                  }}
+                >
+                  Editor
+                </NavItem>
+                <NavItem
+                  eventKey="2"
+                  onClick={() => {
+                    this.showHierarchyTree();
+                  }}
+                >
+                  Hierarchy
+                </NavItem>
+              </Nav>
+              <div
+                className="c-editor__top-container-content"
+                ref={this.topContainerContent}
               >
-                Editor
-              </NavItem>
-              <NavItem
-                eventKey="2"
-                onClick={() => {
-                  this.showHierarchyTree();
-                }}
-              >
-                Hierarchy
-              </NavItem>
-            </Nav>
-            {codeEditorOpened ? (
-              <AceEditor
-                mode="alvis"
-                theme="xcode"
-                onChange={onEditorChange}
-                name="alvisCode_1"
-                value={alvisProject.code.text}
-                editorProps={{ $blockScrolling: true }}
-                setOptions={{
-                  enableBasicAutocompletion: true,
-                  enableLiveAutocompletion: true,
-                }}
-                width="100%"
-              />
-            ) : (
-              <HierarchyTree
-                pages={pages}
-                agents={agents}
-                onPageClick={(page) =>
-                  this.setActivePageInternalId(page.internalId)
-                }
-                onMxGraphPageDeleted={projectBindedActions.deletePage}
-              />
-            )}
-          </div>
+                {codeEditorOpened ? (
+                  <AceEditor
+                    mode="alvis"
+                    theme="xcode"
+                    onChange={onEditorChange}
+                    name="alvisCode_1"
+                    value={alvisProject.code.text}
+                    editorProps={{ $blockScrolling: false }}
+                    setOptions={{
+                      enableBasicAutocompletion: true,
+                      enableLiveAutocompletion: true,
+                    }}
+                    width={`${aceEditorWidth}px`}
+                    height={`${aceEditorHeight}px`}
+                  />
+                ) : (
+                  <HierarchyTree
+                    pages={pages}
+                    agents={agents}
+                    onPageClick={(page) =>
+                      this.setActivePageInternalId(page.internalId)
+                    }
+                    onMxGraphPageDeleted={projectBindedActions.deletePage}
+                  />
+                )}
+              </div>
+            </div>
+            <div>asdfasdf</div>
+          </SplitPane>
           <AlvisGraphPanel
             alvisProject={alvisProject}
             projectId={0}

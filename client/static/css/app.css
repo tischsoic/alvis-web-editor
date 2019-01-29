@@ -1,3 +1,7 @@
+/*
+  TODO: start using `rem`
+*/
+
 .c-app {
   height: 100vh;
   display: grid;
@@ -16,6 +20,17 @@
 
 .c-editor__split-pane {
   height: 100vh;
+  width: calc(100vw - 75px);
+}
+
+.c-editor__top-container-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.c-editor__top-container-content {
+  flex: 1 1 0;
 }
 
 .c-alvis-graph__graph {
@@ -70,7 +85,10 @@
 .c-split-pane {
   display: flex;
   flex: 1 1 0%;
-  width: calc(100vw - 75px);
+}
+
+.c-split-pane--horizontal {
+  flex-direction: column;
 }
 
 .c-split-pane__first-container {
@@ -83,7 +101,15 @@
 }
 
 .c-split-pane__dragbar {
-  width: 5px;
   background: #ccc;
+}
+
+.c-split-pane__dragbar--vertical {
+  width: 5px;
   cursor: ew-resize;
+}
+
+.c-split-pane__dragbar--horizontal {
+  height: 5px;
+  cursor: ns-resize;
 }
