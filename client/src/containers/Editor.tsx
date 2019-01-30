@@ -193,6 +193,8 @@ export class EditorComponent extends React.Component<
     }
   };
 
+  private onRightSplitPaneResize = (): void => {};
+
   render() {
     const {
       xml,
@@ -222,7 +224,11 @@ export class EditorComponent extends React.Component<
           additionalClassName="c-editor__split-pane"
           onResize={this.onSplitPaneResize}
         >
-          <SplitPane vertical={false} onResize={this.onSplitPaneResize}>
+          <SplitPane
+            vertical={false}
+            onResize={this.onSplitPaneResize}
+            additionalClassName="c-editor__split-pane-horizontal-fst"
+          >
             <div className="c-editor__top-container-wrapper">
               <Nav bsStyle="tabs" activeKey={codeEditorOpened ? '1' : '2'}>
                 <NavItem
@@ -274,32 +280,50 @@ export class EditorComponent extends React.Component<
                 )}
               </div>
             </div>
-            <div>asdfasdf</div>
+            <div className="c-editor__outline">
+              <div
+                className="c-editor__outline-container"
+                id="c-editor__outline"
+              />
+            </div>
           </SplitPane>
-          <AlvisGraphPanel
-            alvisProject={alvisProject}
-            projectId={0}
-            onChangeActivePage={(newActivePageInternalId: string) =>
-              this.setActivePageInternalId(newActivePageInternalId)
-            }
-            activePageInternalId={activePageInternalId}
-            onMxGraphPageAdded={projectBindedActions.addPage}
-            onMxGraphAgentAdded={projectBindedActions.addAgent}
-            onMxGraphAgentDeleted={projectBindedActions.deleteAgent}
-            onMxGraphAgentModified={projectBindedActions.modifyAgent}
-            onMxGraphPortAdded={projectBindedActions.addPort}
-            onMxGraphPortDeleted={projectBindedActions.deletePort}
-            onMxGraphPortModified={projectBindedActions.modifyPort}
-            onMxGraphConnectionAdded={projectBindedActions.addConnection}
-            onMxGraphConnectionDeleted={projectBindedActions.deleteConnection}
-            onMxGraphConnectionModified={projectBindedActions.modifyConnection}
-            onHierarchyRemove={projectBindedActions.removeHierarchy}
-            onUndo={projectBindedActions.undo}
-            onRedo={projectBindedActions.redo}
-            onCopy={projectBindedActions.copy}
-            onCut={projectBindedActions.cut}
-            onPaste={projectBindedActions.paste}
-          />
+          <SplitPane
+            vertical={false}
+            onResize={this.onRightSplitPaneResize}
+            additionalClassName="c-editor__split-pane-horizontal-snd"
+          >
+            <div className="c-editor__graph-editor">
+              <AlvisGraphPanel
+                alvisProject={alvisProject}
+                projectId={0}
+                onChangeActivePage={(newActivePageInternalId: string) =>
+                  this.setActivePageInternalId(newActivePageInternalId)
+                }
+                activePageInternalId={activePageInternalId}
+                onMxGraphPageAdded={projectBindedActions.addPage}
+                onMxGraphAgentAdded={projectBindedActions.addAgent}
+                onMxGraphAgentDeleted={projectBindedActions.deleteAgent}
+                onMxGraphAgentModified={projectBindedActions.modifyAgent}
+                onMxGraphPortAdded={projectBindedActions.addPort}
+                onMxGraphPortDeleted={projectBindedActions.deletePort}
+                onMxGraphPortModified={projectBindedActions.modifyPort}
+                onMxGraphConnectionAdded={projectBindedActions.addConnection}
+                onMxGraphConnectionDeleted={
+                  projectBindedActions.deleteConnection
+                }
+                onMxGraphConnectionModified={
+                  projectBindedActions.modifyConnection
+                }
+                onHierarchyRemove={projectBindedActions.removeHierarchy}
+                onUndo={projectBindedActions.undo}
+                onRedo={projectBindedActions.redo}
+                onCopy={projectBindedActions.copy}
+                onCut={projectBindedActions.cut}
+                onPaste={projectBindedActions.paste}
+              />
+            </div>
+            <div className="c-editor__console">Console:</div>
+          </SplitPane>
         </SplitPane>
       </>
     );

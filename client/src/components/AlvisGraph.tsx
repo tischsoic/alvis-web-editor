@@ -360,9 +360,7 @@ export class AlvisGraph extends React.Component<
   };
 
   instantiateOutline() {
-    const outlineDiv = document.getElementById(
-      'alvis-graph-outline-container-' + this.randomNumber,
-    );
+    const outlineDiv = document.getElementById('c-editor__outline');
     const outline = new mx.mxOutline(this.graph, outlineDiv);
 
     this.outline = outline;

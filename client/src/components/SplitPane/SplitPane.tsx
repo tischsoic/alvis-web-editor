@@ -1,10 +1,12 @@
 import * as React from 'react';
+import { ReactNode } from 'react-redux';
 
 export interface SplitPaneProps {
   additionalClassName?: string; // TODO: this is how we mark props with default value in TS? Check it!
-  vertical?: boolean; // maybe also clreate horizontal and require set to set only one of them
+  vertical?: boolean; // change to type 'vertical' | 'horizontal or even create enum (?)
   minSpan?: number;
   initialSpan?: number;
+  children: JSX.Element[];
   onResize?: () => void;
 }
 
@@ -13,6 +15,7 @@ export interface SplitPaneState {
   isDuringResize: boolean;
 }
 
+// TODO: when resizing fast user can by accident select some text etc.
 export class SplitPane extends React.Component<SplitPaneProps, SplitPaneState> {
   constructor(props: SplitPaneProps) {
     super(props);
@@ -139,6 +142,8 @@ export class SplitPane extends React.Component<SplitPaneProps, SplitPaneState> {
         style.height = size;
       }
     }
+
+    console.log(children, children[0], children[1]);
 
     return (
       <div
