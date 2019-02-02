@@ -62,6 +62,8 @@ import { List, Map } from 'immutable';
 import { LoginPanel } from '../components/LoginPanel';
 import { RegisterPanel } from '../components/RegisterPanel';
 import { SplitPane } from '../components/SplitPane/SplitPane';
+import { Tabs } from '../components/Tab/Tabs';
+import { Tab } from '../components/Tab/Tab';
 
 export namespace Editor {
   export interface StateProps {
@@ -293,6 +295,14 @@ export class EditorComponent extends React.Component<
             additionalClassName="c-editor__split-pane-horizontal-snd"
           >
             <div className="c-editor__graph-editor">
+              <Tabs activeId="1" onTabClick={() => {}} onTabClose={() => {}}>
+                <Tab id="1" label="1">
+                  <div>asdf</div>
+                </Tab>
+                <Tab id="2" label="2">
+                  <div>asdf</div>
+                </Tab>
+              </Tabs>
               <AlvisGraphPanel
                 alvisProject={alvisProject}
                 projectId={0}

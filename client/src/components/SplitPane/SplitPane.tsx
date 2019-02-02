@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { ReactNode } from 'react-redux';
 
 export interface SplitPaneProps {
   additionalClassName?: string; // TODO: this is how we mark props with default value in TS? Check it!
@@ -16,7 +15,7 @@ export interface SplitPaneState {
 }
 
 // TODO: when resizing fast user can by accident select some text etc.
-export class SplitPane extends React.Component<SplitPaneProps, SplitPaneState> {
+export class SplitPane extends React.PureComponent<SplitPaneProps, SplitPaneState> {
   constructor(props: SplitPaneProps) {
     super(props);
 
