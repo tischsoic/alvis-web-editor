@@ -24,6 +24,7 @@ export class TabNav extends React.PureComponent<TabNavProps, TabNavState> {
       <ul className={className}>
         {tabsData.map(({ id, label }) => (
           <TabNavButton
+            key={id}
             id={id}
             label={label}
             active={id === activeId}

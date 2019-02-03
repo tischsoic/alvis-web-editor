@@ -143,6 +143,7 @@ export class EditorComponent extends React.Component<
     const aceEditorContainer = this.topContainerContentRef.current;
     const { offsetWidth, offsetHeight } = aceEditorContainer;
 
+    // TODO: It is a little bit unsafe, can we change it?
     if (aceEditorWidth !== offsetWidth || aceEditorHeight !== offsetHeight) {
       this.setState({
         aceEditorWidth: offsetWidth,
@@ -295,14 +296,6 @@ export class EditorComponent extends React.Component<
             additionalClassName="c-editor__split-pane-horizontal-snd"
           >
             <div className="c-editor__graph-editor">
-              <Tabs activeId="1" onTabClick={() => {}} onTabClose={() => {}}>
-                <Tab id="1" label="1">
-                  <div>asdf</div>
-                </Tab>
-                <Tab id="2" label="2">
-                  <div>asdf</div>
-                </Tab>
-              </Tabs>
               <AlvisGraphPanel
                 alvisProject={alvisProject}
                 projectId={0}

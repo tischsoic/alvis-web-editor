@@ -9,12 +9,20 @@ const style = require('./Tabs.scss');
 
 interface TabsProps {
   activeId: string;
-  children: React.ReactElement<TabProps> | React.ReactElement<TabProps>[];
+  children:
+    | React.ReactElement<TabProps>
+    | Iterable<React.ReactElement<TabProps>>;
   onTabClick: (id: string) => void;
   onTabClose: (id: string) => void;
 }
 
 interface TabsState {}
+
+function isIterable(
+  children: any,
+): children is Iterable<React.ReactElement<TabProps>> {
+  return typeof children[Symbol.iterator] === 'function';
+}
 
 export class Tabs extends React.PureComponent<TabsProps, TabsState> {
   static defaultProps = {};
@@ -22,7 +30,16 @@ export class Tabs extends React.PureComponent<TabsProps, TabsState> {
   getChildrenArray(): React.ReactElement<TabProps>[] {
     const { children } = this.props;
 
-    return children instanceof Array ? (children as any) : [children];
+    if (children === null) {
+      return [];
+    }
+
+    // TODO: why this guard is not working?
+    if (isIterable(children)) {
+      return [...(children as Iterable<React.ReactElement<TabProps>>)];
+    }
+
+    return [children];
   }
 
   renderTabNav() {

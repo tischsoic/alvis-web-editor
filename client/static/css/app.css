@@ -31,6 +31,7 @@
   border-style: solid;
   border-width: 0 1px 1px 0;
   border-bottom-right-radius: 4px;
+  overflow: hidden;
 }
 
 .c-editor__top-container-content {
@@ -49,6 +50,7 @@
 }
 
 .c-editor__graph-editor {
+  height: 100%;
   border-color: #8c8c8c;
   border-style: solid;
   border-width: 0 0 1px 1px;
@@ -60,6 +62,7 @@
   border-style: solid;
   border-width: 1px 0 0 1px;
   border-top-left-radius: 4px;
+  height: 100%;
 }
 
 .c-editor__outline-container {
@@ -74,6 +77,7 @@
 .c-alvis-graph__graph {
   touch-action: none;
   overflow: hidden;
+  height: 100%;
 }
 
 .c-alvis-graph__outline {

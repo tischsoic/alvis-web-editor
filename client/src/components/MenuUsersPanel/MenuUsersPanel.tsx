@@ -33,7 +33,7 @@ class MenuUsersPanel extends React.Component<
 
     const { fetchUsers, usersAlreadyFetched, usersDuringFetching } = this.props;
     if (!usersAlreadyFetched && !usersDuringFetching) {
-      fetchUsers();
+      fetchUsers(); // TODO: move to componentDidMount
     }
   }
 

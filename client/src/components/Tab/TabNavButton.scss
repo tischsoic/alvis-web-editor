@@ -3,11 +3,25 @@
   color: #555;
   cursor: default;
   background-color: #fff;
-  border: 1px solid #ddd;
-  border-bottom-color: transparent;
-  padding: 10px 15px;
+  padding: 5px 10px;
+  border-radius: 2px 2px 0 0;
+  border: 2px solid #fff;
+  cursor: pointer;
+
+  &:hover {
+    color: #333;
+    background-color: #ddd;
+  }
 
   &--active {
-    background-color: #8c8c8c;
+    border: 1px solid #ddd;
+    border-bottom-color: transparent;
+    margin-bottom: -1px;
+    cursor: default;
+
+    &:hover {
+      color: #555;
+      background-color: #fff;
+    }
   }
 }

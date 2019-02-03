@@ -1,4 +1,8 @@
 .c-tab-pane {
+  overflow: auto;
+  flex: 1 1 auto;
+  flex-direction: column;
+  position: relative;
   display: none;
 
   &--active {

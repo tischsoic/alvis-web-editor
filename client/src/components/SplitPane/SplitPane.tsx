@@ -30,7 +30,7 @@ export class SplitPane extends React.PureComponent<SplitPaneProps, SplitPaneStat
   static defaultProps = {
     vertical: true,
     additionalClassName: '',
-    minSpan: 100,
+    minSpan: 300,
     // initialSpan: 100,
   };
 

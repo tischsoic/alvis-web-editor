@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as classNames from 'classnames';
 import * as mxClasses from 'mxgraphAllClasses';
 import {
   IAgentRecord,
@@ -21,8 +22,6 @@ import {
   Grid,
   Row,
   Col,
-  Tab,
-  Tabs,
   Glyphicon,
   Button,
   ButtonGroup,
@@ -36,6 +35,10 @@ import { AlvisGraph } from './AlvisGraph';
 import { NamePicker } from './NamePicker';
 import { newUuid } from '../utils/uuidGenerator';
 import { mx } from '../utils/mx';
+import { Tab, TabProps } from './Tab/Tab';
+import { Tabs } from './Tab/Tabs';
+
+const style = require('./AlvisGraphPanel.scss');
 
 // TODO: add some TS types etc.
 declare let canvg: any;
@@ -327,6 +330,57 @@ export class AlvisGraphPanel extends React.Component<
     }
   };
 
+  renderBtns() {
+    const { onUndo, onRedo } = this.props;
+    const { selectedColor, isColoringModeEnabled } = this.state;
+
+    return (
+      <div className={'c-alvis-graph-panel__btn-panel'}>
+      <ButtonToolbar>
+        <ButtonGroup>
+          <Button onClick={() => this.activeAlvisGraph.zoomOut()}>
+            <Glyphicon glyph="zoom-out" />
+          </Button>
+          <Button onClick={() => this.activeAlvisGraph.zoomIn()}>
+            <Glyphicon glyph="zoom-in" />
+          </Button>
+        </ButtonGroup>
+        <ButtonGroup>
+          <Button onClick={() => onUndo()}>undo</Button>
+          <Button onClick={() => onRedo()}>redo</Button>
+        </ButtonGroup>
+        <ButtonGroup>
+          <ColorPicker
+            color={selectedColor}
+            onColorSelect={this.onColorSelect}
+          />
+          <Button
+            onClick={this.toggleColoringMode}
+            active={isColoringModeEnabled}
+          >
+            {isColoringModeEnabled ? 'Stop coloring' : 'Start coloring'}
+          </Button>
+        </ButtonGroup>
+        <button
+          ref={this.addActiveAgentBtn}
+          className="btn btn-default"
+          onClick={() => this.addAgent({ active: 1 })}
+        >
+          A
+        </button>
+        <button
+          ref={this.addStaticAgentBtn}
+          className="btn btn-default"
+          onClick={() => this.addAgent({ active: 0 })}
+        >
+          S
+        </button>
+        <Button onClick={this.onGetGraphImage}>PNG</Button>
+      </ButtonToolbar>
+</div>
+    );
+  }
+
   render() {
     const {
       activePageInternalId,
@@ -342,19 +396,15 @@ export class AlvisGraphPanel extends React.Component<
       onMxGraphConnectionDeleted,
       onMxGraphConnectionModified,
       onHierarchyRemove,
-      onUndo,
-      onRedo,
     } = this.props;
-    const {
-      openedPagesInternalIds,
-      selectedColor,
-      isColoringModeEnabled,
-    } = this.state;
+    const { openedPagesInternalIds } = this.state;
 
     const pagesElements = openedPagesInternalIds.map((pageInternalId) =>
       this.getPageElements(pageInternalId),
     );
-    const pagesTabs = pagesElements.map((pageElements) => {
+    const pagesTabs = pagesElements.map((pageElements): React.ReactElement<
+      TabProps
+    > => {
       const page = pageElements.page;
       const agents = pageElements.agents;
       const ports = pageElements.ports;
@@ -362,7 +412,7 @@ export class AlvisGraphPanel extends React.Component<
       const pageInternalId = page.internalId;
 
       return (
-        <Tab eventKey={pageInternalId} title={page.name} key={pageInternalId}>
+        <Tab id={pageInternalId} label={page.name} key={pageInternalId}>
           <AlvisGraph
             ref={(alvisGraph) => {
               if (pageInternalId === activePageInternalId) {
@@ -393,68 +443,28 @@ export class AlvisGraphPanel extends React.Component<
         </Tab>
       );
     });
+    const className = classNames('c-alvis-graph-panel', 'modal-container');
 
     return (
-      <div className="modal-container">
+      <div className={className}>
         <NamePicker
           container={this}
           ref={(namePicker) => {
             this.namePicker = namePicker;
           }}
         />
-        <ButtonToolbar>
-          <ButtonGroup>
-            <Button onClick={() => this.activeAlvisGraph.zoomOut()}>
-              <Glyphicon glyph="zoom-out" />
-            </Button>
-            <Button onClick={() => this.activeAlvisGraph.zoomIn()}>
-              <Glyphicon glyph="zoom-in" />
-            </Button>
-          </ButtonGroup>
-          <ButtonGroup>
-            <Button onClick={() => onUndo()}>undo</Button>
-            <Button onClick={() => onRedo()}>redo</Button>
-          </ButtonGroup>
-          <ButtonGroup>
-            <ColorPicker
-              color={selectedColor}
-              onColorSelect={this.onColorSelect}
-            />
-            <Button
-              onClick={this.toggleColoringMode}
-              active={isColoringModeEnabled}
-            >
-              {isColoringModeEnabled ? 'Stop coloring' : 'Start coloring'}
-            </Button>
-          </ButtonGroup>
-          <button
-            ref={this.addActiveAgentBtn}
-            className="btn btn-default"
-            onClick={() => this.addAgent({ active: 1 })}
-          >
-            A
-          </button>
-          <button
-            ref={this.addStaticAgentBtn}
-            className="btn btn-default"
-            onClick={() => this.addAgent({ active: 0 })}
-          >
-            S
-          </button>
-          <Button onClick={this.onGetGraphImage}>PNG</Button>
-        </ButtonToolbar>
-        <div>
+        {this.renderBtns()}
+        <div className={'c-alvis-graph-panel__tabs'}>
           <Tabs
-            activeKey={activePageInternalId}
-            animation={false}
-            onSelect={(pageInternalId) => {
+            activeId={activePageInternalId}
+            onTabClick={(pageInternalId) => {
               onChangeActivePage(pageInternalId);
 
               if (document.activeElement instanceof HTMLElement) {
                 document.activeElement.blur();
               }
             }}
-            id="alvis-graph-panel"
+            onTabClose={() => {}}
           >
             {pagesTabs}
           </Tabs>

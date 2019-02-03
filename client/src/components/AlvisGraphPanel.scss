@@ -1,0 +1,13 @@
+.c-alvis-graph-panel {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+  &__btn-panel {
+    flex: 0 0 0%; // TODO: check if needed
+  }
+
+  &__tabs {
+    flex: 1 1 0%;
+  }
+}
