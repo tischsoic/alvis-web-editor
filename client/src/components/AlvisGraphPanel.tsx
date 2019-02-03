@@ -15,7 +15,7 @@ import {
   IAlvisProjectRecord,
   IAgent,
 } from '../models/alvisProject';
-import { List, Record } from 'immutable';
+import { List, Record, OrderedSet } from 'immutable';
 import {
   Nav,
   NavItem,
@@ -45,7 +45,8 @@ declare let canvg: any;
 
 export interface AlvisGraphPanelProps {
   alvisProject: IAlvisProjectRecord;
-  activePageInternalId: string | null;
+  activePageId: string | null;
+  openedPagesIds: OrderedSet<string>;
   projectId: number;
   onChangeActivePage: (newActivePageInternalId: string) => void;
 
@@ -74,8 +75,6 @@ export interface AlvisGraphPanelProps {
 }
 
 export interface AlvisGraphPanelState {
-  openedPagesInternalIds: List<string>;
-
   selectedColor: string;
   isColoringModeEnabled: boolean;
 }
@@ -87,13 +86,7 @@ export class AlvisGraphPanel extends React.Component<
   constructor(props: AlvisGraphPanelProps) {
     super(props);
 
-    const { activePageInternalId } = this.props;
-    const openedPagesInternalIds =
-      activePageInternalId !== null ? [activePageInternalId] : [];
     this.state = {
-      // TO DO: Check how initial state should be set - getInitialState() function overwriting
-      openedPagesInternalIds: List(openedPagesInternalIds),
-
       selectedColor: '#000',
       isColoringModeEnabled: false,
     };
@@ -109,42 +102,6 @@ export class AlvisGraphPanel extends React.Component<
   namePicker: NamePicker | null = null;
   addActiveAgentBtn: React.RefObject<HTMLButtonElement>;
   addStaticAgentBtn: React.RefObject<HTMLButtonElement>;
-
-  componentWillReceiveProps(nextProps: AlvisGraphPanelProps) {
-    const { projectId } = this.props;
-    const { openedPagesInternalIds } = this.state;
-    const nextActivePageInternalId = nextProps.activePageInternalId;
-
-    if (nextProps.projectId !== projectId) {
-      const openedPagesInternalIds =
-        nextActivePageInternalId !== null ? [nextActivePageInternalId] : [];
-      this.setState({
-        openedPagesInternalIds: List(openedPagesInternalIds),
-      });
-      return;
-    }
-
-    const nextPagesInternalIds = nextProps.alvisProject.pages.map(
-      (page) => page.internalId,
-    );
-    let newOpenedPagesInternalIds = openedPagesInternalIds.filter(
-      (openedPageInternalId) =>
-        nextPagesInternalIds.contains(openedPageInternalId),
-    );
-
-    if (
-      nextActivePageInternalId &&
-      !openedPagesInternalIds.contains(nextActivePageInternalId)
-    ) {
-      newOpenedPagesInternalIds = newOpenedPagesInternalIds.push(
-        nextActivePageInternalId,
-      );
-    }
-
-    this.setState({
-      openedPagesInternalIds: newOpenedPagesInternalIds,
-    });
-  }
 
   private getDragPreviewElement = (isActive: boolean) => {
     const dragElt = document.createElement('div');
@@ -162,7 +119,7 @@ export class AlvisGraphPanel extends React.Component<
   };
 
   private addAgent = (agentData: Partial<IAgent>) => {
-    const { onMxGraphAgentAdded, activePageInternalId } = this.props;
+    const { onMxGraphAgentAdded, activePageId: activePageInternalId } = this.props;
     const agent = agentRecordFactory({
       // TODO: create util for creating objects like this.
       internalId: newUuid(),
@@ -253,7 +210,7 @@ export class AlvisGraphPanel extends React.Component<
         onCut(elementsIds);
       }
     } else if (event.ctrlKey && event.keyCode === vKey) {
-      const { activePageInternalId } = this.props;
+      const { activePageId: activePageInternalId } = this.props;
 
       onPaste(activePageInternalId);
     }
@@ -336,54 +293,54 @@ export class AlvisGraphPanel extends React.Component<
 
     return (
       <div className={'c-alvis-graph-panel__btn-panel'}>
-      <ButtonToolbar>
-        <ButtonGroup>
-          <Button onClick={() => this.activeAlvisGraph.zoomOut()}>
-            <Glyphicon glyph="zoom-out" />
-          </Button>
-          <Button onClick={() => this.activeAlvisGraph.zoomIn()}>
-            <Glyphicon glyph="zoom-in" />
-          </Button>
-        </ButtonGroup>
-        <ButtonGroup>
-          <Button onClick={() => onUndo()}>undo</Button>
-          <Button onClick={() => onRedo()}>redo</Button>
-        </ButtonGroup>
-        <ButtonGroup>
-          <ColorPicker
-            color={selectedColor}
-            onColorSelect={this.onColorSelect}
-          />
-          <Button
-            onClick={this.toggleColoringMode}
-            active={isColoringModeEnabled}
+        <ButtonToolbar>
+          <ButtonGroup>
+            <Button onClick={() => this.activeAlvisGraph.zoomOut()}>
+              <Glyphicon glyph="zoom-out" />
+            </Button>
+            <Button onClick={() => this.activeAlvisGraph.zoomIn()}>
+              <Glyphicon glyph="zoom-in" />
+            </Button>
+          </ButtonGroup>
+          <ButtonGroup>
+            <Button onClick={() => onUndo()}>undo</Button>
+            <Button onClick={() => onRedo()}>redo</Button>
+          </ButtonGroup>
+          <ButtonGroup>
+            <ColorPicker
+              color={selectedColor}
+              onColorSelect={this.onColorSelect}
+            />
+            <Button
+              onClick={this.toggleColoringMode}
+              active={isColoringModeEnabled}
+            >
+              {isColoringModeEnabled ? 'Stop coloring' : 'Start coloring'}
+            </Button>
+          </ButtonGroup>
+          <button
+            ref={this.addActiveAgentBtn}
+            className="btn btn-default"
+            onClick={() => this.addAgent({ active: 1 })}
           >
-            {isColoringModeEnabled ? 'Stop coloring' : 'Start coloring'}
-          </Button>
-        </ButtonGroup>
-        <button
-          ref={this.addActiveAgentBtn}
-          className="btn btn-default"
-          onClick={() => this.addAgent({ active: 1 })}
-        >
-          A
-        </button>
-        <button
-          ref={this.addStaticAgentBtn}
-          className="btn btn-default"
-          onClick={() => this.addAgent({ active: 0 })}
-        >
-          S
-        </button>
-        <Button onClick={this.onGetGraphImage}>PNG</Button>
-      </ButtonToolbar>
-</div>
+            A
+          </button>
+          <button
+            ref={this.addStaticAgentBtn}
+            className="btn btn-default"
+            onClick={() => this.addAgent({ active: 0 })}
+          >
+            S
+          </button>
+          <Button onClick={this.onGetGraphImage}>PNG</Button>
+        </ButtonToolbar>
+      </div>
     );
   }
 
   render() {
     const {
-      activePageInternalId,
+      activePageId: activePageInternalId,
       onChangeActivePage,
       onMxGraphPageAdded,
       onMxGraphAgentAdded,
@@ -396,10 +353,10 @@ export class AlvisGraphPanel extends React.Component<
       onMxGraphConnectionDeleted,
       onMxGraphConnectionModified,
       onHierarchyRemove,
+      openedPagesIds,
     } = this.props;
-    const { openedPagesInternalIds } = this.state;
 
-    const pagesElements = openedPagesInternalIds.map((pageInternalId) =>
+    const pagesElements = openedPagesIds.map((pageInternalId) =>
       this.getPageElements(pageInternalId),
     );
     const pagesTabs = pagesElements.map((pageElements): React.ReactElement<

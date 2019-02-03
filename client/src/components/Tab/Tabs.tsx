@@ -14,6 +14,7 @@ interface TabsProps {
     | Iterable<React.ReactElement<TabProps>>;
   onTabClick: (id: string) => void;
   onTabClose: (id: string) => void;
+  noNavigation: boolean;
 }
 
 interface TabsState {}
@@ -25,7 +26,11 @@ function isIterable(
 }
 
 export class Tabs extends React.PureComponent<TabsProps, TabsState> {
-  static defaultProps = {};
+  static defaultProps = {
+    onTabClick: () => {},
+    onTabClose: () => {},
+    noNavigation: false,
+  };
 
   getChildrenArray(): React.ReactElement<TabProps>[] {
     const { children } = this.props;
@@ -80,11 +85,12 @@ export class Tabs extends React.PureComponent<TabsProps, TabsState> {
   }
 
   render() {
+    const { noNavigation } = this.props;
     const className = classNames('c-tabs');
 
     return (
       <div className={className}>
-        {this.renderTabNav()}
+        {!noNavigation && this.renderTabNav()}
         {this.renderTabs()}
       </div>
     );

@@ -58,7 +58,7 @@ import {
   agentRecordFactory,
   IAlvisProjectRecord,
 } from '../models/alvisProject';
-import { List, Map } from 'immutable';
+import { List, Map, OrderedSet } from 'immutable';
 import { LoginPanel } from '../components/LoginPanel';
 import { RegisterPanel } from '../components/RegisterPanel';
 import { SplitPane } from '../components/SplitPane/SplitPane';
@@ -86,9 +86,10 @@ export namespace Editor {
   export type AllProps = StateProps & DispatchProps & OwnProps;
 
   export interface OwnState {
-    codeEditorOpened: boolean;
+    codeEditorOpened: boolean; // TODO: replace with Enum - panelOpenedId = 'code-editor' | 'hierarchy-tree'
     hierarchyTreeOpened: boolean;
-    activePageInternalId: string;
+    activePageId: string;
+    openedPagesIds: OrderedSet<string>;
     aceEditorWidth: number;
     aceEditorHeight: number;
   }
@@ -108,7 +109,10 @@ export class EditorComponent extends React.Component<
     this.state = {
       codeEditorOpened: true,
       hierarchyTreeOpened: false,
-      activePageInternalId: systemPage ? systemPage.internalId : null,
+      activePageId: systemPage ? systemPage.internalId : null,
+      openedPagesIds: systemPage
+        ? OrderedSet([systemPage.internalId])
+        : OrderedSet(),
       aceEditorWidth: 0,
       aceEditorHeight: 0,
     };
@@ -118,23 +122,31 @@ export class EditorComponent extends React.Component<
   private aceEditorRef = React.createRef<AceEditor>();
 
   componentWillReceiveProps(nextProps: Editor.AllProps) {
-    const { activePageInternalId } = this.state;
+    const { activePageId, openedPagesIds } = this.state;
     const nextPages = nextProps.alvisProject.pages;
     const nextPagesInternalIds = nextPages.map((page) => page.internalId);
 
-    let nextActivePageInternalId: string = null;
-    if (nextPagesInternalIds.contains(activePageInternalId)) {
-      nextActivePageInternalId = activePageInternalId;
+    let nextActivePageId: string = null;
+    let nextOpenedPagesIds: OrderedSet<string> = OrderedSet();
+    if (nextPagesInternalIds.contains(activePageId)) {
+      nextActivePageId = activePageId;
+      nextOpenedPagesIds = openedPagesIds.intersect(
+        nextPagesInternalIds.keys(),
+      );
     } else if (
-      !nextPagesInternalIds.contains(activePageInternalId) &&
+      !nextPagesInternalIds.contains(activePageId) &&
       nextPagesInternalIds.size !== 0
     ) {
       const systemPage = this.getSystemPage(nextPages);
-      nextActivePageInternalId = systemPage.internalId;
+      const systemPageId = systemPage.internalId;
+
+      nextActivePageId = systemPageId;
+      nextOpenedPagesIds = OrderedSet([systemPageId]);
     }
 
     this.setState({
-      activePageInternalId: nextActivePageInternalId,
+      activePageId: nextActivePageId,
+      openedPagesIds: nextOpenedPagesIds,
     });
   }
 
@@ -166,11 +178,12 @@ export class EditorComponent extends React.Component<
     });
   }
 
-  setActivePageInternalId(pageInternalId: string) {
-    this.setState({
-      activePageInternalId: pageInternalId,
-    });
-  }
+  setActivePageInternalId = (pageId: string) => {
+    this.setState((state) => ({
+      activePageId: pageId,
+      openedPagesIds: state.openedPagesIds.add(pageId),
+    }));
+  };
 
   getElementByFn<T>(elements: List<T>, fn: (element: T) => boolean) {
     const elementIndex = elements.findIndex(fn);
@@ -198,6 +211,28 @@ export class EditorComponent extends React.Component<
 
   private onRightSplitPaneResize = (): void => {};
 
+  renderOutlineTabs() {
+    const { activePageId, openedPagesIds } = this.state;
+    const tabs = openedPagesIds
+      .map((pageId) => (
+        <Tab id={pageId} label={pageId} key={pageId}>
+          <div
+            className="c-editor__outline-container"
+            id={`c-editor__outline-${pageId}`}
+            style={{ position: 'absolute', width: '100%' }} // TODO: move to some scss etc.
+          />
+        </Tab>
+      ))
+      .toList();
+
+    // TODO: turns out our type system allows passing
+    return (
+      <Tabs activeId={activePageId} noNavigation>
+        {tabs}
+      </Tabs>
+    );
+  }
+
   render() {
     const {
       xml,
@@ -211,7 +246,8 @@ export class EditorComponent extends React.Component<
     const {
       codeEditorOpened,
       hierarchyTreeOpened,
-      activePageInternalId,
+      activePageId,
+      openedPagesIds,
       aceEditorWidth,
       aceEditorHeight,
     } = this.state;
@@ -283,12 +319,7 @@ export class EditorComponent extends React.Component<
                 )}
               </div>
             </div>
-            <div className="c-editor__outline">
-              <div
-                className="c-editor__outline-container"
-                id="c-editor__outline"
-              />
-            </div>
+            <div className="c-editor__outline">{this.renderOutlineTabs()}</div>
           </SplitPane>
           <SplitPane
             vertical={false}
@@ -299,10 +330,9 @@ export class EditorComponent extends React.Component<
               <AlvisGraphPanel
                 alvisProject={alvisProject}
                 projectId={0}
-                onChangeActivePage={(newActivePageInternalId: string) =>
-                  this.setActivePageInternalId(newActivePageInternalId)
-                }
-                activePageInternalId={activePageInternalId}
+                onChangeActivePage={this.setActivePageInternalId}
+                activePageId={activePageId}
+                openedPagesIds={openedPagesIds}
                 onMxGraphPageAdded={projectBindedActions.addPage}
                 onMxGraphAgentAdded={projectBindedActions.addAgent}
                 onMxGraphAgentDeleted={projectBindedActions.deleteAgent}
