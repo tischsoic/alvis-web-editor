@@ -1,0 +1,32 @@
+.c-split-pane {
+  display: flex;
+  flex: 1 1 0%;
+}
+
+.c-split-pane--horizontal {
+  flex-direction: column;
+}
+
+.c-split-pane__first-container {
+  flex: 0 0 auto;
+}
+
+.c-split-pane__second-container {
+  overflow: hidden;
+  flex: 1 1 0%;
+}
+
+.c-split-pane__dragbar:hover {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.c-split-pane__dragbar--vertical {
+  width: 5px;
+  cursor: ew-resize;
+}
+
+.c-split-pane__dragbar--horizontal {
+  height: 5px;
+  cursor: ns-resize;
+}

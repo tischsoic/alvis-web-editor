@@ -28,9 +28,11 @@ import {
 import { LoginPanel } from '../components/LoginPanel';
 import { RegisterPanel } from '../components/RegisterPanel';
 import { OpenProjectModal } from '../components/OpenProjectModal';
-import  MenuUsersPanel  from '../components/MenuUsersPanel/MenuUsersPanel';
+import MenuUsersPanel from '../components/MenuUsersPanel/MenuUsersPanel';
 import { Editor } from './Editor';
 import { Menu } from '../components/Menu/Menu';
+
+const style = require('./App.scss');
 
 export namespace App {
   export interface StateProps {
@@ -122,7 +124,7 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
           onProjectDelete={appBindedActions.deleteProject as any}
         />
         <div className="c-app__menu-panel">
-          <Menu /> 
+          <Menu />
           {/* <ButtonToolbar>
             <Button onClick={this.openAdministrationPanel}>
               Administration

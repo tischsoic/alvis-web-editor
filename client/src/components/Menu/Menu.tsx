@@ -3,6 +3,8 @@ import * as React from 'react';
 import { MenuButton } from '../MenuButton/MenuButton';
 import MenuUsersPanel from '../MenuUsersPanel/MenuUsersPanel';
 
+const style = require('./Menu.scss');
+
 enum PanelKey {
   Users,
 }

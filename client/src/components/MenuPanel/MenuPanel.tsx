@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+const style = require('./MenuPanel.scss');
+
 export interface MenuPanelProps {
   // opened: boolean;
 }

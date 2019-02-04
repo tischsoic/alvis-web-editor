@@ -65,6 +65,8 @@ import { SplitPane } from '../components/SplitPane/SplitPane';
 import { Tabs } from '../components/Tab/Tabs';
 import { Tab } from '../components/Tab/Tab';
 
+const style = require('./Editor.scss');
+
 export namespace Editor {
   export interface StateProps {
     // extends RouteComponentProps<void> {

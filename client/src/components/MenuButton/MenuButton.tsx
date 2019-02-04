@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+const style = require('./MenuButton.scss');
+
 export interface MenuButtonProps {
   pressed: boolean;
   onClick: () => void;

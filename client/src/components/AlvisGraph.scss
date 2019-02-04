@@ -1,5 +1,16 @@
 .c-alvis-graph {
-    height: 100%;
-    width: 100%;
-    position: absolute;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+}
+
+.c-alvis-graph__graph {
+  touch-action: none;
+  overflow: hidden;
+  height: 100%;
+}
+
+.c-alvis-graph__outline {
+  touch-action: none;
+  overflow: hidden;
 }

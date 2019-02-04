@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+const style = require('./SplitPane.scss');
+
 export interface SplitPaneProps {
   additionalClassName?: string; // TODO: this is how we mark props with default value in TS? Check it!
   vertical?: boolean; // change to type 'vertical' | 'horizontal or even create enum (?)
@@ -15,7 +17,10 @@ export interface SplitPaneState {
 }
 
 // TODO: when resizing fast user can by accident select some text etc.
-export class SplitPane extends React.PureComponent<SplitPaneProps, SplitPaneState> {
+export class SplitPane extends React.PureComponent<
+  SplitPaneProps,
+  SplitPaneState
+> {
   constructor(props: SplitPaneProps) {
     super(props);
 
