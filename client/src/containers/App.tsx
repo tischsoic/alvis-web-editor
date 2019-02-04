@@ -12,23 +12,8 @@ import {
 import { RootState } from '../reducers';
 import { IAppRecord } from '../models/app';
 
-import {
-  Nav,
-  NavItem,
-  Grid,
-  Row,
-  Col,
-  Modal,
-  ButtonToolbar,
-  ButtonGroup,
-  Button,
-  Glyphicon,
-} from 'react-bootstrap';
-
 import { LoginPanel } from '../components/LoginPanel';
 import { RegisterPanel } from '../components/RegisterPanel';
-import { OpenProjectModal } from '../components/OpenProjectModal';
-import MenuUsersPanel from '../components/MenuUsersPanel/MenuUsersPanel';
 import { Editor } from './Editor';
 import { Menu } from '../components/Menu/Menu';
 
@@ -48,81 +33,26 @@ export namespace App {
 
   export type AllProps = StateProps & DispatchProps & OwnProps;
 
-  export interface OwnState {
-    showAdministrationPanel: boolean;
-    showOpenProjectModal: boolean;
-  }
+  export interface OwnState {}
 }
 
 export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
   constructor(props?: App.AllProps, context?: App.OwnState) {
     super(props, context);
 
-    this.state = {
-      showAdministrationPanel: false,
-      showOpenProjectModal: true,
-    };
-
-    this.closeOpenProjectModal = this.closeOpenProjectModal.bind(this);
-    this.openOpenProjectModal = this.openOpenProjectModal.bind(this);
-    this.closeAdministrationPanel = this.closeAdministrationPanel.bind(this);
-    this.openAdministrationPanel = this.openAdministrationPanel.bind(this);
+    this.state = {};
   }
 
   componentDidMount() {
     this.props.appBindedActions.initializeApp();
   }
 
-  private showOpenProjectModal(show: boolean) {
-    this.setState({
-      showOpenProjectModal: show,
-    });
-  }
-
-  private showAdministrationPanel(show: boolean) {
-    this.setState({
-      showAdministrationPanel: show,
-    });
-  }
-
-  private closeOpenProjectModal() {
-    this.showOpenProjectModal(false);
-  }
-
-  private openOpenProjectModal() {
-    this.showOpenProjectModal(true);
-  }
-
-  private closeAdministrationPanel() {
-    this.showAdministrationPanel(false);
-  }
-
-  private openAdministrationPanel() {
-    this.showAdministrationPanel(true);
-  }
-
   render() {
     const { appData, appBindedActions } = this.props;
-    const { showOpenProjectModal, showAdministrationPanel } = this.state;
     const appOpened = appData.appOpened;
 
     const app = (
       <div className="c-app">
-        <OpenProjectModal
-          showModal={showOpenProjectModal}
-          projects={appData.projects}
-          projectsDuringFetching={appData.projectsDuringFetching}
-          projectsAlreadyFetched={appData.projectsAlreadyFetched}
-          openedProjectId={appData.openedProjectId}
-          onFetchProjects={appBindedActions.fetchProjects}
-          onModalClose={this.closeOpenProjectModal}
-          onProjectOpen={appBindedActions.openProjectFromServer}
-          onProjectFromFileCreate={
-            appBindedActions.createProjectFromFile as any
-          }
-          onEmptyProjectCreate={appBindedActions.createEmptyProject as any}
-          onProjectDelete={appBindedActions.deleteProject as any}
-        />
         <div className="c-app__menu-panel">
           <Menu />
           {/* <ButtonToolbar>

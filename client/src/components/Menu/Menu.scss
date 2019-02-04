@@ -1,7 +1,24 @@
-.c-menu__menu-panel {
+.c-menu {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+
+  &__user-info {
+    flex: 1;
+  }
+
+  &__buttons {
+    flex: 0 0 0%
+  }
+
+  &__filler {
+    flex: 3;
+  }
+
+  &__menu-panel {
     position: absolute;
     top: 0;
-    left: 76px;
+    left: 75px;
     z-index: 100;
     background: white;
     padding: 30px;
@@ -10,3 +27,4 @@
     border-width: 0 3px 0 0;
     height: 100%;
   }
+}
