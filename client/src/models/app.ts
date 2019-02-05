@@ -11,8 +11,7 @@ export interface IApp {
   projects: List<IProjectRecord>;
   projectsDuringFetching: boolean;
   projectsAlreadyFetched: boolean;
-  openedProjectName: string | null;
-  openedProjectId: number | null;
+  openedProject: IProjectRecord | null;
 
   users: List<IUserRecord>;
   usersDuringFetching: boolean;
@@ -25,8 +24,7 @@ const defaultAppRecord: IApp = {
   duringRegistration: false,
   bearerToken: null,
 
-  openedProjectName: null,
-  openedProjectId: null,
+  openedProject: null,
 
   projects: List(),
   projectsDuringFetching: false,

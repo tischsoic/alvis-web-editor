@@ -17,6 +17,7 @@ export default handleActions<
   | number
   | boolean
   | IUserRecord
+  | IProjectRecord
   | List<IUserRecord>
   | List<IProjectRecord>
 >(
@@ -81,11 +82,11 @@ export default handleActions<
     ) => {
       return state.set('usersDuringFetching', action.payload);
     },
-    [appActions.APP_SET_OPENED_PROJECT_ID]: (
+    [appActions.APP_SET_OPENED_PROJECT]: (
       state: IAppRecord,
-      action: Action<number>,
+      action: Action<IProjectRecord>,
     ) => {
-      return state.set('openedProjectId', action.payload);
+      return state.set('openedProject', action.payload);
     },
   },
   initialState,

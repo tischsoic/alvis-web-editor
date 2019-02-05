@@ -23,7 +23,7 @@ interface MenuProjectsPanelStateProps {
   projectsDuringFetching: boolean;
   projectsAlreadyFetched: boolean;
 
-  openedProjectId: number | null;
+  openedProject: IProjectRecord | null;
 }
 
 type MenuProjectsPanelDispatchProps = ReturnType<typeof mapDispatchToProps>;
@@ -75,6 +75,7 @@ const CustomListGroupItem = ({ projectName, onOpen, onDelete }) => {
 
 /////////////////////////////////////////////
 
+// TODO: consider using name MenuPanelProjects (MenuPanelUsers, MenuPanelAbout etc.)
 class MenuProjectsPanel extends React.Component<
   MenuProjectsPanelProps,
   MenuProjectsPanelState
@@ -156,7 +157,7 @@ class MenuProjectsPanel extends React.Component<
         key={project.id}
         projectName={project.name}
         onOpen={() => {
-          onProjectOpen(project.id);
+          onProjectOpen(project);
           onMenuPanelClose();
         }}
         onDelete={() => {
@@ -312,10 +313,10 @@ class MenuProjectsPanel extends React.Component<
       projects,
       projectsDuringFetching,
       projectsAlreadyFetched,
-      openedProjectId,
+      openedProject,
       onMenuPanelClose,
     } = this.props;
-    const someProjectIsOpened = openedProjectId !== null;
+    const someProjectIsOpened = openedProject !== null;
 
     return (
       <MenuPanel>
@@ -331,14 +332,14 @@ function mapStateToProps(state: RootState): MenuProjectsPanelStateProps {
     projects,
     projectsDuringFetching,
     projectsAlreadyFetched,
-    openedProjectId,
+    openedProject,
   } = state.app;
 
   return {
     projects,
     projectsDuringFetching,
     projectsAlreadyFetched,
-    openedProjectId,
+    openedProject,
   };
 }
 
