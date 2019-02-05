@@ -1,34 +1,50 @@
 import * as React from 'react';
-import {
-  IAgentRecord,
-  agentRecordFactory,
-  IPortRecord,
-  portRecordFactory,
-  IConnectionRecord,
-  connectionRecordFactory,
-  IIdentifiableElement,
-  IAlvisPageElement,
-  ConnectionDirection,
-  IPageRecord,
-} from '../models/alvisProject';
 import { List } from 'immutable';
+import { IProjectRecord } from '../../models/app';
+import { connect, Dispatch } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { RootState } from '../../reducers';
+import * as appActions from '../../actions/app';
+import { getValidationState } from '../../utils/reactBootstrapUtils';
+
 import {
-  Modal,
   Button,
   ButtonGroup,
-  Grid,
-  Row,
-  Col,
   ListGroup,
-  ListGroupItem,
   FormGroup,
   FormControl,
   ControlLabel,
   Glyphicon,
 } from 'react-bootstrap';
-import { AxiosPromise } from 'axios';
-import { IProjectRecord } from '../models/app';
-import { getValidationState } from '../utils/reactBootstrapUtils';
+import { MenuPanel } from '../MenuPanel/MenuPanel';
+
+interface MenuProjectsPanelStateProps {
+  projects: List<IProjectRecord>;
+  projectsDuringFetching: boolean;
+  projectsAlreadyFetched: boolean;
+
+  openedProjectId: number | null;
+}
+
+type MenuProjectsPanelDispatchProps = ReturnType<typeof mapDispatchToProps>;
+
+interface MenuProjectsPanelOwnProps {
+  onMenuPanelClose: () => void;
+}
+
+type MenuProjectsPanelProps = MenuProjectsPanelStateProps &
+  MenuProjectsPanelDispatchProps &
+  MenuProjectsPanelOwnProps;
+
+interface MenuProjectsPanelState {
+  newProjectName: string;
+  newProjectNameValid: boolean | null;
+
+  newProjectFiles: FileList;
+  newProjectFileValid: boolean | null;
+}
+
+//////////////////////////////////////////////
 
 /* tslint:disable-next-line:variable-name */
 const CustomListGroupItem = ({ projectName, onOpen, onDelete }) => {
@@ -57,37 +73,13 @@ const CustomListGroupItem = ({ projectName, onOpen, onDelete }) => {
   );
 };
 
-export interface OpenProjectModalProps {
-  showModal: boolean;
+/////////////////////////////////////////////
 
-  projects: List<IProjectRecord>;
-  projectsDuringFetching: boolean;
-  projectsAlreadyFetched: boolean;
-
-  openedProjectId: number | null;
-
-  onFetchProjects: () => void;
-  onModalClose: () => void;
-  onProjectOpen: (projectId: number) => void;
-  onProjectFromFileCreate: (name: string, sourceCodeFile: File) => AxiosPromise;
-  onEmptyProjectCreate: (projectName: string) => AxiosPromise;
-  onProjectDelete: (projectId: number) => AxiosPromise;
-}
-
-export interface OpenProjectModalState {
-  newProjectName: string;
-  newProjectNameValid: boolean | null;
-
-  newProjectFiles: FileList;
-  newProjectFileValid: boolean | null;
-}
-
-// TO DO: rename to ProjectManagerModal etc.
-export class OpenProjectModal extends React.Component<
-  OpenProjectModalProps,
-  OpenProjectModalState
+class MenuProjectsPanel extends React.Component<
+  MenuProjectsPanelProps,
+  MenuProjectsPanelState
 > {
-  constructor(props: OpenProjectModalProps) {
+  constructor(props: MenuProjectsPanelProps) {
     super(props);
 
     this.state = {
@@ -157,7 +149,7 @@ export class OpenProjectModal extends React.Component<
   }
 
   private renderProjectListItem(project: IProjectRecord) {
-    const { onProjectOpen, onModalClose, onProjectDelete } = this.props;
+    const { onProjectOpen, onProjectDelete, onMenuPanelClose } = this.props;
 
     return (
       <CustomListGroupItem
@@ -165,7 +157,7 @@ export class OpenProjectModal extends React.Component<
         projectName={project.name}
         onOpen={() => {
           onProjectOpen(project.id);
-          onModalClose();
+          onMenuPanelClose();
         }}
         onDelete={() => {
           onProjectDelete(project.id);
@@ -212,7 +204,7 @@ export class OpenProjectModal extends React.Component<
     const {
       onProjectFromFileCreate,
       onEmptyProjectCreate,
-      onModalClose,
+      onMenuPanelClose,
     } = this.props;
     const {
       newProjectName,
@@ -272,8 +264,9 @@ export class OpenProjectModal extends React.Component<
                 return;
               }
 
-              onEmptyProjectCreate(newProjectName).then(() => {
-                onModalClose();
+              // TODO: fix TS types
+              (onEmptyProjectCreate(newProjectName) as any).then(() => {
+                onMenuPanelClose();
                 // TO DO: update projects list data
               });
 
@@ -296,11 +289,13 @@ export class OpenProjectModal extends React.Component<
                 return;
               }
 
-              onProjectFromFileCreate(newProjectName, newProjectFiles[0]).then(
-                () => {
-                  onModalClose();
-                },
-              );
+              // TODO: fix TS types
+              (onProjectFromFileCreate(
+                newProjectName,
+                newProjectFiles[0],
+              ) as any).then(() => {
+                onMenuPanelClose();
+              });
 
               e.preventDefault();
             }}
@@ -314,45 +309,62 @@ export class OpenProjectModal extends React.Component<
 
   render() {
     const {
-      showModal,
       projects,
       projectsDuringFetching,
       projectsAlreadyFetched,
       openedProjectId,
-      onModalClose,
+      onMenuPanelClose,
     } = this.props;
     const someProjectIsOpened = openedProjectId !== null;
-    const modalTitle = 'Open';
 
     return (
-      <div>
-        <Modal show={showModal} onHide={onModalClose}>
-          <Modal.Header closeButton={someProjectIsOpened}>
-            <Modal.Title>{modalTitle}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Grid bsClass="container-fluid">
-              <Row>
-                <Col xs={6} md={6}>
-                  {this.renderProjectsList()}
-                </Col>
-                <Col xs={6} md={6}>
-                  <Col xs={12} md={12}>
-                    {this.renderNewProjectForm()}
-                  </Col>
-                </Col>
-              </Row>
-            </Grid>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button disabled={!someProjectIsOpened} onClick={onModalClose}>
-              Cancel
-            </Button>
-          </Modal.Footer>
-        </Modal>
-      </div>
+      <MenuPanel>
+        {this.renderProjectsList()}
+        {this.renderNewProjectForm()}
+      </MenuPanel>
     );
   }
 }
 
-// open/upload/empty
+function mapStateToProps(state: RootState): MenuProjectsPanelStateProps {
+  const {
+    projects,
+    projectsDuringFetching,
+    projectsAlreadyFetched,
+    openedProjectId,
+  } = state.app;
+
+  return {
+    projects,
+    projectsDuringFetching,
+    projectsAlreadyFetched,
+    openedProjectId,
+  };
+}
+
+function mapDispatchToProps(dispatch: Dispatch<any>) {
+  const {
+    fetchProjects,
+    openProjectFromServer,
+    createProjectFromFile,
+    createEmptyProject,
+    deleteProject,
+  } = appActions;
+
+  return bindActionCreators(
+    {
+      onFetchProjects: fetchProjects,
+      onProjectOpen: openProjectFromServer,
+      onProjectFromFileCreate: createProjectFromFile,
+      onEmptyProjectCreate: createEmptyProject,
+      onProjectDelete: deleteProject,
+    },
+    dispatch,
+  );
+}
+
+export default connect<
+  MenuProjectsPanelStateProps,
+  MenuProjectsPanelDispatchProps,
+  MenuProjectsPanelOwnProps
+>(mapStateToProps, mapDispatchToProps)(MenuProjectsPanel);

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as classNames from 'classnames';
 import * as mxClasses from 'mxgraphAllClasses';
 import {
   IAgentRecord,
@@ -14,15 +15,13 @@ import {
   IAlvisProjectRecord,
   IAgent,
 } from '../models/alvisProject';
-import { List, Record } from 'immutable';
+import { List, Record, OrderedSet } from 'immutable';
 import {
   Nav,
   NavItem,
   Grid,
   Row,
   Col,
-  Tab,
-  Tabs,
   Glyphicon,
   Button,
   ButtonGroup,
@@ -36,13 +35,18 @@ import { AlvisGraph } from './AlvisGraph';
 import { NamePicker } from './NamePicker';
 import { newUuid } from '../utils/uuidGenerator';
 import { mx } from '../utils/mx';
+import { Tab, TabProps } from './Tab/Tab';
+import { Tabs } from './Tab/Tabs';
+
+const style = require('./AlvisGraphPanel.scss');
 
 // TODO: add some TS types etc.
 declare let canvg: any;
 
 export interface AlvisGraphPanelProps {
   alvisProject: IAlvisProjectRecord;
-  activePageInternalId: string | null;
+  activePageId: string | null;
+  openedPagesIds: OrderedSet<string>;
   projectId: number;
   onChangeActivePage: (newActivePageInternalId: string) => void;
 
@@ -71,8 +75,6 @@ export interface AlvisGraphPanelProps {
 }
 
 export interface AlvisGraphPanelState {
-  openedPagesInternalIds: List<string>;
-
   selectedColor: string;
   isColoringModeEnabled: boolean;
 }
@@ -84,13 +86,7 @@ export class AlvisGraphPanel extends React.Component<
   constructor(props: AlvisGraphPanelProps) {
     super(props);
 
-    const { activePageInternalId } = this.props;
-    const openedPagesInternalIds =
-      activePageInternalId !== null ? [activePageInternalId] : [];
     this.state = {
-      // TO DO: Check how initial state should be set - getInitialState() function overwriting
-      openedPagesInternalIds: List(openedPagesInternalIds),
-
       selectedColor: '#000',
       isColoringModeEnabled: false,
     };
@@ -106,42 +102,6 @@ export class AlvisGraphPanel extends React.Component<
   namePicker: NamePicker | null = null;
   addActiveAgentBtn: React.RefObject<HTMLButtonElement>;
   addStaticAgentBtn: React.RefObject<HTMLButtonElement>;
-
-  componentWillReceiveProps(nextProps: AlvisGraphPanelProps) {
-    const { projectId } = this.props;
-    const { openedPagesInternalIds } = this.state;
-    const nextActivePageInternalId = nextProps.activePageInternalId;
-
-    if (nextProps.projectId !== projectId) {
-      const openedPagesInternalIds =
-        nextActivePageInternalId !== null ? [nextActivePageInternalId] : [];
-      this.setState({
-        openedPagesInternalIds: List(openedPagesInternalIds),
-      });
-      return;
-    }
-
-    const nextPagesInternalIds = nextProps.alvisProject.pages.map(
-      (page) => page.internalId,
-    );
-    let newOpenedPagesInternalIds = openedPagesInternalIds.filter(
-      (openedPageInternalId) =>
-        nextPagesInternalIds.contains(openedPageInternalId),
-    );
-
-    if (
-      nextActivePageInternalId &&
-      !openedPagesInternalIds.contains(nextActivePageInternalId)
-    ) {
-      newOpenedPagesInternalIds = newOpenedPagesInternalIds.push(
-        nextActivePageInternalId,
-      );
-    }
-
-    this.setState({
-      openedPagesInternalIds: newOpenedPagesInternalIds,
-    });
-  }
 
   private getDragPreviewElement = (isActive: boolean) => {
     const dragElt = document.createElement('div');
@@ -159,7 +119,7 @@ export class AlvisGraphPanel extends React.Component<
   };
 
   private addAgent = (agentData: Partial<IAgent>) => {
-    const { onMxGraphAgentAdded, activePageInternalId } = this.props;
+    const { onMxGraphAgentAdded, activePageId: activePageInternalId } = this.props;
     const agent = agentRecordFactory({
       // TODO: create util for creating objects like this.
       internalId: newUuid(),
@@ -250,7 +210,7 @@ export class AlvisGraphPanel extends React.Component<
         onCut(elementsIds);
       }
     } else if (event.ctrlKey && event.keyCode === vKey) {
-      const { activePageInternalId } = this.props;
+      const { activePageId: activePageInternalId } = this.props;
 
       onPaste(activePageInternalId);
     }
@@ -327,81 +287,12 @@ export class AlvisGraphPanel extends React.Component<
     }
   };
 
-  render() {
-    const {
-      activePageInternalId,
-      onChangeActivePage,
-      onMxGraphPageAdded,
-      onMxGraphAgentAdded,
-      onMxGraphAgentDeleted,
-      onMxGraphAgentModified,
-      onMxGraphPortAdded,
-      onMxGraphPortDeleted,
-      onMxGraphPortModified,
-      onMxGraphConnectionAdded,
-      onMxGraphConnectionDeleted,
-      onMxGraphConnectionModified,
-      onHierarchyRemove,
-      onUndo,
-      onRedo,
-    } = this.props;
-    const {
-      openedPagesInternalIds,
-      selectedColor,
-      isColoringModeEnabled,
-    } = this.state;
-
-    const pagesElements = openedPagesInternalIds.map((pageInternalId) =>
-      this.getPageElements(pageInternalId),
-    );
-    const pagesTabs = pagesElements.map((pageElements) => {
-      const page = pageElements.page;
-      const agents = pageElements.agents;
-      const ports = pageElements.ports;
-      const connections = pageElements.connections;
-      const pageInternalId = page.internalId;
-
-      return (
-        <Tab eventKey={pageInternalId} title={page.name} key={pageInternalId}>
-          <AlvisGraph
-            ref={(alvisGraph) => {
-              if (pageInternalId === activePageInternalId) {
-                this.activeAlvisGraph = alvisGraph;
-              }
-            }}
-            active={pageInternalId === activePageInternalId}
-            agents={agents}
-            ports={ports}
-            connections={connections}
-            pageInternalId={pageInternalId}
-            onChangeActivePage={onChangeActivePage}
-            onMxGraphPageAdded={onMxGraphPageAdded}
-            onMxGraphAgentAdded={onMxGraphAgentAdded}
-            onMxGraphAgentDeleted={onMxGraphAgentDeleted}
-            onMxGraphAgentModified={onMxGraphAgentModified}
-            onMxGraphPortAdded={onMxGraphPortAdded}
-            onMxGraphPortDeleted={onMxGraphPortDeleted}
-            onMxGraphPortModified={onMxGraphPortModified}
-            onMxGraphConnectionAdded={onMxGraphConnectionAdded}
-            onMxGraphConnectionDeleted={onMxGraphConnectionDeleted}
-            onMxGraphConnectionModified={onMxGraphConnectionModified}
-            onHierarchyRemove={onHierarchyRemove}
-            onAgentClick={this.onAgentClick}
-            onPortClick={this.onPortClick}
-            getNameFromUser={this.getNameFromUser}
-          />
-        </Tab>
-      );
-    });
+  renderBtns() {
+    const { onUndo, onRedo } = this.props;
+    const { selectedColor, isColoringModeEnabled } = this.state;
 
     return (
-      <div className="modal-container">
-        <NamePicker
-          container={this}
-          ref={(namePicker) => {
-            this.namePicker = namePicker;
-          }}
-        />
+      <div className={'c-alvis-graph-panel__btn-panel'}>
         <ButtonToolbar>
           <ButtonGroup>
             <Button onClick={() => this.activeAlvisGraph.zoomOut()}>
@@ -443,18 +334,94 @@ export class AlvisGraphPanel extends React.Component<
           </button>
           <Button onClick={this.onGetGraphImage}>PNG</Button>
         </ButtonToolbar>
-        <div>
+      </div>
+    );
+  }
+
+  render() {
+    const {
+      activePageId: activePageInternalId,
+      onChangeActivePage,
+      onMxGraphPageAdded,
+      onMxGraphAgentAdded,
+      onMxGraphAgentDeleted,
+      onMxGraphAgentModified,
+      onMxGraphPortAdded,
+      onMxGraphPortDeleted,
+      onMxGraphPortModified,
+      onMxGraphConnectionAdded,
+      onMxGraphConnectionDeleted,
+      onMxGraphConnectionModified,
+      onHierarchyRemove,
+      openedPagesIds,
+    } = this.props;
+
+    const pagesElements = openedPagesIds.map((pageInternalId) =>
+      this.getPageElements(pageInternalId),
+    );
+    const pagesTabs = pagesElements.map((pageElements): React.ReactElement<
+      TabProps
+    > => {
+      const page = pageElements.page;
+      const agents = pageElements.agents;
+      const ports = pageElements.ports;
+      const connections = pageElements.connections;
+      const pageInternalId = page.internalId;
+
+      return (
+        <Tab id={pageInternalId} label={page.name} key={pageInternalId}>
+          <AlvisGraph
+            ref={(alvisGraph) => {
+              if (pageInternalId === activePageInternalId) {
+                this.activeAlvisGraph = alvisGraph;
+              }
+            }}
+            active={pageInternalId === activePageInternalId}
+            agents={agents}
+            ports={ports}
+            connections={connections}
+            pageInternalId={pageInternalId}
+            onChangeActivePage={onChangeActivePage}
+            onMxGraphPageAdded={onMxGraphPageAdded}
+            onMxGraphAgentAdded={onMxGraphAgentAdded}
+            onMxGraphAgentDeleted={onMxGraphAgentDeleted}
+            onMxGraphAgentModified={onMxGraphAgentModified}
+            onMxGraphPortAdded={onMxGraphPortAdded}
+            onMxGraphPortDeleted={onMxGraphPortDeleted}
+            onMxGraphPortModified={onMxGraphPortModified}
+            onMxGraphConnectionAdded={onMxGraphConnectionAdded}
+            onMxGraphConnectionDeleted={onMxGraphConnectionDeleted}
+            onMxGraphConnectionModified={onMxGraphConnectionModified}
+            onHierarchyRemove={onHierarchyRemove}
+            onAgentClick={this.onAgentClick}
+            onPortClick={this.onPortClick}
+            getNameFromUser={this.getNameFromUser}
+          />
+        </Tab>
+      );
+    });
+    const className = classNames('c-alvis-graph-panel', 'modal-container');
+
+    return (
+      <div className={className}>
+        <NamePicker
+          container={this}
+          ref={(namePicker) => {
+            this.namePicker = namePicker;
+          }}
+        />
+        {this.renderBtns()}
+        <div className={'c-alvis-graph-panel__tabs'}>
           <Tabs
-            activeKey={activePageInternalId}
-            animation={false}
-            onSelect={(pageInternalId) => {
+            activeId={activePageInternalId}
+            onTabClick={(pageInternalId) => {
               onChangeActivePage(pageInternalId);
 
               if (document.activeElement instanceof HTMLElement) {
                 document.activeElement.blur();
               }
             }}
-            id="alvis-graph-panel"
+            onTabClose={() => {}}
           >
             {pagesTabs}
           </Tabs>

@@ -1,0 +1,22 @@
+.c-menu-button {
+  display: inline-block; /* ? */
+  color: #333;
+  background-color: #fff;
+  border-color: #ccc;
+  border-width: 1px 0;
+  border-style: solid;
+  width: 75px;
+  height: 50px;
+}
+
+.c-menu-button--pressed {
+  background-color: #e6e6e6;
+  border-color: #8c8c8c;
+}
+
+.c-menu-button:hover,
+.c-menu-button:focus,
+.c-menu-button--pressed {
+  background-color: #e6e6e6;
+  border-color: #8c8c8c;
+}

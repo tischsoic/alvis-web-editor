@@ -12,24 +12,12 @@ import {
 import { RootState } from '../reducers';
 import { IAppRecord } from '../models/app';
 
-import {
-  Nav,
-  NavItem,
-  Grid,
-  Row,
-  Col,
-  Modal,
-  ButtonToolbar,
-  ButtonGroup,
-  Button,
-  Glyphicon,
-} from 'react-bootstrap';
-
 import { LoginPanel } from '../components/LoginPanel';
 import { RegisterPanel } from '../components/RegisterPanel';
-import { OpenProjectModal } from '../components/OpenProjectModal';
-import { AdministrationPanel } from '../components/AdministrationPanel';
 import { Editor } from './Editor';
+import { Menu } from '../components/Menu/Menu';
+
+const style = require('./App.scss');
 
 export namespace App {
   export interface StateProps {
@@ -45,131 +33,46 @@ export namespace App {
 
   export type AllProps = StateProps & DispatchProps & OwnProps;
 
-  export interface OwnState {
-    showAdministrationPanel: boolean;
-    showOpenProjectModal: boolean;
-  }
+  export interface OwnState {}
 }
 
 export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
   constructor(props?: App.AllProps, context?: App.OwnState) {
     super(props, context);
 
-    this.state = {
-      showAdministrationPanel: false,
-      showOpenProjectModal: true,
-    };
-
-    this.closeOpenProjectModal = this.closeOpenProjectModal.bind(this);
-    this.openOpenProjectModal = this.openOpenProjectModal.bind(this);
-    this.closeAdministrationPanel = this.closeAdministrationPanel.bind(this);
-    this.openAdministrationPanel = this.openAdministrationPanel.bind(this);
+    this.state = {};
   }
 
   componentDidMount() {
     this.props.appBindedActions.initializeApp();
   }
 
-  private showOpenProjectModal(show: boolean) {
-    this.setState({
-      showOpenProjectModal: show,
-    });
-  }
-
-  private showAdministrationPanel(show: boolean) {
-    this.setState({
-      showAdministrationPanel: show,
-    });
-  }
-
-  private closeOpenProjectModal() {
-    this.showOpenProjectModal(false);
-  }
-
-  private openOpenProjectModal() {
-    this.showOpenProjectModal(true);
-  }
-
-  private closeAdministrationPanel() {
-    this.showAdministrationPanel(false);
-  }
-
-  private openAdministrationPanel() {
-    this.showAdministrationPanel(true);
-  }
-
   render() {
     const { appData, appBindedActions } = this.props;
-    const { showOpenProjectModal, showAdministrationPanel } = this.state;
     const appOpened = appData.appOpened;
 
     const app = (
-      <div>
-        <Modal
-          bsSize="large"
-          aria-labelledby="contained-modal-title-lg"
-          show={showAdministrationPanel}
-          onHide={this.closeAdministrationPanel}
-        >
-          <Modal.Header closeButton>
-            <Modal.Title id="contained-modal-title-lg">
+      <div className="c-app">
+        <div className="c-app__menu-panel">
+          <Menu />
+          {/* <ButtonToolbar>
+            <Button onClick={this.openAdministrationPanel}>
               Administration
-            </Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <AdministrationPanel
-              users={appData.users}
-              usersAlreadyFetched={appData.usersAlreadyFetched}
-              usersDuringFetching={appData.usersAlreadyFetched}
-              fetchUsers={appBindedActions.fetchUsers as any}
-              onUserSetActivated={appBindedActions.activateUser as any}
-            />
-          </Modal.Body>
-          <Modal.Footer>
-            <Button onClick={this.closeAdministrationPanel}>Close</Button>
-          </Modal.Footer>
-        </Modal>
-        <OpenProjectModal
-          showModal={showOpenProjectModal}
-          projects={appData.projects}
-          projectsDuringFetching={appData.projectsDuringFetching}
-          projectsAlreadyFetched={appData.projectsAlreadyFetched}
-          openedProjectId={appData.openedProjectId}
-          onFetchProjects={appBindedActions.fetchProjects}
-          onModalClose={this.closeOpenProjectModal}
-          onProjectOpen={appBindedActions.openProjectFromServer}
-          onProjectFromFileCreate={
-            appBindedActions.createProjectFromFile as any
-          }
-          onEmptyProjectCreate={appBindedActions.createEmptyProject as any}
-          onProjectDelete={appBindedActions.deleteProject as any}
-        />
-        <Grid fluid={true}>
-          <Row>
-            <Col>
-              <ButtonToolbar>
-                <Button onClick={this.openAdministrationPanel}>
-                  Administration
-                </Button>
-                <Button onClick={this.openOpenProjectModal}>
-                  <Glyphicon glyph="open" />Projects Manager
-                </Button>
-                <ButtonGroup>
-                  <Button onClick={appBindedActions.saveProjectToServer}>
-                    <Glyphicon glyph="save" />Save
-                  </Button>
-                  {/* <Button><Glyphicon glyph='refresh' />Autosave</Button> */}
-                </ButtonGroup>
-                <Button onClick={appBindedActions.signOut}>Sign out</Button>
-              </ButtonToolbar>
-            </Col>
-          </Row>
-          <Row>
-            <Col>
-              <Editor />
-            </Col>
-          </Row>
-        </Grid>
+            </Button>
+            <Button onClick={this.openOpenProjectModal}>
+              <Glyphicon glyph="open" />Projects Manager
+            </Button>
+            <ButtonGroup>
+              <Button onClick={appBindedActions.saveProjectToServer}>
+                <Glyphicon glyph="save" />Save
+              </Button>
+            </ButtonGroup>
+            <Button onClick={appBindedActions.signOut}>Sign out</Button>
+          </ButtonToolbar> */}
+        </div>
+        <div className="c-app__editor">
+          <Editor />
+        </div>
       </div>
     );
 

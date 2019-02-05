@@ -58,9 +58,14 @@ import {
   agentRecordFactory,
   IAlvisProjectRecord,
 } from '../models/alvisProject';
-import { List, Map } from 'immutable';
+import { List, Map, OrderedSet } from 'immutable';
 import { LoginPanel } from '../components/LoginPanel';
 import { RegisterPanel } from '../components/RegisterPanel';
+import { SplitPane } from '../components/SplitPane/SplitPane';
+import { Tabs } from '../components/Tab/Tabs';
+import { Tab } from '../components/Tab/Tab';
+
+const style = require('./Editor.scss');
 
 export namespace Editor {
   export interface StateProps {
@@ -83,9 +88,12 @@ export namespace Editor {
   export type AllProps = StateProps & DispatchProps & OwnProps;
 
   export interface OwnState {
-    codeEditorOpened: boolean;
+    codeEditorOpened: boolean; // TODO: replace with Enum - panelOpenedId = 'code-editor' | 'hierarchy-tree'
     hierarchyTreeOpened: boolean;
-    activePageInternalId: string;
+    activePageId: string;
+    openedPagesIds: OrderedSet<string>;
+    aceEditorWidth: number;
+    aceEditorHeight: number;
   }
 }
 
@@ -103,29 +111,59 @@ export class EditorComponent extends React.Component<
     this.state = {
       codeEditorOpened: true,
       hierarchyTreeOpened: false,
-      activePageInternalId: systemPage ? systemPage.internalId : null,
+      activePageId: systemPage ? systemPage.internalId : null,
+      openedPagesIds: systemPage
+        ? OrderedSet([systemPage.internalId])
+        : OrderedSet(),
+      aceEditorWidth: 0,
+      aceEditorHeight: 0,
     };
   }
 
+  private topContainerContentRef = React.createRef<HTMLDivElement>();
+  private aceEditorRef = React.createRef<AceEditor>();
+
   componentWillReceiveProps(nextProps: Editor.AllProps) {
-    const { activePageInternalId } = this.state;
+    const { activePageId, openedPagesIds } = this.state;
     const nextPages = nextProps.alvisProject.pages;
     const nextPagesInternalIds = nextPages.map((page) => page.internalId);
 
-    let nextActivePageInternalId: string = null;
-    if (nextPagesInternalIds.contains(activePageInternalId)) {
-      nextActivePageInternalId = activePageInternalId;
+    let nextActivePageId: string = null;
+    let nextOpenedPagesIds: OrderedSet<string> = OrderedSet();
+    if (nextPagesInternalIds.contains(activePageId)) {
+      nextActivePageId = activePageId;
+      nextOpenedPagesIds = openedPagesIds.intersect(
+        nextPagesInternalIds.keys(),
+      );
     } else if (
-      !nextPagesInternalIds.contains(activePageInternalId) &&
+      !nextPagesInternalIds.contains(activePageId) &&
       nextPagesInternalIds.size !== 0
     ) {
       const systemPage = this.getSystemPage(nextPages);
-      nextActivePageInternalId = systemPage.internalId;
+      const systemPageId = systemPage.internalId;
+
+      nextActivePageId = systemPageId;
+      nextOpenedPagesIds = OrderedSet([systemPageId]);
     }
 
     this.setState({
-      activePageInternalId: nextActivePageInternalId,
+      activePageId: nextActivePageId,
+      openedPagesIds: nextOpenedPagesIds,
     });
+  }
+
+  componentDidUpdate() {
+    const { aceEditorWidth, aceEditorHeight } = this.state;
+    const aceEditorContainer = this.topContainerContentRef.current;
+    const { offsetWidth, offsetHeight } = aceEditorContainer;
+
+    // TODO: It is a little bit unsafe, can we change it?
+    if (aceEditorWidth !== offsetWidth || aceEditorHeight !== offsetHeight) {
+      this.setState({
+        aceEditorWidth: offsetWidth,
+        aceEditorHeight: offsetHeight,
+      });
+    }
   }
 
   showHierarchyTree() {
@@ -142,11 +180,12 @@ export class EditorComponent extends React.Component<
     });
   }
 
-  setActivePageInternalId(pageInternalId: string) {
-    this.setState({
-      activePageInternalId: pageInternalId,
-    });
-  }
+  setActivePageInternalId = (pageId: string) => {
+    this.setState((state) => ({
+      activePageId: pageId,
+      openedPagesIds: state.openedPagesIds.add(pageId),
+    }));
+  };
 
   getElementByFn<T>(elements: List<T>, fn: (element: T) => boolean) {
     const elementIndex = elements.findIndex(fn);
@@ -158,6 +197,42 @@ export class EditorComponent extends React.Component<
   getSystemPage(pages: Map<string, IPageRecord>) {
     // TODO: store 'System' in some global variable
     return pages.find((page) => page.name === 'System');
+  }
+
+  // TODO: to avoid using forceUpdate we should store SplitPane width/height not in SplitPane but in this component
+  // and pass this width/height to SplitPane
+  private onSplitPaneResize = (): void => {
+    const aceEditor = this.aceEditorRef.current;
+
+    if (aceEditor) {
+      this.forceUpdate();
+      // console.log(aceEditor);
+      // aceEditor.editor
+    }
+  };
+
+  private onRightSplitPaneResize = (): void => {};
+
+  renderOutlineTabs() {
+    const { activePageId, openedPagesIds } = this.state;
+    const tabs = openedPagesIds
+      .map((pageId) => (
+        <Tab id={pageId} label={pageId} key={pageId}>
+          <div
+            className="c-editor__outline-container"
+            id={`c-editor__outline-${pageId}`}
+            style={{ position: 'absolute', width: '100%' }} // TODO: move to some scss etc.
+          />
+        </Tab>
+      ))
+      .toList();
+
+    // TODO: turns out our type system allows passing
+    return (
+      <Tabs activeId={activePageId} noNavigation>
+        {tabs}
+      </Tabs>
+    );
   }
 
   render() {
@@ -173,7 +248,10 @@ export class EditorComponent extends React.Component<
     const {
       codeEditorOpened,
       hierarchyTreeOpened,
-      activePageInternalId,
+      activePageId,
+      openedPagesIds,
+      aceEditorWidth,
+      aceEditorHeight,
     } = this.state;
     const { appData } = this.props;
 
@@ -182,78 +260,107 @@ export class EditorComponent extends React.Component<
     };
 
     return (
-      <div>
-        <div style={{ width: '33%', float: 'left' }}>
-          <Nav bsStyle="tabs" activeKey={codeEditorOpened ? '1' : '2'}>
-            <NavItem
-              eventKey="1"
-              onClick={() => {
-                this.showCodeEditor();
-              }}
-            >
-              Editor
-            </NavItem>
-            <NavItem
-              eventKey="2"
-              onClick={() => {
-                this.showHierarchyTree();
-              }}
-            >
-              Hierarchy
-            </NavItem>
-          </Nav>
-          {codeEditorOpened ? (
-            <AceEditor
-              mode="alvis"
-              theme="xcode"
-              onChange={onEditorChange}
-              name="alvisCode_1"
-              value={alvisProject.code.text}
-              editorProps={{ $blockScrolling: true }}
-              setOptions={{
-                enableBasicAutocompletion: true,
-                enableLiveAutocompletion: true,
-              }}
-              width="100%"
-            />
-          ) : (
-            <HierarchyTree
-              pages={pages}
-              agents={agents}
-              onPageClick={(page) =>
-                this.setActivePageInternalId(page.internalId)
-              }
-              onMxGraphPageDeleted={projectBindedActions.deletePage}
-            />
-          )}
-        </div>
-        <div style={{ width: '67%', float: 'left' }}>
-          <AlvisGraphPanel
-            alvisProject={alvisProject}
-            projectId={0}
-            onChangeActivePage={(newActivePageInternalId: string) =>
-              this.setActivePageInternalId(newActivePageInternalId)
-            }
-            activePageInternalId={activePageInternalId}
-            onMxGraphPageAdded={projectBindedActions.addPage}
-            onMxGraphAgentAdded={projectBindedActions.addAgent}
-            onMxGraphAgentDeleted={projectBindedActions.deleteAgent}
-            onMxGraphAgentModified={projectBindedActions.modifyAgent}
-            onMxGraphPortAdded={projectBindedActions.addPort}
-            onMxGraphPortDeleted={projectBindedActions.deletePort}
-            onMxGraphPortModified={projectBindedActions.modifyPort}
-            onMxGraphConnectionAdded={projectBindedActions.addConnection}
-            onMxGraphConnectionDeleted={projectBindedActions.deleteConnection}
-            onMxGraphConnectionModified={projectBindedActions.modifyConnection}
-            onHierarchyRemove={projectBindedActions.removeHierarchy}
-            onUndo={projectBindedActions.undo}
-            onRedo={projectBindedActions.redo}
-            onCopy={projectBindedActions.copy}
-            onCut={projectBindedActions.cut}
-            onPaste={projectBindedActions.paste}
-          />
-        </div>
-      </div>
+      <>
+        <SplitPane
+          additionalClassName="c-editor__split-pane"
+          onResize={this.onSplitPaneResize}
+        >
+          <SplitPane
+            vertical={false}
+            onResize={this.onSplitPaneResize}
+            additionalClassName="c-editor__split-pane-horizontal-fst"
+          >
+            <div className="c-editor__top-container-wrapper">
+              <Nav bsStyle="tabs" activeKey={codeEditorOpened ? '1' : '2'}>
+                <NavItem
+                  eventKey="1"
+                  onClick={() => {
+                    this.showCodeEditor();
+                  }}
+                >
+                  Editor
+                </NavItem>
+                <NavItem
+                  eventKey="2"
+                  onClick={() => {
+                    this.showHierarchyTree();
+                  }}
+                >
+                  Hierarchy
+                </NavItem>
+              </Nav>
+              <div
+                className="c-editor__top-container-content"
+                ref={this.topContainerContentRef}
+              >
+                {codeEditorOpened ? (
+                  <AceEditor
+                    mode="alvis"
+                    theme="xcode"
+                    onChange={onEditorChange}
+                    name="alvisCode_1"
+                    value={alvisProject.code.text}
+                    editorProps={{ $blockScrolling: false }}
+                    setOptions={{
+                      enableBasicAutocompletion: true,
+                      enableLiveAutocompletion: true,
+                    }}
+                    width={`${aceEditorWidth}px`}
+                    height={`${aceEditorHeight}px`}
+                    ref={this.aceEditorRef}
+                  />
+                ) : (
+                  <HierarchyTree
+                    pages={pages}
+                    agents={agents}
+                    onPageClick={(page) =>
+                      this.setActivePageInternalId(page.internalId)
+                    }
+                    onMxGraphPageDeleted={projectBindedActions.deletePage}
+                  />
+                )}
+              </div>
+            </div>
+            <div className="c-editor__outline">{this.renderOutlineTabs()}</div>
+          </SplitPane>
+          <SplitPane
+            vertical={false}
+            onResize={this.onRightSplitPaneResize}
+            additionalClassName="c-editor__split-pane-horizontal-snd"
+          >
+            <div className="c-editor__graph-editor">
+              <AlvisGraphPanel
+                alvisProject={alvisProject}
+                projectId={0}
+                onChangeActivePage={this.setActivePageInternalId}
+                activePageId={activePageId}
+                openedPagesIds={openedPagesIds}
+                onMxGraphPageAdded={projectBindedActions.addPage}
+                onMxGraphAgentAdded={projectBindedActions.addAgent}
+                onMxGraphAgentDeleted={projectBindedActions.deleteAgent}
+                onMxGraphAgentModified={projectBindedActions.modifyAgent}
+                onMxGraphPortAdded={projectBindedActions.addPort}
+                onMxGraphPortDeleted={projectBindedActions.deletePort}
+                onMxGraphPortModified={projectBindedActions.modifyPort}
+                onMxGraphConnectionAdded={projectBindedActions.addConnection}
+                onMxGraphConnectionDeleted={
+                  projectBindedActions.deleteConnection
+                }
+                onMxGraphConnectionModified={
+                  projectBindedActions.modifyConnection
+                }
+                onHierarchyRemove={projectBindedActions.removeHierarchy}
+                onUndo={projectBindedActions.undo}
+                onRedo={projectBindedActions.redo}
+                onCopy={projectBindedActions.copy}
+                onCut={projectBindedActions.cut}
+                onPaste={projectBindedActions.paste}
+              />
+            </div>
+            <div className="c-editor__console">Console:</div>
+          </SplitPane>
+        </SplitPane>
+      </>
     );
   }
 }

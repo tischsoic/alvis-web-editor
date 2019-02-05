@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as classNames from 'classnames';
 import * as mxClasses from 'mxgraphAllClasses';
 import modifyMxGraph from '../utils/mxGraphModifier';
 import { mx } from '../utils/mx';
@@ -22,6 +23,8 @@ import {
 } from '../models/alvisProject';
 import { List, Map, Set } from 'immutable';
 import { newUuid } from '../utils/uuidGenerator';
+
+const style = require('./AlvisGraph.scss');
 
 // TO DO: Problem with moving edeges between ports is because of
 // mxEdgeHandler.prototype.createMarker = function()
@@ -360,8 +363,9 @@ export class AlvisGraph extends React.Component<
   };
 
   instantiateOutline() {
+    const { pageInternalId } = this.props;
     const outlineDiv = document.getElementById(
-      'alvis-graph-outline-container-' + this.randomNumber,
+      `c-editor__outline-${pageInternalId}`,
     );
     const outline = new mx.mxOutline(this.graph, outlineDiv);
 
@@ -441,16 +445,13 @@ export class AlvisGraph extends React.Component<
   render() {
     console.log(this.props);
     console.log('rendering AlivGraph COmponent');
+    const className = classNames('c-alvis-graph', 'modal-container');
 
     return (
-      <div className="modal-container">
+      <div className={className}>
         <div
+          className="c-alvis-graph__graph"
           id={'alvis-graph-container-' + this.randomNumber}
-          style={{ overflow: 'hidden', height: '400px' }}
-        />
-        <div
-          id={'alvis-graph-outline-container-' + this.randomNumber}
-          style={{ height: '200px' }}
         />
       </div>
     );

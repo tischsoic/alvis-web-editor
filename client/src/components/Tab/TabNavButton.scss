@@ -1,0 +1,27 @@
+.c-tab-nav-button {
+  display: block;
+  color: #555;
+  cursor: default;
+  background-color: #fff;
+  padding: 5px 10px;
+  border-radius: 2px 2px 0 0;
+  border: 2px solid #fff;
+  cursor: pointer;
+
+  &:hover {
+    color: #333;
+    background-color: #ddd;
+  }
+
+  &--active {
+    border: 1px solid #ddd;
+    border-bottom-color: transparent;
+    margin-bottom: -1px;
+    cursor: default;
+
+    &:hover {
+      color: #555;
+      background-color: #fff;
+    }
+  }
+}
