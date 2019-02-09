@@ -51,21 +51,12 @@ export class AppComponent extends React.Component<App.AllProps, App.OwnState> {
     const { appData, appBindedActions } = this.props;
     const appOpened = appData.appOpened;
 
+    // TODO: consider using <main> HTML5 tag
     const app = (
-      <div className="c-app">
+      <div className="c-app"> 
         <div className="c-app__menu-panel">
           <Menu />
-          {/* <ButtonToolbar>
-            <Button onClick={this.openAdministrationPanel}>
-              Administration
-            </Button>
-            <Button onClick={this.openOpenProjectModal}>
-              <Glyphicon glyph="open" />Projects Manager
-            </Button>
-            <ButtonGroup>
-              <Button onClick={appBindedActions.saveProjectToServer}>
-                <Glyphicon glyph="save" />Save
-              </Button>
+          {/* 
             </ButtonGroup>
             <Button onClick={appBindedActions.signOut}>Sign out</Button>
           </ButtonToolbar> */}

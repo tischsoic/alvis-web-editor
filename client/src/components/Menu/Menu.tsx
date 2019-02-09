@@ -55,6 +55,7 @@ export class Menu extends React.Component<MenuProps, MenuState> {
     this.togglePanel(PanelKey.About);
   };
 
+  // TODO: maybe better idea would be to use React-router to manage panel opening/hiding ?
   renderMenuPanel() {
     const { openedPanel } = this.state;
     let panel = null;

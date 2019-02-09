@@ -37,6 +37,7 @@ import { newUuid } from '../utils/uuidGenerator';
 import { mx } from '../utils/mx';
 import { Tab, TabProps } from './Tab/Tab';
 import { Tabs } from './Tab/Tabs';
+import EditorButtonSave from './EditorSaveButton/EditorButtonSave';
 
 const style = require('./AlvisGraphPanel.scss');
 
@@ -72,6 +73,8 @@ export interface AlvisGraphPanelProps {
   onCopy: (elementsIds: string[]) => any;
   onCut: (elementsIds: string[]) => any;
   onPaste: (pageId: string) => any;
+
+  // saveProjectToServer: () => void
 }
 
 export interface AlvisGraphPanelState {
@@ -119,7 +122,10 @@ export class AlvisGraphPanel extends React.Component<
   };
 
   private addAgent = (agentData: Partial<IAgent>) => {
-    const { onMxGraphAgentAdded, activePageId: activePageInternalId } = this.props;
+    const {
+      onMxGraphAgentAdded,
+      activePageId: activePageInternalId,
+    } = this.props;
     const agent = agentRecordFactory({
       // TODO: create util for creating objects like this.
       internalId: newUuid(),
@@ -294,6 +300,7 @@ export class AlvisGraphPanel extends React.Component<
     return (
       <div className={'c-alvis-graph-panel__btn-panel'}>
         <ButtonToolbar>
+          <EditorButtonSave />
           <ButtonGroup>
             <Button onClick={() => this.activeAlvisGraph.zoomOut()}>
               <Glyphicon glyph="zoom-out" />

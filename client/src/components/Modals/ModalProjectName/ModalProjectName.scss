@@ -1,0 +1,15 @@
+.c-modal-project-name {
+  display: grid;
+  grid-template-areas:
+    'body'
+    'footer';
+  grid-row-gap: 15px;
+
+  &__body {
+    grid-area: 'body';
+  }
+
+  &__footer {
+    grid-area: 'footer';
+  }
+}

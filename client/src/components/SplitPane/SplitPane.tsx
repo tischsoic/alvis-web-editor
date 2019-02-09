@@ -79,6 +79,13 @@ export class SplitPane extends React.PureComponent<
     }
   }
 
+  componentWillUnmount() {
+    const dragbar = this.dragbarRef.current;
+
+    dragbar.removeEventListener('mousedown', this.startDrag, false);
+    document.removeEventListener('mouseup', this.endDrag, false);
+  }
+
   private startDrag = () => {
     this.setState({ isDuringResize: true }, () => {
       document.addEventListener('mousemove', this.handleMouseMove, false);

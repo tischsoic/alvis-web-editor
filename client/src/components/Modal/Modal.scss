@@ -1,0 +1,41 @@
+.c-modal {
+  &__container,
+  &__backdrop {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+
+  &__backdrop {
+    background: #000;
+    opacity: 0.5;
+    z-index: 100;
+  }
+
+  &__container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 200;
+  }
+
+  &__filler-top {
+    flex: 1 1 0;
+  }
+
+  &__dialog {
+    background: #fff;
+    padding: 20px;
+
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+  }
+
+  &__filler-bottom {
+    flex: 4 4 0;
+  }
+}

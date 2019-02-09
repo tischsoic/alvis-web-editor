@@ -65,10 +65,10 @@ const setUserData = createAction<IUserRecord, IUserRecord>(
   (value: IUserRecord) => value,
 );
 
-const setOpenedProjectId = createAction<number, number>(
-  Actions.APP_SET_OPENED_PROJECT_ID,
-  (value: number) => value,
-);
+const setOpenedProject = createAction<
+  IProjectRecord | null,
+  IProjectRecord | null
+>(Actions.APP_SET_OPENED_PROJECT, (value: IProjectRecord | null) => value);
 
 const signOut = () => {
   return (dispatch: redux.Dispatch<any>): void => {
@@ -247,12 +247,12 @@ const fetchProjects = (): ((
 };
 
 const openProject = (
-  projectId: number,
+  project: IProjectRecord,
   alvisProject: IAlvisProjectRecord,
 ): ((dispatch: redux.Dispatch<any>, getState: () => RootState) => void) => {
   return (dispatch, getState): void => {
     dispatch(projectActions.setAlvisProject(alvisProject));
-    dispatch(setOpenedProjectId(projectId));
+    dispatch(setOpenedProject(project));
   };
 };
 
@@ -262,12 +262,12 @@ const closeProject = (
   return (dispatch, getState): void => {
     const emptyAlvisProject = getValidEmptyAlvisProject();
     dispatch(projectActions.setAlvisProject(emptyAlvisProject));
-    dispatch(setOpenedProjectId(null));
+    dispatch(setOpenedProject(null));
   };
 };
 
 const openProjectFromServer = (
-  projectId: number,
+  project: IProjectRecord,
 ): ((
   dispatch: redux.Dispatch<any>,
   getState: () => RootState,
@@ -275,14 +275,14 @@ const openProjectFromServer = (
   return (dispatch, getState): AxiosPromise => {
     // dispatch(setProjectsDuringFetching(true));
 
-    const promise = getServerApi(getState()).project.get(projectId);
+    const promise = getServerApi(getState()).project.get(project.id);
 
     promise
       .then((response: AxiosResponse) => {
         const { sourcecode } = response.data; // TO DO: better name would be 'code' or 'sources', probably 'code'
         const xmlDocument = mx.mxUtils.parseXml(sourcecode);
 
-        dispatch(openProject(projectId, parseAlvisProjectXML(xmlDocument)));
+        dispatch(openProject(project, parseAlvisProjectXML(xmlDocument)));
         // dispatch(setProjectsDuringFetching(false));
       })
       .catch((error: AxiosError) => {
@@ -303,7 +303,7 @@ const saveProjectToServer = (): ((
     const alvisProject = getState().project.alvisProject;
     const alvisProjectXml = parseAlvisProjectToXml(alvisProject);
 
-    const projectId = getState().app.openedProjectId;
+    const projectId = getState().app.openedProject.id;
     const promise = getServerApi(getState()).project.save(
       projectId,
       alvisProjectXml,
@@ -351,14 +351,51 @@ const createProjectFromFile = (
       .then((response) => {
         const { id, name, sourcecode } = response.data;
         const xmlDocument = mx.mxUtils.parseXml(sourcecode);
+        const project = projectRecordFactory({ id, name });
 
-        dispatch(openProject(id, parseAlvisProjectXML(xmlDocument)));
+        dispatch(openProject(project, parseAlvisProjectXML(xmlDocument)));
         dispatch(fetchProjects());
 
         console.log(response.data);
       })
       .catch((error: AxiosError) => {
         console.log(error);
+      });
+
+    return promise;
+  };
+};
+
+const createProjectFromCurrent = (
+  projectName: string,
+): ((
+  dispatch: redux.Dispatch<any>,
+  getState: () => RootState,
+) => AxiosPromise) => {
+  return (dispatch, getState): AxiosPromise => {
+    const state = getState();
+    const project = state.project.alvisProject;
+    const projectXml = parseAlvisProjectToXml(project);
+
+    // TODO: display spinner
+    const promise = getServerApi(state).project.create(projectName, projectXml);
+
+    promise
+      .then((response) => {
+        const { projectId, projectName, projectSourceCode } = response.data;
+        const xmlDocument = mx.mxUtils.parseXml(projectSourceCode);
+        const project = projectRecordFactory({
+          id: projectId,
+          name: projectName,
+        });
+
+        dispatch(openProject(project, parseAlvisProjectXML(xmlDocument)));
+        dispatch(fetchProjects());
+
+        console.log(response.data);
+      })
+      .catch((error: AxiosError) => {
+        console.error(error);
       });
 
     return promise;
@@ -384,8 +421,12 @@ const createEmptyProject = (
       .then((response) => {
         const { projectId, projectName, projectSourceCode } = response.data;
         const xmlDocument = mx.mxUtils.parseXml(projectSourceCode);
+        const project = projectRecordFactory({
+          id: projectId,
+          name: projectName,
+        });
 
-        dispatch(openProject(projectId, parseAlvisProjectXML(xmlDocument)));
+        dispatch(openProject(project, parseAlvisProjectXML(xmlDocument)));
         dispatch(fetchProjects());
 
         console.log(response.data);
@@ -405,7 +446,7 @@ const deleteProject = (
   getState: () => RootState,
 ) => AxiosPromise) => {
   return (dispatch, getState): AxiosPromise => {
-    const currentProjectId = getState().app.openedProjectId;
+    const currentProjectId = getState().app.openedProject.id;
     const promise = getServerApi(getState()).project.delete(projectId);
 
     promise
@@ -455,6 +496,7 @@ export {
   openProjectFromServer,
   saveProjectToServer,
   createProjectFromFile,
+  createProjectFromCurrent,
   createEmptyProject,
   deleteProject,
   initializeApp,
