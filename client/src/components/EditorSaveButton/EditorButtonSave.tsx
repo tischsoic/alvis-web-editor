@@ -5,6 +5,7 @@ import { bindActionCreators } from 'redux';
 import { Dispatch, connect } from 'react-redux';
 import { IProjectRecord } from '../../models/app';
 import * as appActions from '../../actions/app';
+import { EditorButton } from '../EditorButton/EditorButton';
 
 const style = require('./EditorButtonSave.scss');
 
@@ -43,9 +44,9 @@ class EditorButtonSave extends React.PureComponent<
   }
 
   handleButtonClick = () => {
-    const {openedProject, saveProjectToServer} = this.props
+    const { openedProject, saveProjectToServer } = this.props;
 
-    if(openedProject) {
+    if (openedProject) {
       saveProjectToServer();
       return;
     }
@@ -54,7 +55,7 @@ class EditorButtonSave extends React.PureComponent<
   };
 
   saveProjectAs = (projectName: string) => {
-    const {createProjectFromCurrent} = this.props;
+    const { createProjectFromCurrent } = this.props;
 
     console.log('save: ', projectName);
     createProjectFromCurrent(projectName);
@@ -70,13 +71,11 @@ class EditorButtonSave extends React.PureComponent<
 
     return (
       <>
-        <button
-          type="button"
-          className="btn btn-default c-editor-button-save"
+        <EditorButton
+          icon="save"
+          title="Save"
           onClick={this.handleButtonClick}
-        >
-          Save
-        </button>
+        />
         {isDuringChoosingName && (
           <ModalProjectName
             onOkay={this.saveProjectAs}

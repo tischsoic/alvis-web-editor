@@ -1,9 +1,13 @@
 import * as React from 'react';
-import ReactDOM = require('react-dom');
+import { Icon } from '../Icon/Icon';
 
 const style = require('./EditorButton.scss');
 
-export interface EditorButtonProps {}
+export interface EditorButtonProps {
+  icon: string;
+  title: string;
+  onClick: React.MouseEventHandler<HTMLButtonElement>;
+}
 
 export interface EditorButtonState {}
 
@@ -18,8 +22,17 @@ export class EditorButton extends React.PureComponent<
   }
 
   render() {
-    const { children } = this.props;
+    const { icon, title, onClick } = this.props;
 
-    return <button type="button" className="c-editor-button">{children}</button>;
+    return (
+      <button
+        type="button"
+        title={title}
+        className="btn btn-default c-editor-button"
+        onClick={onClick}
+      >
+        <Icon icon={icon} />
+      </button>
+    );
   }
 }
