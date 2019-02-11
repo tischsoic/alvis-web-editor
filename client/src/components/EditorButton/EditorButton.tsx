@@ -1,38 +1,37 @@
 import * as React from 'react';
+import * as classNames from 'classnames';
+
 import { Icon } from '../Icon/Icon';
 
 const style = require('./EditorButton.scss');
 
-export interface EditorButtonProps {
+interface EditorButtonProps {
   icon: string;
   title: string;
-  onClick: React.MouseEventHandler<HTMLButtonElement>;
+  active?: boolean;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
 }
 
-export interface EditorButtonState {}
-
-export class EditorButton extends React.PureComponent<
-  EditorButtonProps,
-  EditorButtonState
-> {
-  constructor(props: EditorButtonProps) {
-    super(props);
-
-    this.state = {};
-  }
-
-  render() {
-    const { icon, title, onClick } = this.props;
+/* tslint:disable variable-name */
+const EditorButton = React.forwardRef<HTMLButtonElement, EditorButtonProps>(
+  (props, ref) => {
+    const { icon, title, active, onClick } = props;
+    const className = classNames('btn ', 'btn-default ', 'c-editor-button', {
+      active,
+    });
 
     return (
       <button
         type="button"
         title={title}
-        className="btn btn-default c-editor-button"
+        className={className}
         onClick={onClick}
+        ref={ref}
       >
         <Icon icon={icon} />
       </button>
     );
-  }
-}
+  },
+);
+
+export { EditorButton };

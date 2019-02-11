@@ -38,6 +38,7 @@ import { mx } from '../utils/mx';
 import { Tab, TabProps } from './Tab/Tab';
 import { Tabs } from './Tab/Tabs';
 import EditorButtonSave from './EditorSaveButton/EditorButtonSave';
+import { EditorButton } from './EditorButton/EditorButton';
 
 const style = require('./AlvisGraphPanel.scss');
 
@@ -302,44 +303,50 @@ export class AlvisGraphPanel extends React.Component<
         <ButtonToolbar>
           <EditorButtonSave />
           <ButtonGroup>
-            <Button onClick={() => this.activeAlvisGraph.zoomOut()}>
-              <Glyphicon glyph="zoom-out" />
-            </Button>
-            <Button onClick={() => this.activeAlvisGraph.zoomIn()}>
-              <Glyphicon glyph="zoom-in" />
-            </Button>
+            <EditorButton
+              icon="zoom-out"
+              title="zoom-out"
+              onClick={() => this.activeAlvisGraph.zoomOut()}
+            />
+            <EditorButton
+              icon="zoom-in"
+              title="zoom-in"
+              onClick={() => this.activeAlvisGraph.zoomIn()}
+            />
           </ButtonGroup>
           <ButtonGroup>
-            <Button onClick={() => onUndo()}>undo</Button>
-            <Button onClick={() => onRedo()}>redo</Button>
+            <EditorButton icon="undo" title="undo" onClick={onUndo} />
+            <EditorButton icon="redo" title="redo" onClick={onRedo} />
           </ButtonGroup>
           <ButtonGroup>
             <ColorPicker
               color={selectedColor}
               onColorSelect={this.onColorSelect}
             />
-            <Button
+            <EditorButton
               onClick={this.toggleColoringMode}
+              icon="fill-color"
+              title={isColoringModeEnabled ? 'stop filling' : 'start filling'}
               active={isColoringModeEnabled}
-            >
-              {isColoringModeEnabled ? 'Stop coloring' : 'Start coloring'}
-            </Button>
+            />
           </ButtonGroup>
-          <button
-            ref={this.addActiveAgentBtn}
-            className="btn btn-default"
+          <EditorButton
+            icon="agent-active"
+            title="drag&drop active agent"
             onClick={() => this.addAgent({ active: 1 })}
-          >
-            A
-          </button>
-          <button
-            ref={this.addStaticAgentBtn}
-            className="btn btn-default"
+            ref={this.addActiveAgentBtn}
+          />
+          <EditorButton
+            icon="agent-passive"
+            title="drag&drop passive agent"
             onClick={() => this.addAgent({ active: 0 })}
-          >
-            S
-          </button>
-          <Button onClick={this.onGetGraphImage}>PNG</Button>
+            ref={this.addStaticAgentBtn}
+          />
+          <EditorButton
+            icon="image"
+            title="download as image"
+            onClick={this.onGetGraphImage}
+          />
         </ButtonToolbar>
       </div>
     );
