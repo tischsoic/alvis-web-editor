@@ -1,27 +1,38 @@
 .c-tab-nav-button {
-  display: block;
+  display: flex;
   color: #555;
-  cursor: default;
   background-color: #fff;
   padding: 5px 10px;
-  border-radius: 2px 2px 0 0;
-  border: 2px solid #fff;
+  border-width: 4px 1px 1px 1px;
+  border-style: solid;
+  border-color: transparent;
+  user-select: none;
   cursor: pointer;
 
-  &:hover {
-    color: #333;
-    background-color: #ddd;
-  }
-
   &--active {
-    border: 1px solid #ddd;
+    color: #333;
+    border-color: #ddd;
     border-bottom-color: transparent;
     margin-bottom: -1px;
-    cursor: default;
+  }
+
+  &__close-button {
+    display: block;
+    border: 0;
+    background: transparent;
+    height: 16px;
+    width: 16px;
+    padding: 0;
+    fill: #ddd;
+    margin-left: 10px;
 
     &:hover {
-      color: #555;
-      background-color: #fff;
+      fill: #555;
     }
+  }
+
+  &__close-button-icon {
+    height: 16px;
+    width: 16px;
   }
 }

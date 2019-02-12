@@ -180,6 +180,22 @@ export class EditorComponent extends React.Component<
     });
   }
 
+  closePage = (pageId: string) => {
+    this.setState((state) => {
+      const oldActivePageId = state.activePageId;
+      const openedPagesIds = state.openedPagesIds.remove(pageId);
+      const activePageId =
+        pageId !== oldActivePageId
+          ? oldActivePageId
+          : openedPagesIds.last(null);
+
+      return {
+        activePageId,
+        openedPagesIds,
+      };
+    });
+  };
+
   setActivePageInternalId = (pageId: string) => {
     this.setState((state) => ({
       activePageId: pageId,
@@ -333,6 +349,7 @@ export class EditorComponent extends React.Component<
                 alvisProject={alvisProject}
                 projectId={0}
                 onChangeActivePage={this.setActivePageInternalId}
+                onClosePage={this.closePage}
                 activePageId={activePageId}
                 openedPagesIds={openedPagesIds}
                 onMxGraphPageAdded={projectBindedActions.addPage}
