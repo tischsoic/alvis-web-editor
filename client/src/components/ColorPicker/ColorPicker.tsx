@@ -18,6 +18,8 @@ import Draggable, {
 } from 'react-draggable';
 import * as Color from 'color';
 
+const style = require('./ColorPicker.scss');
+
 export class DraggableModalDialog extends React.Component {
   // TO DO: think about better solution => decorator?
   static onStop: DraggableEventHandler;
@@ -86,12 +88,11 @@ export class ColorPicker extends React.Component<
 
     return (
       <>
-        <Button onClick={this.onModalShow} style={{ backgroundColor: color }}>
-          <span
-            className="glyphicon glyphicon-pencil"
-            style={{ color: this.getGlyphiconColor() }}
-          />
-        </Button>
+        <Button
+          className="c-color-picker__button"
+          onClick={this.onModalShow}
+          style={{ backgroundColor: color }}
+        />
         <Modal
           show={show}
           enforceFocus={false}
