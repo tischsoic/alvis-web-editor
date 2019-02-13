@@ -15,6 +15,7 @@ interface TabsProps {
   onTabClick: (id: string) => void;
   onTabClose: (id: string) => void;
   noNavigation: boolean;
+  noCloseButton: boolean;
 }
 
 interface TabsState {}
@@ -30,6 +31,7 @@ export class Tabs extends React.PureComponent<TabsProps, TabsState> {
     onTabClick: () => {},
     onTabClose: () => {},
     noNavigation: false,
+    noCloseButton: false,
   };
 
   getChildrenArray(): React.ReactElement<TabProps>[] {
@@ -48,7 +50,7 @@ export class Tabs extends React.PureComponent<TabsProps, TabsState> {
   }
 
   renderTabNav() {
-    const { activeId, onTabClick, onTabClose } = this.props;
+    const { activeId, onTabClick, onTabClose, noCloseButton } = this.props;
     const childrenArray = this.getChildrenArray();
     const tabsData = childrenArray.reduce<TabNavProps['tabsData']>(
       (tabsData, tab) => {
@@ -65,6 +67,7 @@ export class Tabs extends React.PureComponent<TabsProps, TabsState> {
         activeId={activeId}
         onClick={onTabClick}
         onClose={onTabClose}
+        noCloseButton={noCloseButton}
       />
     );
   }
@@ -74,10 +77,10 @@ export class Tabs extends React.PureComponent<TabsProps, TabsState> {
     const childrenArray = this.getChildrenArray();
 
     return childrenArray.map((tab) => {
-      const { id } = tab.props;
+      const { id, extraClasses } = tab.props;
 
       return (
-        <TabPane key={id} active={id === activeId}>
+        <TabPane key={id} active={id === activeId} extraClasses={extraClasses}>
           {tab.props.children}
         </TabPane>
       );

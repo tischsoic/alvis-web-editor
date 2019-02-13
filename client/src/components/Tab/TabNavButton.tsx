@@ -10,6 +10,7 @@ interface TabNavButtonProps {
   active: boolean;
   onClick: (label: string) => void;
   onClose: (label: string) => void;
+  noCloseButton: boolean;
 }
 
 interface TabNavButtonState {}
@@ -34,8 +35,29 @@ export class TabNavButton extends React.PureComponent<
     onClose(id);
   };
 
+  renderCloseButton() {
+    if (this.props.noCloseButton) {
+      return null;
+    }
+
+    return (
+      <button
+        type="button"
+        title="Close"
+        className="c-tab-nav-button__close-button"
+        onClick={this.onClose}
+        tabIndex={-1}
+      >
+        <Icon
+          icon="close"
+          extraClasses={['c-tab-nav-button__close-button-icon']}
+        />
+      </button>
+    );
+  }
+
   render() {
-    const { label, active, onClose } = this.props;
+    const { label, active } = this.props;
     const className = classNames('c-tab-nav-button', {
       'c-tab-nav-button--active': active,
     });
@@ -43,18 +65,7 @@ export class TabNavButton extends React.PureComponent<
     return (
       <li className={className} onClick={this.onClick}>
         {label}
-        <button
-          type="button"
-          title="Close"
-          className="c-tab-nav-button__close-button"
-          onClick={this.onClose}
-          tabIndex={-1}
-        >
-          <Icon
-            icon="close"
-            extraClasses={['c-tab-nav-button__close-button-icon']}
-          />
-        </button>
+        {this.renderCloseButton()}
       </li>
     );
   }
