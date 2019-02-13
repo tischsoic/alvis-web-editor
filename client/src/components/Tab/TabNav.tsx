@@ -9,6 +9,7 @@ export interface TabNavProps {
   activeId: string;
   onClick: (label: string) => void;
   onClose: (label: string) => void;
+  noCloseButton: boolean;
 }
 
 interface TabNavState {}
@@ -17,7 +18,7 @@ export class TabNav extends React.PureComponent<TabNavProps, TabNavState> {
   static defaultProps = {};
 
   render() {
-    const { tabsData, activeId, onClick, onClose } = this.props;
+    const { tabsData, activeId, onClick, onClose, noCloseButton } = this.props;
     const className = classNames('c-tab-nav');
 
     return (
@@ -30,6 +31,7 @@ export class TabNav extends React.PureComponent<TabNavProps, TabNavState> {
             active={id === activeId}
             onClick={onClick}
             onClose={onClose}
+            noCloseButton={noCloseButton}
           />
         ))}
       </ul>

@@ -3,6 +3,7 @@ import * as React from 'react';
 export interface TabProps {
   id: string;
   label: string;
+  extraClasses: string[];
   children: React.ReactElement<any>;
 }
 
@@ -15,7 +16,9 @@ export class Tab extends React.PureComponent<TabProps, TabState> {
     this.state = {};
   }
 
-  static defaultProps = {};
+  static defaultProps = {
+    extraClasses: [],
+  };
 
   render() {
     throw new Error('This component should not be rendered!');

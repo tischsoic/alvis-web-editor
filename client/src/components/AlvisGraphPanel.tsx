@@ -51,6 +51,7 @@ export interface AlvisGraphPanelProps {
   openedPagesIds: OrderedSet<string>;
   projectId: number;
   onChangeActivePage: (newActivePageInternalId: string) => void;
+  onClosePage: (pageId: string) => void;
 
   onMxGraphPageAdded: (page: IPageRecord) => any; // TODO: shouldn't return type be
 
@@ -356,6 +357,7 @@ export class AlvisGraphPanel extends React.Component<
     const {
       activePageId: activePageInternalId,
       onChangeActivePage,
+      onClosePage,
       onMxGraphPageAdded,
       onMxGraphAgentAdded,
       onMxGraphAgentDeleted,
@@ -435,7 +437,7 @@ export class AlvisGraphPanel extends React.Component<
                 document.activeElement.blur();
               }
             }}
-            onTabClose={() => {}}
+            onTabClose={onClosePage}
           >
             {pagesTabs}
           </Tabs>

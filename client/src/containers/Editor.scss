@@ -7,6 +7,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  padding-top: 64px;
   border-color: #8c8c8c;
   border-style: solid;
   border-width: 0 1px 1px 0;
@@ -14,9 +15,13 @@
   overflow: hidden;
 }
 
-.c-editor__top-container-content {
-  flex: 1 1 0;
+.c-editor__top-container-tab {
+  display: flex;
   overflow: hidden;
+}
+
+.c-editor__ace-editor-wrapper {
+  flex: 1 1 0;
 }
 
 .c-editor__outline {
