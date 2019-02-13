@@ -29,7 +29,7 @@ interface MenuProjectsPanelStateProps {
 type MenuProjectsPanelDispatchProps = ReturnType<typeof mapDispatchToProps>;
 
 interface MenuProjectsPanelOwnProps {
-  onMenuPanelClose: () => void;
+  onClose: () => void;
 }
 
 type MenuProjectsPanelProps = MenuProjectsPanelStateProps &
@@ -150,7 +150,11 @@ class MenuProjectsPanel extends React.Component<
   }
 
   private renderProjectListItem(project: IProjectRecord) {
-    const { onProjectOpen, onProjectDelete, onMenuPanelClose } = this.props;
+    const {
+      onProjectOpen,
+      onProjectDelete,
+      onClose: onMenuPanelClose,
+    } = this.props;
 
     return (
       <CustomListGroupItem
@@ -205,7 +209,7 @@ class MenuProjectsPanel extends React.Component<
     const {
       onProjectFromFileCreate,
       onEmptyProjectCreate,
-      onMenuPanelClose,
+      onClose: onMenuPanelClose,
     } = this.props;
     const {
       newProjectName,
@@ -314,12 +318,12 @@ class MenuProjectsPanel extends React.Component<
       projectsDuringFetching,
       projectsAlreadyFetched,
       openedProject,
-      onMenuPanelClose,
+      onClose,
     } = this.props;
     const someProjectIsOpened = openedProject !== null;
 
     return (
-      <MenuPanel>
+      <MenuPanel onClose={onClose}>
         {this.renderProjectsList()}
         {this.renderNewProjectForm()}
       </MenuPanel>

@@ -1,9 +1,11 @@
 import * as React from 'react';
+import * as ReactDOM from 'react-dom';
+import { Icon } from '../Icon/Icon';
 
 const style = require('./MenuPanel.scss');
 
 export interface MenuPanelProps {
-  // opened: boolean;
+  onClose: () => void;
 }
 
 export interface MenuPanelState {}
@@ -15,15 +17,30 @@ export class MenuPanel extends React.Component<MenuPanelProps, MenuPanelState> {
     this.state = {};
   }
 
+  private backdropContainer = document.querySelector(
+    '#menu-backdrop-container',
+  );
+
+  renderBackdrop() {
+    const { onClose } = this.props;
+
+    return ReactDOM.createPortal(
+      <div className="c-menu-panel__backdrop" onClick={onClose} />,
+      this.backdropContainer,
+    );
+  }
+
   render() {
-    const { children } = this.props;
-    const baseClassName = 'c-menu-panel';
-    const className = baseClassName;
+    const { children, onClose } = this.props;
 
-    // if (opened) {
-    //   className = `${className} ${baseClassName}--opened`;
-    // }
-
-    return <div className={className}>{children}</div>;
+    return (
+      <div className="c-menu-panel">
+        <div className="c-menu-panel__close-button" onClick={onClose}>
+          <Icon icon="close" />
+        </div>
+        <div className="c-menu-panel__content">{children}</div>
+        {this.renderBackdrop()}
+      </div>
+    );
   }
 }
