@@ -16,7 +16,9 @@ interface MenuUsersPanelStateProps {
 
 type MenuUsersPanelDispatchProps = ReturnType<typeof mapDispatchToProps>;
 
-interface MenuUsersPanelOwnProps {}
+interface MenuUsersPanelOwnProps {
+  onClose: () => void;
+}
 
 type MenuUsersPanelProps = MenuUsersPanelStateProps &
   MenuUsersPanelDispatchProps &
@@ -59,10 +61,10 @@ class MenuUsersPanel extends React.Component<
   };
 
   render() {
-    const { users } = this.props;
+    const { users, onClose } = this.props;
 
     return (
-      <MenuPanel>
+      <MenuPanel onClose={onClose}>
         <Table responsive>
           <thead>
             <tr>

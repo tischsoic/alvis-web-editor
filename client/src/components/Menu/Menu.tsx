@@ -4,6 +4,7 @@ import { MenuButton } from '../MenuButton/MenuButton';
 import MenuUsersPanel from '../MenuUsersPanel/MenuUsersPanel';
 import MenuProjectsPanel from '../MenuProjectsPanel/MenuProjectsPanel';
 import MenuAboutPanel from '../MenuAboutPanel/MenuAboutPanel';
+import { Icon } from '../Icon/Icon';
 
 const style = require('./Menu.scss');
 
@@ -62,13 +63,13 @@ export class Menu extends React.Component<MenuProps, MenuState> {
 
     switch (openedPanel) {
       case PanelKey.Projects:
-        panel = <MenuProjectsPanel onMenuPanelClose={this.closePanel} />;
+        panel = <MenuProjectsPanel onClose={this.closePanel} />;
         break;
       case PanelKey.Users:
-        panel = <MenuUsersPanel />;
+        panel = <MenuUsersPanel onClose={this.closePanel} />;
         break;
       case PanelKey.About:
-        panel = <MenuAboutPanel />;
+        panel = <MenuAboutPanel onClose={this.closePanel} />;
         break;
       default:
         return null;
@@ -77,43 +78,47 @@ export class Menu extends React.Component<MenuProps, MenuState> {
     return <div className="c-menu__menu-panel">{panel}</div>;
   }
 
-  renderUserInfo() {
-    return 'Name Surname';
+  // TODO: not used
+  renderUserBadge() {
+    return (
+      <div className="c-menu__user-badge">
+        <Icon icon="account-circle" extraClasses={['c-menu__user-avatar']} />
+        <span className="c-menu__user-email">john.smith@gmail.com</span>
+      </div>
+    );
   }
-
-  renderButtonsWrapper() {}
 
   render() {
     const { openedPanel } = this.state;
 
     return (
       <div className="c-menu">
-        <div className="c-menu__user-info">{this.renderUserInfo()}</div>
+        <div className="c-menu__user-info" />
         <div className="c-menu__buttons">
           <MenuButton
+            icon="briefcase"
+            label="Projects"
             onClick={this.toggleProjectsPanel}
             pressed={openedPanel === PanelKey.Projects}
-          >
-            Projects
-          </MenuButton>
+          />
           <MenuButton
+            icon="people"
+            label="Users"
             onClick={this.toggleUsersPanel}
             pressed={openedPanel === PanelKey.Users}
-          >
-            Users
-          </MenuButton>
+          />
           <MenuButton
+            icon="settings"
+            label="Preferences"
             onClick={this.togglePreferencesPanel}
             pressed={openedPanel === PanelKey.Preferences}
-          >
-            Preferences
-          </MenuButton>
+          />
           <MenuButton
+            icon="information"
+            label="About"
             onClick={this.toggleAboutPanel}
             pressed={openedPanel === PanelKey.About}
-          >
-            About
-          </MenuButton>
+          />
         </div>
         <div className="c-menu__filler" />
         {this.renderMenuPanel()}

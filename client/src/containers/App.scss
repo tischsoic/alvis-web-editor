@@ -8,6 +8,8 @@
 
 .c-app__menu-panel {
   grid-area: menu-panel;
+  z-index: 20;
+  background: #fff;
 }
 
 .c-app__editor {

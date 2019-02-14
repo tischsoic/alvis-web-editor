@@ -2,13 +2,28 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+  border-right: 1px solid #8c8c8c;
 
   &__user-info {
     flex: 1;
   }
 
+  &__user-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  &__user-avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  &__user-email {
+  }
+
   &__buttons {
-    flex: 0 0 0%
+    flex: 0 0 0%;
   }
 
   &__filler {
@@ -18,13 +33,10 @@
   &__menu-panel {
     position: absolute;
     top: 0;
-    left: 75px;
-    z-index: 100;
+    left: 74px;
     background: white;
     padding: 30px;
-    border-style: solid;
-    border-color: #8c8c8c;
-    border-width: 0 3px 0 0;
     height: 100%;
+    box-shadow: 6px 0px 20px 0 rgba(0, 0, 0, 0.5);
   }
 }

@@ -12,7 +12,9 @@ interface MenuAboutPanelStateProps {}
 
 type MenuAboutPanelDispatchProps = ReturnType<typeof mapDispatchToProps>;
 
-interface MenuAboutPanelOwnProps {}
+interface MenuAboutPanelOwnProps {
+  onClose: () => void;
+}
 
 type MenuAboutPanelProps = MenuAboutPanelStateProps &
   MenuAboutPanelDispatchProps &
@@ -25,8 +27,10 @@ class MenuAboutPanel extends React.Component<
   MenuAboutPanelState
 > {
   render() {
+    const {onClose}  = this.props;
+
     return (
-      <MenuPanel>
+      <MenuPanel onClose={onClose}>
         In case of any bugs, report them on: <br />
         <a  target="_blank" href="https://github.com/tischsoic/alvis-web-editor/issues">https://github.com/tischsoic/alvis-web-editor/issues</a>
       </MenuPanel>
