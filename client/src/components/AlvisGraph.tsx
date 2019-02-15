@@ -351,6 +351,7 @@ export class AlvisGraph extends React.Component<
     this.addChanges(agents, Map(), ports, Map(), connections, Map());
 
     this.applyChanges();
+    this.graph.center();
   }
 
   restrictGraphViewToDivBoundries() {
