@@ -9,13 +9,14 @@ interface EditorButtonProps {
   icon: string;
   title: string;
   active?: boolean;
+  disabled?: boolean;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
 }
 
 /* tslint:disable variable-name */
 const EditorButton = React.forwardRef<HTMLButtonElement, EditorButtonProps>(
   (props, ref) => {
-    const { icon, title, active, onClick } = props;
+    const { icon, title, active, disabled, onClick } = props;
     const className = classNames('btn ', 'btn-default ', 'c-editor-button', {
       active,
     });
@@ -25,6 +26,7 @@ const EditorButton = React.forwardRef<HTMLButtonElement, EditorButtonProps>(
         type="button"
         title={title}
         className={className}
+        disabled={disabled}
         onClick={onClick}
         ref={ref}
       >

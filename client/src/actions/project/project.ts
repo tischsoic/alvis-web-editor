@@ -18,6 +18,8 @@ import {
   projectModificationRecordFactoryPartial,
   IProjectModification,
   IProjectElementModification,
+  IProjectModificationRecord,
+  IPartialModification,
 } from '../../models/project';
 
 const setProjectXML = createAction<string, string>(
@@ -77,6 +79,13 @@ const modifyConnection = createElementAction<IConnection>(
 );
 const deleteConnection = createElementDeleteAction('connections');
 
+const applyModification = createAction<
+  IPartialModification,
+  IProjectModificationRecord
+>(Actions.MODIFY_PROJECT, (partialModification: IPartialModification) =>
+  projectModificationRecordFactoryPartial(partialModification),
+);
+
 const undo = createAction(Actions.PROJECT_UNDO);
 const redo = createAction(Actions.PROJECT_REDO);
 
@@ -112,6 +121,7 @@ export {
   addConnection,
   deleteConnection,
   modifyConnection,
+  applyModification,
   setAlvisProject,
   undo,
   redo,

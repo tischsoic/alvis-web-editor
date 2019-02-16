@@ -65,6 +65,7 @@ export interface IProjectModification {
 export type IProjectModificationRecord = ReturnType<
   Record.Factory<IProjectModification>
 >;
+export type IPartialModification = PartialPartial<IProjectModification>;
 const defaultProjectModificationRecord = {
   pages: projectElementModificationFactory<IPageRecord>()(),
   agents: projectElementModificationFactory<IAgentRecord>()(),
@@ -75,7 +76,7 @@ export const projectModificationRecordFactory = Record<IProjectModification>(
   defaultProjectModificationRecord,
 );
 export const projectModificationRecordFactoryPartial = (
-  data: PartialPartial<IProjectModification>,
+  data: IPartialModification,
 ): IProjectModificationRecord => {
   const defaultRecord = projectModificationRecordFactory();
 

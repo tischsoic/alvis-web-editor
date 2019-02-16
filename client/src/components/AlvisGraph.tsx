@@ -23,6 +23,13 @@ import {
 } from '../models/alvisProject';
 import { List, Map, Set } from 'immutable';
 import { newUuid } from '../utils/uuidGenerator';
+import { addPopupMenu } from '../utils/mxGraphPopupMenu';
+import {
+  IProjectModificationRecord,
+  projectModificationRecordFactoryPartial,
+  IPartialModification,
+} from '../models/project';
+import { IPageSelection } from './AlvisGraphPanel';
 
 const style = require('./AlvisGraph.scss');
 
@@ -40,20 +47,7 @@ export interface AlvisGraphProps {
 
   onChangeActivePage: (newActivePageInternalId: string) => void;
 
-  onMxGraphPageAdded: (page: IPageRecord) => any; // TODO: mxGraph should be encapsulated thus in interface should be no mention about it
-  // rather call this function: `onPageAdded`
-
-  onMxGraphAgentAdded: (agent: IAgentRecord) => any;
-  onMxGraphAgentDeleted: (agentInternalId: string) => any;
-  onMxGraphAgentModified: (agent: IAgentRecord) => any;
-
-  onMxGraphPortAdded: (port: IPortRecord) => any;
-  onMxGraphPortDeleted: (portInternalId: string) => any;
-  onMxGraphPortModified: (port: IPortRecord) => any;
-
-  onMxGraphConnectionAdded: (connection: IConnectionRecord) => any;
-  onMxGraphConnectionDeleted: (connectionInternalId: string) => any;
-  onMxGraphConnectionModified: (connection: IConnectionRecord) => any;
+  onProjectModify: (modification: IPartialModification) => any;
 
   onAgentClick: (id: string) => void;
   onPortClick: (id: string) => void;
@@ -61,6 +55,7 @@ export interface AlvisGraphProps {
   onHierarchyRemove: (agentId: string) => void;
 
   getNameFromUser: (callback: (chosenName: string) => void) => void;
+  setSelection: (selection: IPageSelection) => void;
 }
 
 export interface AlvisGraphState {}
@@ -73,18 +68,12 @@ export class AlvisGraph extends React.Component<
     super(props);
 
     this.onProcessChange = this.onProcessChange.bind(this);
-    this.changeActivePageToAgentSubPage = this.changeActivePageToAgentSubPage.bind(
-      this,
-    );
     this.randomNumber = Math.floor(Math.random() * 100000 + 1); // TO DO: set unique ID based on alvis Page ID
   }
 
   private graph: mxClasses.mxGraph;
   private outline: mxClasses.mxOutline;
   private parent;
-
-  private mxGraphIdsToInternalIds: string[] = [];
-  private internalIdsToMxGraphIds: string[] = [];
 
   private mxGraphIdsToHierarchicalIconOverlays: mxClasses.mxCellOverlay[] = [];
 
@@ -104,17 +93,7 @@ export class AlvisGraph extends React.Component<
       'alvis-graph-container-' + this.randomNumber,
     );
     const alvisGraph = this; // TODO: it should be passed trough constructor
-    const {
-      onMxGraphAgentAdded,
-      onMxGraphAgentDeleted,
-      onMxGraphAgentModified,
-      onMxGraphPortAdded,
-      onMxGraphPortDeleted,
-      onMxGraphPortModified,
-      onMxGraphConnectionAdded,
-      onMxGraphConnectionDeleted,
-      onMxGraphConnectionModified,
-    } = this.props;
+    const { onProjectModify } = this.props;
 
     class mxAlvisGraphModel extends mx.mxGraphModel {
       add(
@@ -130,20 +109,19 @@ export class AlvisGraph extends React.Component<
 
         if (alvisGraph.graph.isPort(child)) {
           // Detects edges????
-          const parentId = parent.getId();
-          const parentInternalId = alvisGraph.getInternalIdByMxGrpahId(
-            parentId,
-          );
+          const agentInternalId = parent.getId();
+          const portName = child.getValue();
+          const addedPort = alvisGraph.createPort({
+            x,
+            y,
+            agentInternalId,
+            name: portName,
+            color: 'white',
+          });
 
-          onMxGraphPortAdded(
-            alvisGraph.createPort({
-              x,
-              y,
-              name: child.getValue(),
-              color: 'white',
-              agentInternalId: parentInternalId,
-            }),
-          );
+          onProjectModify({
+            ports: { added: List([addedPort]) },
+          });
         } else if (alvisGraph.graph.getModel().isEdge(child)) {
           const s = child.getTerminal(true);
           const t = child.getTerminal(false);
@@ -151,18 +129,19 @@ export class AlvisGraph extends React.Component<
         } else {
           // TO DO: save "ACTIVE_AGENT" type in some enum etc.
           const active = child.style === 'AGENT_ACTIVE' ? 1 : 0;
+          const addedAgent = alvisGraph.createAgent({
+            x,
+            y,
+            width,
+            height,
+            active,
+            name: child.getValue(),
+            color: 'white',
+          });
 
-          onMxGraphAgentAdded(
-            alvisGraph.createAgent({
-              x,
-              y,
-              width,
-              height,
-              active,
-              name: child.getValue(),
-              color: 'white',
-            }),
-          );
+          onProjectModify({
+            agents: { added: List([addedAgent]) },
+          });
         }
       }
 
@@ -173,17 +152,22 @@ export class AlvisGraph extends React.Component<
         }
 
         if (alvisGraph.graph.isPort(cell)) {
-          onMxGraphPortModified(
-            alvisGraph.createPort({
-              name: value,
-              internalId: cell.getId(),
-            }),
-          );
+          const modifiedPort = alvisGraph.createPort({
+            name: value,
+            internalId: cell.getId(),
+          });
+          onProjectModify({
+            ports: { modified: List([modifiedPort]) },
+          });
         } else if (alvisGraph.graph.getModel().isEdge(cell)) {
         } else {
-          onMxGraphAgentModified(
-            alvisGraph.createAgent({ name: value, internalId: cell.getId() }),
-          );
+          const modifiedAgent = alvisGraph.createAgent({
+            name: value,
+            internalId: cell.getId(),
+          });
+          onProjectModify({
+            agents: { modified: List([modifiedAgent]) },
+          });
         }
       }
 
@@ -198,23 +182,20 @@ export class AlvisGraph extends React.Component<
           return super.remove.apply(this, arguments);
         }
 
-        if (alvisGraph.graph.isPort(cell)) {
-          onMxGraphPortDeleted(
-            alvisGraph.getInternalIdByMxGrpahId(cell.getId()),
-          );
-        } else if (alvisGraph.graph.getModel().isEdge(cell)) {
-          onMxGraphConnectionDeleted(
-            alvisGraph.getInternalIdByMxGrpahId(cell.getId()),
-          );
-        } else {
-          const { x, y, width, height } = cell.geometry; // TO DO: We dont use it!!!
-          // TO DO: save "ACTIVE_AGENT" type in some enum etc.
-          // TO DO: change it to better check style attrubute may contain many styles
-          const active = cell.style === 'AGENT_ACTIVE' ? 1 : 0;
+        const elementId = cell.getId();
 
-          onMxGraphAgentDeleted(
-            alvisGraph.getInternalIdByMxGrpahId(cell.getId()),
-          );
+        if (alvisGraph.graph.isPort(cell)) {
+          onProjectModify({
+            ports: { deleted: List([elementId]) },
+          });
+        } else if (alvisGraph.graph.getModel().isEdge(cell)) {
+          onProjectModify({
+            connections: { deleted: List([elementId]) },
+          });
+        } else {
+          onProjectModify({
+            agents: { deleted: List([elementId]) },
+          });
         }
       }
 
@@ -229,28 +210,26 @@ export class AlvisGraph extends React.Component<
         const { x, y, width, height } = geometry;
 
         if (alvisGraph.graph.isPort(cell)) {
-          onMxGraphPortModified(
-            alvisGraph.createPort({
-              x,
-              y,
-              internalId: cell.getId(),
-            }),
-          );
+          const modifiedPort = alvisGraph.createPort({
+            x,
+            y,
+            internalId: cell.getId(),
+          });
+          onProjectModify({
+            ports: { modified: List([modifiedPort]) },
+          });
         } else if (alvisGraph.graph.getModel().isEdge(cell)) {
         } else {
-          // TO DO: save "ACTIVE_AGENT" type in some enum etc.
-          // TO DO: change it to better check style attrubute may contain many styles
-          const active = cell.style === 'AGENT_ACTIVE' ? 1 : 0;
-
-          onMxGraphAgentModified(
-            alvisGraph.createAgent({
-              x,
-              y,
-              width,
-              height,
-              internalId: cell.getId(),
-            }),
-          );
+          const modifiedAgent = alvisGraph.createAgent({
+            x,
+            y,
+            width,
+            height,
+            internalId: cell.getId(),
+          });
+          onProjectModify({
+            agents: { modified: List([modifiedAgent]) },
+          });
         }
       }
 
@@ -266,6 +245,7 @@ export class AlvisGraph extends React.Component<
     this.mxAlvisGraphModel = new mxAlvisGraphModel();
     this.graph = new mx.mxGraph(graphDiv, this.mxAlvisGraphModel);
     modifyMxGraph(mx, this.graph, this, this.onProcessChange);
+    addPopupMenu(mx, this.graph, alvisGraph);
     const oldCellConnected = this.graph.cellConnected;
     const graph = this.graph;
     this.graph.cellConnected = function() {
@@ -285,6 +265,18 @@ export class AlvisGraph extends React.Component<
       console.log(arguments);
     });
 
+    this.graph
+      .getSelectionModel()
+      .addListener(
+        (mx as any).mxEvent.CHANGE,
+        (sender: mxClasses.mxGraphSelectionModel, evt) => {
+          const selectedCells = sender.cells;
+          const selection = this.getSelectionData(selectedCells);
+
+          this.props.setSelection(selection);
+        },
+      );
+
     this.graph.addListener((mx as any).mxEvent.CLICK, (sender, event) => {
       const cell: mxClasses.mxCell = event.getProperty('cell');
 
@@ -293,7 +285,7 @@ export class AlvisGraph extends React.Component<
       }
 
       const cellId = cell.getId();
-      const internalId = this.getInternalIdByMxGrpahId(cellId); // TODO: it would be more convinient to pass cell, not cellId
+      const internalId = cellId; // TODO: it would be more convinient to pass cell, not cellId
       // TODO: and even more convenient to store internalId in cell id.
 
       if (this.graph.isPort(cell)) {
@@ -324,21 +316,18 @@ export class AlvisGraph extends React.Component<
         const source = evt.getProperty('source');
         const direction = 'target';
         const style = 'straight';
-        const sourcePortInternalId = alvisGraph.getInternalIdByMxGrpahId(
-          source.getId(),
-        );
-        const targetPortInternalId = alvisGraph.getInternalIdByMxGrpahId(
-          target.getId(),
-        );
+        const sourcePortId = source.getId();
+        const targetPortId = target.getId();
+        const addedConnection = alvisGraph.createConnection({
+          direction,
+          style,
+          sourcePortInternalId: sourcePortId,
+          targetPortInternalId: targetPortId,
+        });
 
-        onMxGraphConnectionAdded(
-          alvisGraph.createConnection({
-            sourcePortInternalId,
-            targetPortInternalId,
-            direction,
-            style,
-          }),
-        );
+        onProjectModify({
+          connections: { added: List([addedConnection]) },
+        });
       }
     });
 
@@ -352,6 +341,34 @@ export class AlvisGraph extends React.Component<
 
     this.applyChanges();
     this.graph.center();
+  }
+
+  private getSelectionData(selectedCells: mxClasses.mxCell[]): IPageSelection {
+    const { agents, ports, connections } = this.props;
+    const selection: IPageSelection = {
+      agents: [],
+      ports: [],
+      connections: [],
+    };
+
+    for (const cell of selectedCells) {
+      const cellId = cell.getId();
+      const cellIsDuringCreation = cellId === null;
+
+      if (cellIsDuringCreation) {
+        continue;
+      }
+
+      if (agents.has(cellId)) {
+        selection.agents.push(cellId);
+      } else if (ports.has(cellId)) {
+        selection.ports.push(cellId);
+      } else {
+        selection.connections.push(cellId);
+      }
+    }
+
+    return selection;
   }
 
   restrictGraphViewToDivBoundries() {
@@ -410,7 +427,15 @@ export class AlvisGraph extends React.Component<
       connections,
     );
 
-    this.applyChanges();
+    // We need to check this because after deletion of selected item during processing
+    // changes mxGraph fires change selection event, which triggers
+    // change of AlvisGraphPanel state change, which triggers re-render of AlvisGraph
+    // which triggers componentWillReceiveProps
+    // and everything happens during internalChanges === true
+    // TODO: is beneath condition OK? Will it work every single time as expected?
+    if (!this.isDuringInternalChanges()) {
+      this.applyChanges();
+    }
   }
 
   shouldComponentUpdate(
@@ -599,19 +624,11 @@ export class AlvisGraph extends React.Component<
     // }
   }
 
-  getInternalIdByMxGrpahId(mxGraphId: string): string | undefined {
-    return this.mxGraphIdsToInternalIds[mxGraphId];
-  }
-
-  private getMxGraphIdByInternalId(internalId: string): string | undefined {
-    return this.internalIdsToMxGraphIds[internalId];
-  }
-
   // TO DO
   private modifyAgent = (agent: IAgentRecord): IAgentRecord => {
     this.graph.getModel().beginUpdate();
     try {
-      const mxGraphAgentId = this.getMxGraphIdByInternalId(agent.internalId);
+      const mxGraphAgentId = agent.internalId;
       const model = this.graph.getModel();
       const cellToModify = model.getCell(mxGraphAgentId);
 
@@ -641,7 +658,7 @@ export class AlvisGraph extends React.Component<
   private deleteAgent(agent: IAgentRecord): IAgentRecord {
     this.graph.getModel().beginUpdate();
     try {
-      const mxGraphAgentId = this.getMxGraphIdByInternalId(agent.internalId);
+      const mxGraphAgentId = agent.internalId;
       const cellToDelete = this.graph.getModel().getCell(mxGraphAgentId);
 
       this.graph.removeCells([cellToDelete]);
@@ -652,14 +669,13 @@ export class AlvisGraph extends React.Component<
     return agent;
   }
 
-  private changeActivePageToAgentSubPage(agentVertexId: string) {
+  private openAgentSubpage = (agentId: string) => {
     const { agents, onChangeActivePage } = this.props;
-    const agentInternalId = this.getInternalIdByMxGrpahId(agentVertexId);
-    const agentRecord = agents.get(agentInternalId);
-    const newActivePageInternalId = agentRecord.subPageInternalId;
+    const agent = agents.get(agentId);
+    const subpageId = agent.subPageInternalId;
 
-    onChangeActivePage(newActivePageInternalId);
-  }
+    onChangeActivePage(subpageId);
+  };
 
   private getAgentHierarchicalIconOverlay(agentVertexId: string) {
     return this.mxGraphIdsToHierarchicalIconOverlays[agentVertexId];
@@ -700,14 +716,14 @@ export class AlvisGraph extends React.Component<
     overlay.align = mx.mxConstants.ALIGN_RIGHT;
     overlay.verticalAlign = mx.mxConstants.ALIGN_BOTTOM;
 
-    const agentVertexId = agentVertex.getId();
+    const agentId = agentVertex.getId();
 
     overlay.addListener((mx as any).mxEvent.CLICK, (sender, event) => {
-      this.changeActivePageToAgentSubPage(agentVertexId);
+      this.openAgentSubpage(agentId);
     });
 
     this.graph.addCellOverlay(agentVertex, overlay);
-    this.setAgentHierarchicalIconOverlay(agentVertexId, overlay);
+    this.setAgentHierarchicalIconOverlay(agentId, overlay);
   }
 
   private getAgentMainStyle(agent: IAgentRecord): string {
@@ -721,9 +737,11 @@ export class AlvisGraph extends React.Component<
     agentVertex: mxClasses.mxCell,
     agentRecord: IAgentRecord,
   ): void {
-    const agentFillColorStyle = 'fillColor=' + agentRecord.color + ';'; // TO DO: this.props.mx.mxConstants.STYLE_FILLCOLOR
-    // this.graph.setCellStyles
-    this.graph.setCellStyles('fillColor', agentRecord.color, [agentVertex]);
+    const { FONT_UNDERLINE, STYLE_FILLCOLOR, STYLE_FONTSTYLE } = mx.mxConstants;
+    const fontStyle = agentRecord.running ? FONT_UNDERLINE : null;
+
+    this.graph.setCellStyles(STYLE_FILLCOLOR, agentRecord.color, [agentVertex]);
+    this.graph.setCellStyles(STYLE_FONTSTYLE, fontStyle, [agentVertex]);
   }
 
   private addAgent(agent: IAgentRecord): IAgentRecord {
@@ -747,9 +765,6 @@ export class AlvisGraph extends React.Component<
         this.addAgentHierarchyIconOverlay(agentVertex);
       }
 
-      this.mxGraphIdsToInternalIds[agentVertex.getId()] = agent.internalId;
-      this.internalIdsToMxGraphIds[agent.internalId] = agentVertex.getId();
-
       return agent;
     } finally {
       this.graph.getModel().endUpdate();
@@ -759,7 +774,7 @@ export class AlvisGraph extends React.Component<
   private modifyPort(port: IPortRecord): IPortRecord {
     this.graph.getModel().beginUpdate();
     try {
-      const mxGraphPortId = this.getMxGraphIdByInternalId(port.internalId);
+      const mxGraphPortId = port.internalId;
       const cellToModify = this.graph.getModel().getCell(mxGraphPortId);
       const cellToModifyState = this.graph.view.getState(cellToModify);
       const cellToModifyParent = cellToModify.getParent();
@@ -796,7 +811,7 @@ export class AlvisGraph extends React.Component<
   private deletePort(port: IPortRecord): IPortRecord {
     this.graph.getModel().beginUpdate();
     try {
-      const mxGraphPortId = this.getMxGraphIdByInternalId(port.internalId);
+      const mxGraphPortId = port.internalId;
       const cellToDelete = this.graph.getModel().getCell(mxGraphPortId);
 
       this.graph.removeCells([cellToDelete]);
@@ -813,14 +828,14 @@ export class AlvisGraph extends React.Component<
 
   private setPortSpecificStyle(
     portVertex: mxClasses.mxCell,
-    portRecord: IPortRecord,
+    port: IPortRecord,
   ): void {
     let labelPosition = 'center';
     let verticalLabelPosition = 'middle';
     let align = 'center';
     let verticalAlign = 'middle';
 
-    switch (portRecord.x) {
+    switch (port.x) {
       case 1:
         labelPosition = 'left';
         align = 'right';
@@ -830,7 +845,7 @@ export class AlvisGraph extends React.Component<
         align = 'left';
         break;
       default:
-        switch (portRecord.y) {
+        switch (port.y) {
           case 1:
             verticalLabelPosition = 'top';
             verticalAlign = 'bottom';
@@ -848,15 +863,13 @@ export class AlvisGraph extends React.Component<
     ]);
     this.graph.setCellStyles('align', align, [portVertex]);
     this.graph.setCellStyles('verticalAlign', verticalAlign, [portVertex]);
-    this.graph.setCellStyles('fillColor', portRecord.color, [portVertex]);
+    this.graph.setCellStyles('fillColor', port.color, [portVertex]);
   }
 
   private addPort(port: IPortRecord): IPortRecord {
     this.graph.getModel().beginUpdate();
     try {
-      const portAgentMxGraphId = this.getMxGraphIdByInternalId(
-        port.agentInternalId,
-      );
+      const portAgentMxGraphId = port.agentInternalId;
       const portAgentVertex = this.graph.getModel().getCell(portAgentMxGraphId);
       const portMainStyle = this.getPortMainStyle(port);
 
@@ -875,9 +888,6 @@ export class AlvisGraph extends React.Component<
 
       this.setPortSpecificStyle(portVertex, port);
 
-      this.mxGraphIdsToInternalIds[portVertex.getId()] = port.internalId;
-      this.internalIdsToMxGraphIds[port.internalId] = portVertex.getId();
-
       return port;
     } finally {
       this.graph.getModel().endUpdate();
@@ -885,12 +895,8 @@ export class AlvisGraph extends React.Component<
   }
 
   private getConnectionMainStyle(connection: IConnectionRecord): string {
-    const sourcePortMxGraphId = this.getMxGraphIdByInternalId(
-      connection.sourcePortInternalId,
-    );
-    const targetPortMxGraphId = this.getMxGraphIdByInternalId(
-      connection.targetPortInternalId,
-    );
+    const sourcePortMxGraphId = connection.sourcePortInternalId;
+    const targetPortMxGraphId = connection.targetPortInternalId;
     const connectionMainStyle = `CONNECTION;sourcePort=${sourcePortMxGraphId};targetPort=${targetPortMxGraphId};`;
 
     return connectionMainStyle;
@@ -898,29 +904,21 @@ export class AlvisGraph extends React.Component<
 
   private setConnectionSpecificStyle(
     connectionVertex: mxClasses.mxCell,
-    connectionRecord: IConnectionRecord,
+    connection: IConnectionRecord,
   ): void {
-    let startArrow;
-    let endArrow;
+    const { direction, style } = connection;
+    const edgeStyle =
+      style === 'straight' ? null : mx.mxConstants.EDGESTYLE_ENTITY_RELATION;
+    const startArrowStyle = direction === 'source' ? 'block' : 'none';
+    const endArrowStyle = direction === 'target' ? 'block' : 'none';
 
-    switch (connectionRecord.direction) {
-      case 'target':
-        startArrow = 'none';
-        endArrow = 'block';
-        break;
-      case 'source':
-        startArrow = 'block';
-        endArrow = 'none';
-        break;
-      case 'none':
-        startArrow = 'none';
-        endArrow = 'none';
-    }
-
-    this.graph.setCellStyles(mx.mxConstants.STYLE_STARTARROW, startArrow, [
+    this.graph.setCellStyles(mx.mxConstants.STYLE_STARTARROW, startArrowStyle, [
       connectionVertex,
     ]);
-    this.graph.setCellStyles(mx.mxConstants.STYLE_ENDARROW, endArrow, [
+    this.graph.setCellStyles(mx.mxConstants.STYLE_ENDARROW, endArrowStyle, [
+      connectionVertex,
+    ]);
+    this.graph.setCellStyles(mx.mxConstants.STYLE_EDGE, edgeStyle, [
       connectionVertex,
     ]);
   }
@@ -929,12 +927,8 @@ export class AlvisGraph extends React.Component<
     const { ports } = this.props;
     this.graph.getModel().beginUpdate();
     try {
-      const sourcePortMxGraphId = this.getMxGraphIdByInternalId(
-        connection.sourcePortInternalId,
-      );
-      const targetPortMxGraphId = this.getMxGraphIdByInternalId(
-        connection.targetPortInternalId,
-      );
+      const sourcePortMxGraphId = connection.sourcePortInternalId;
+      const targetPortMxGraphId = connection.targetPortInternalId;
       // can it be whatever port recordafter change? Maybe we should rather provide port from state of this change
       // targetPortRecord = this.getElementByInternalId(ports, connection.targetPortInternalId),
       const connectionMainStyle = this.getConnectionMainStyle(connection);
@@ -950,9 +944,6 @@ export class AlvisGraph extends React.Component<
 
       this.setConnectionSpecificStyle(edgeCell, connection);
 
-      this.mxGraphIdsToInternalIds[edgeCell.getId()] = connection.internalId;
-      this.internalIdsToMxGraphIds[connection.internalId] = edgeCell.getId();
-
       return connection;
     } finally {
       this.graph.getModel().endUpdate();
@@ -962,9 +953,7 @@ export class AlvisGraph extends React.Component<
   private modifyConnection(connection: IConnectionRecord): IConnectionRecord {
     this.graph.getModel().beginUpdate();
     try {
-      const mxGraphConnectionId = this.getMxGraphIdByInternalId(
-        connection.internalId,
-      );
+      const mxGraphConnectionId = connection.internalId;
       const cellToModify = this.graph.getModel().getCell(mxGraphConnectionId);
 
       this.setConnectionSpecificStyle(cellToModify, connection);
@@ -978,9 +967,7 @@ export class AlvisGraph extends React.Component<
   private deleteConnection(connection: IConnectionRecord): IConnectionRecord {
     this.graph.getModel().beginUpdate();
     try {
-      const mxGraphConnectionId = this.getMxGraphIdByInternalId(
-        connection.internalId,
-      );
+      const mxGraphConnectionId = connection.internalId;
       const cellToDelete = this.graph.getModel().getCell(mxGraphConnectionId);
 
       this.graph.removeCells([cellToDelete]);
@@ -1031,7 +1018,9 @@ export class AlvisGraph extends React.Component<
   }
 
   // TO DO: look for optimizations
-  // TO DO: check do we need something similar for connections?
+  // TO DO: check if we need something similar for connections?
+  // TODO: later: maybe we should assume that port never changes it's agent?
+  // I think there was some reason, why it was designed like that.
   private getPortsChanges<T extends IPortRecord>(
     next: Map<string, T>,
     current: Map<string, T>,

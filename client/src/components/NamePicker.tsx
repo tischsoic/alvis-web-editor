@@ -54,7 +54,12 @@ export class NamePicker extends React.Component<
           <Modal.Title id="contained-modal-title-sm">Choose name</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <form>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              this.onModalClose(true);
+            }}
+          >
             <FormGroup controlId="chooseNameFormGroup">
               <FormControl
                 type="text"

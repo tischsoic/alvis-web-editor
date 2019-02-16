@@ -276,7 +276,11 @@ export class EditorComponent extends React.Component<
             additionalClassName="c-editor__split-pane-horizontal-fst"
           >
             <div className="c-editor__top-container-wrapper">
-              <Tabs activeId={openedView} onTabClick={this.changeTab} noCloseButton>
+              <Tabs
+                activeId={openedView}
+                onTabClick={this.changeTab}
+                noCloseButton
+              >
                 <Tab
                   id="code-editor"
                   label="Editor"
@@ -329,25 +333,11 @@ export class EditorComponent extends React.Component<
             <div className="c-editor__graph-editor">
               <AlvisGraphPanel
                 alvisProject={alvisProject}
-                projectId={0}
                 onChangeActivePage={this.setActivePageInternalId}
                 onClosePage={this.closePage}
                 activePageId={activePageId}
                 openedPagesIds={openedPagesIds}
-                onMxGraphPageAdded={projectBindedActions.addPage}
-                onMxGraphAgentAdded={projectBindedActions.addAgent}
-                onMxGraphAgentDeleted={projectBindedActions.deleteAgent}
-                onMxGraphAgentModified={projectBindedActions.modifyAgent}
-                onMxGraphPortAdded={projectBindedActions.addPort}
-                onMxGraphPortDeleted={projectBindedActions.deletePort}
-                onMxGraphPortModified={projectBindedActions.modifyPort}
-                onMxGraphConnectionAdded={projectBindedActions.addConnection}
-                onMxGraphConnectionDeleted={
-                  projectBindedActions.deleteConnection
-                }
-                onMxGraphConnectionModified={
-                  projectBindedActions.modifyConnection
-                }
+                onProjectModify={projectBindedActions.applyModification}
                 onHierarchyRemove={projectBindedActions.removeHierarchy}
                 onUndo={projectBindedActions.undo}
                 onRedo={projectBindedActions.redo}
