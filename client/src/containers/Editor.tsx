@@ -318,7 +318,7 @@ export class EditorComponent extends React.Component<
                     onPageClick={(page) =>
                       this.setActivePageInternalId(page.internalId)
                     }
-                    onMxGraphPageDeleted={projectBindedActions.deletePage}
+                    onProjectModify={projectBindedActions.applyModification}
                   />
                 </Tab>
               </Tabs>

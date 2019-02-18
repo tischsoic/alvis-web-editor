@@ -13,13 +13,14 @@ import {
 } from '../models/alvisProject';
 import { List, Map } from 'immutable';
 import { Button, Glyphicon } from 'react-bootstrap';
+import { IPartialModification } from '../models/project';
 
 export interface HierarchyTreeProps {
   pages: Map<string, IPageRecord>;
   agents: Map<string, IAgentRecord>;
   onPageClick: (page: IPageRecord) => void;
 
-  onMxGraphPageDeleted: (pageInternalId: string) => any;
+  onProjectModify: (modification: IPartialModification) => any;
 }
 
 export interface HierarchyTreeState {}
@@ -58,8 +59,14 @@ export class HierarchyTree extends React.Component<
     return agents.find((agent) => agent.internalId === page.supAgentInternalId);
   }
 
+  private handlePageDelete = (pageId: string) => () => {
+    this.props.onProjectModify({
+      pages: { deleted: List([pageId]) },
+    });
+  };
+
   getPageTree(page: IPageRecord) {
-    const { onPageClick, onMxGraphPageDeleted } = this.props;
+    const { onPageClick, onProjectModify } = this.props;
     const subPages = page.subPagesInternalIds.map((pageInternalId) =>
       this.getPageByInternalId(pageInternalId),
     );
@@ -76,7 +83,7 @@ export class HierarchyTree extends React.Component<
           <Button
             bsStyle="danger"
             bsSize="xsmall"
-            onClick={() => onMxGraphPageDeleted(pageInternalId)}
+            onClick={this.handlePageDelete(pageInternalId)}
           >
             <Glyphicon glyph="remove" />
           </Button>
