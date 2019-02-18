@@ -3,9 +3,9 @@
     display: flex;
     flex-direction: column;
 
-  &__btn-panel {
+  &__toolbars-panel {
     padding: 16px;
-    flex: 0 0 0%; // TODO: check if needed
+    flex: 0 0 100px; // TODO: check if needed
   }
 
   &__tabs {

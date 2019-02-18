@@ -13,6 +13,7 @@ import {
   IAlvisCodeRecord,
   ConnectionDirection,
   IIdentifiableElement,
+  ConnectionStyle,
 } from '../models/alvisProject';
 import { List, Map, Set } from 'immutable';
 import { newUuid } from './uuidGenerator';
@@ -117,7 +118,7 @@ function connectionToRecord(
     direction,
     sourcePortInternalId,
     targetPortInternalId,
-    style: connection.getAttribute('style'),
+    style: connection.getAttribute('style') as ConnectionStyle,
   });
 }
 

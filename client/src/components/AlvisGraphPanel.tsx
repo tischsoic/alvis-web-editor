@@ -2,31 +2,21 @@ import * as React from 'react';
 import * as classNames from 'classnames';
 import * as mxClasses from 'mxgraphAllClasses';
 import {
-  IAgentRecord,
   agentRecordFactory,
-  IPortRecord,
-  portRecordFactory,
-  IConnectionRecord,
-  connectionRecordFactory,
-  IIdentifiableElement,
-  IAlvisPageElement,
   ConnectionDirection,
-  IPageRecord,
   IAlvisProjectRecord,
   IAgent,
+  IAgentRecord,
+  IPortRecord,
+  IConnectionRecord,
+  ConnectionStyle,
+  IConnection,
+  pageRecordFactory,
+  portRecordFactory,
+  IPort,
 } from '../models/alvisProject';
-import { List, Record, OrderedSet } from 'immutable';
-import {
-  Nav,
-  NavItem,
-  Grid,
-  Row,
-  Col,
-  Glyphicon,
-  Button,
-  ButtonGroup,
-  ButtonToolbar,
-} from 'react-bootstrap';
+import { List, OrderedSet } from 'immutable';
+import { ButtonGroup, ButtonToolbar } from 'react-bootstrap';
 // TODO: add some TS types etc.
 import { saveAs } from 'file-saver';
 
@@ -39,33 +29,29 @@ import { Tab, TabProps } from './Tab/Tab';
 import { Tabs } from './Tab/Tabs';
 import EditorButtonSave from './EditorSaveButton/EditorButtonSave';
 import { EditorButton } from './EditorButton/EditorButton';
+import { IPartialModification } from '../models/project';
 
 const style = require('./AlvisGraphPanel.scss');
 
 // TODO: add some TS types etc.
 declare let canvg: any;
 
+// TODO: should be immutable Record
+export type IPageSelection = {
+  agents: string[];
+  ports: string[];
+  connections: string[];
+};
+
 export interface AlvisGraphPanelProps {
   alvisProject: IAlvisProjectRecord;
   activePageId: string | null;
   openedPagesIds: OrderedSet<string>;
-  projectId: number;
-  onChangeActivePage: (newActivePageInternalId: string) => void;
+
+  onChangeActivePage: (newActivePageId: string) => void;
   onClosePage: (pageId: string) => void;
 
-  onMxGraphPageAdded: (page: IPageRecord) => any; // TODO: shouldn't return type be
-
-  onMxGraphAgentAdded: (agent: IAgentRecord) => any;
-  onMxGraphAgentDeleted: (agentInternalId: string) => any;
-  onMxGraphAgentModified: (agent: IAgentRecord) => any;
-
-  onMxGraphPortAdded: (port: IPortRecord) => any;
-  onMxGraphPortDeleted: (portInternalId: string) => any;
-  onMxGraphPortModified: (port: IPortRecord) => any;
-
-  onMxGraphConnectionAdded: (connection: IConnectionRecord) => any;
-  onMxGraphConnectionDeleted: (connectionInternalId: string) => any;
-  onMxGraphConnectionModified: (connection: IConnectionRecord) => any;
+  onProjectModify: (modification: IPartialModification) => any;
 
   onHierarchyRemove: (agentId: string) => void;
 
@@ -82,6 +68,7 @@ export interface AlvisGraphPanelProps {
 export interface AlvisGraphPanelState {
   selectedColor: string;
   isColoringModeEnabled: boolean;
+  selection: IPageSelection;
 }
 
 export class AlvisGraphPanel extends React.Component<
@@ -94,6 +81,11 @@ export class AlvisGraphPanel extends React.Component<
     this.state = {
       selectedColor: '#000',
       isColoringModeEnabled: false,
+      selection: {
+        agents: [],
+        ports: [],
+        connections: [],
+      },
     };
 
     this.getNameFromUser = this.getNameFromUser.bind(this);
@@ -124,10 +116,7 @@ export class AlvisGraphPanel extends React.Component<
   };
 
   private addAgent = (agentData: Partial<IAgent>) => {
-    const {
-      onMxGraphAgentAdded,
-      activePageId: activePageInternalId,
-    } = this.props;
+    const { onProjectModify, activePageId: activePageInternalId } = this.props;
     const agent = agentRecordFactory({
       // TODO: create util for creating objects like this.
       internalId: newUuid(),
@@ -139,7 +128,9 @@ export class AlvisGraphPanel extends React.Component<
       ...agentData,
     });
 
-    onMxGraphAgentAdded(agent);
+    onProjectModify({
+      agents: { added: List([agent]) },
+    });
   };
 
   private getActiveMxGraphInstance = () => {
@@ -201,30 +192,164 @@ export class AlvisGraphPanel extends React.Component<
     document.addEventListener('keydown', this.handleKeyDown, false);
   }
 
+  private getSelectedElementsIds(): string[] {
+    const mxGraph = this.activeAlvisGraph.getMxGraphInstance();
+    const selectedCells = mxGraph.getSelectionCells();
+    const elementsIds = selectedCells.map((cell) => cell.getId());
+
+    return elementsIds;
+  }
+
+  private handleCopy = (): void => {
+    const { onCopy } = this.props;
+    const elementsIds = this.getSelectedElementsIds();
+
+    if (elementsIds.length !== 0) {
+      onCopy(elementsIds);
+    }
+  };
+
+  private handleCut = (): void => {
+    const { onCut } = this.props;
+    const elementsIds = this.getSelectedElementsIds();
+
+    if (elementsIds.length !== 0) {
+      onCut(elementsIds);
+    }
+  };
+
+  private handlePaste = (): void => {
+    const { onPaste } = this.props;
+    const { activePageId } = this.props;
+
+    onPaste(activePageId);
+  };
+
+  private handleConnectionModify = (connectionId: string) => (
+    connectionData: Partial<IConnection>,
+  ) => () => {
+    const { onProjectModify, alvisProject: { connections } } = this.props;
+    const connection = connections.get(connectionId);
+    const modifiedConnection = connection
+      .merge(connectionData)
+      .set('internalId', connection.internalId);
+
+    onProjectModify({
+      connections: { modified: List([modifiedConnection]) },
+    });
+  };
+
+  private handleConnectionDelete = (connectionId: string) => () => {
+    this.props.onProjectModify({
+      connections: { deleted: List([connectionId]) },
+    });
+  };
+
+  private handlePageAdd = (agentId: string) => () => {
+    this.getNameFromUser((chosenName: string) => {
+      if (chosenName === null) {
+        return;
+      }
+
+      const page = pageRecordFactory({
+        internalId: newUuid(),
+        name: chosenName,
+        supAgentInternalId: agentId,
+      });
+
+      this.props.onProjectModify({
+        pages: { added: List([page]) },
+      });
+    });
+  };
+
+  private handlePortAdd = (agentId: string) => () => {
+    const port = portRecordFactory({
+      internalId: newUuid(),
+      name: 'port_',
+      agentInternalId: agentId,
+      x: 0,
+      y: 0.2,
+    });
+
+    this.props.onProjectModify({
+      ports: { added: List([port]) },
+    });
+  };
+
+  private handleHierarchyRemove = (agentId: string) => () => {
+    this.props.onHierarchyRemove(agentId);
+  };
+
+  private handleAgentModify = (agentId: string) => (
+    agentData: Partial<IAgent>,
+  ) => () => {
+    const { onProjectModify, alvisProject: { agents } } = this.props;
+    const agent = agents.get(agentId);
+    const modifiedAgent = agent
+      .merge(agentData)
+      .set('internalId', agent.internalId);
+
+    onProjectModify({
+      agents: { modified: List([modifiedAgent]) },
+    });
+  };
+
+  private handleAgentDelete = (agentId: string) => () => {
+    this.props.onProjectModify({
+      agents: { deleted: List([agentId]) },
+    });
+  };
+
+  private handlePortModify = (portId: string) => (
+    portData: Partial<IPort>,
+  ) => () => {
+    const { onProjectModify, alvisProject: { ports } } = this.props;
+    const port = ports.get(portId);
+    const modifiedPort = port
+      .merge(portData)
+      .set('internalId', port.internalId);
+
+    onProjectModify({
+      ports: { modified: List([modifiedPort]) },
+    });
+  };
+
+  private handlePortDelete = (portId: string) => () => {
+    this.props.onProjectModify({
+      ports: { deleted: List([portId]) },
+    });
+  };
+
+  private handleElementsAlign = (align: string) => () => {
+    this.activeAlvisGraph.getMxGraphInstance().alignCells(align);
+  };
+
   private handleKeyDown = (event) => {
-    const { onCopy, onCut, onPaste } = this.props;
     const cKey = 67;
     const xKey = 88;
     const vKey = 86;
 
-    if (event.ctrlKey && (event.keyCode === cKey || event.keyCode === xKey)) {
-      const mxGraph = this.activeAlvisGraph.getMxGraphInstance();
-      const selectedCells = mxGraph.getSelectionCells();
-      const elementsIds = selectedCells.map((cell) => cell.getId());
+    if (!event.ctrlKey) {
+      return;
+    }
 
-      if (event.keyCode === cKey) {
-        onCopy(elementsIds);
-      } else {
-        onCut(elementsIds);
-      }
-    } else if (event.ctrlKey && event.keyCode === vKey) {
-      const { activePageId: activePageInternalId } = this.props;
-
-      onPaste(activePageInternalId);
+    switch (event.keyCode) {
+      case cKey:
+        this.handleCopy();
+        break;
+      case xKey:
+        this.handleCut();
+        break;
+      case vKey:
+        this.handlePaste();
+        break;
     }
   };
 
-  componentWillMount() {}
+  setSelection = (selection: IPageSelection): void => {
+    this.setState({ selection });
+  };
 
   getPageElements(pageInternalId: string) {
     const { alvisProject } = this.props;
@@ -255,52 +380,249 @@ export class AlvisGraphPanel extends React.Component<
     }));
   };
 
-  colorElement = <T extends IAgentRecord | IPortRecord>(element: T): T => {
-    const { selectedColor } = this.state;
-
-    return (element as any).set('color', selectedColor);
-  };
-
-  manageElementColoring = <T extends IAgentRecord | IPortRecord>(
-    element: T,
-  ): T => {
-    const { isColoringModeEnabled } = this.state;
-
-    if (!isColoringModeEnabled) {
-      return element;
-    }
-
-    const { selectedColor } = this.state;
-
-    return (element as any).set('color', selectedColor);
-  };
-
   onAgentClick = (id: string): void => {
-    const { onMxGraphAgentModified, alvisProject } = this.props;
-    const agent = alvisProject.agents.find((el) => el.internalId === id);
-    const coloredAgent = this.manageElementColoring(agent);
+    const { onProjectModify, alvisProject } = this.props;
+    const { isColoringModeEnabled, selectedColor } = this.state;
+    const agent = alvisProject.agents.get(id);
 
-    if (agent !== coloredAgent) {
-      onMxGraphAgentModified(coloredAgent);
+    if (isColoringModeEnabled) {
+      const coloredAgent = agent.set('color', selectedColor);
+
+      onProjectModify({
+        agents: { modified: List([coloredAgent]) },
+      });
     }
   };
 
   onPortClick = (id: string): void => {
-    const { onMxGraphPortModified, alvisProject } = this.props;
-    const port = alvisProject.ports.find((el) => el.internalId === id);
-    const coloredPort = this.manageElementColoring(port);
+    const { onProjectModify, alvisProject } = this.props;
+    const { isColoringModeEnabled, selectedColor } = this.state;
+    const port = alvisProject.ports.get(id);
 
-    if (port !== coloredPort) {
-      onMxGraphPortModified(coloredPort);
+    if (isColoringModeEnabled) {
+      const coloredPort = port.set('color', selectedColor);
+
+      onProjectModify({
+        ports: { modified: List([coloredPort]) },
+      });
     }
   };
 
-  renderBtns() {
+  renderAgentToolbar() {
+    const { alvisProject: { agents } } = this.props;
+    const {
+      selection: { agents: selectedAgentsIds },
+      selectedColor,
+    } = this.state;
+    const agentId = selectedAgentsIds[0];
+    const agent = agents.get(agentId);
+
+    if (!agent) {
+      return null;
+    }
+
+    return (
+      <div className={'c-alvis-graph-panel__toolbar'}>
+        <ButtonToolbar>
+          <EditorButton
+            icon="page-add"
+            title="Add page"
+            disabled={agent.subPageInternalId !== null}
+            onClick={this.handlePageAdd(agentId)}
+          />
+          <EditorButton
+            icon="port-add"
+            title="Add port"
+            onClick={this.handlePortAdd(agentId)}
+          />
+          <EditorButton
+            icon="run-fast"
+            title={
+              agent.running
+                ? 'Start in Initial State'
+                : 'Start in Running State'
+            }
+            active={agent.running === 1}
+            onClick={this.handleAgentModify(agentId)({
+              running: agent.running ? 0 : 1,
+            })}
+          />
+          <EditorButton
+            icon="remove-hierarchy"
+            title="Remove hierarchy"
+            onClick={this.handleHierarchyRemove(agentId)}
+          />
+          <EditorButton
+            icon="fill-color"
+            title="Color"
+            onClick={this.handleAgentModify(agentId)({ color: selectedColor })}
+          />
+          <EditorButton
+            icon="delete"
+            title="Delete"
+            onClick={this.handleAgentDelete(agentId)}
+          />
+        </ButtonToolbar>
+      </div>
+    );
+  }
+
+  renderPortToolbar() {
+    const { alvisProject: { ports } } = this.props;
+    const {
+      selection: { ports: selectedPortsIds },
+      selectedColor,
+    } = this.state;
+    const portId = selectedPortsIds[0];
+    const port = ports.get(portId);
+
+    if (!port) {
+      return null;
+    }
+
+    return (
+      <div className={'c-alvis-graph-panel__toolbar'}>
+        <ButtonToolbar>
+          <EditorButton
+            icon="fill-color"
+            title="Color"
+            onClick={this.handlePortModify(portId)({ color: selectedColor })}
+          />
+          <EditorButton
+            icon="delete"
+            title="Delete"
+            onClick={this.handlePortDelete(portId)}
+          />
+        </ButtonToolbar>
+      </div>
+    );
+  }
+
+  renderConnectionToolbar() {
+    const { alvisProject: { connections } } = this.props;
+    const { selection: { connections: selectedConnectionsIds } } = this.state;
+    const connectionId = selectedConnectionsIds[0];
+    const connection = connections.get(connectionId);
+
+    if (!connection) {
+      return null;
+    }
+
+    return (
+      <div className={'c-alvis-graph-panel__toolbar'}>
+        <ButtonToolbar>
+          <ButtonGroup>
+            <EditorButton
+              icon="arrow-left"
+              title="Direct to source"
+              disabled={connection.direction === 'source'}
+              onClick={this.handleConnectionModify(connectionId)({
+                direction: 'source',
+              })}
+            />
+            <EditorButton
+              icon="line"
+              title="Undirect"
+              disabled={connection.direction === 'none'}
+              onClick={this.handleConnectionModify(connectionId)({
+                direction: 'none',
+              })}
+            />
+            <EditorButton
+              icon="arrow-right"
+              title="Direct to target"
+              disabled={connection.direction === 'target'}
+              onClick={this.handleConnectionModify(connectionId)({
+                direction: 'target',
+              })}
+            />
+          </ButtonGroup>
+          <ButtonGroup>
+            <EditorButton
+              icon="connection-straight"
+              title="Straight style"
+              disabled={connection.style === 'straight'}
+              onClick={this.handleConnectionModify(connectionId)({
+                style: 'straight',
+              })}
+            />
+            <EditorButton
+              icon="connection-relational"
+              title="Relational style"
+              disabled={connection.style === 'relational'}
+              onClick={this.handleConnectionModify(connectionId)({
+                style: 'relational',
+              })}
+            />
+          </ButtonGroup>
+          <EditorButton
+            icon="delete"
+            title="Delete"
+            onClick={this.handleConnectionDelete(connectionId)}
+          />
+        </ButtonToolbar>
+      </div>
+    );
+  }
+
+  renderElementsToolbar() {
+    const {
+      ALIGN_LEFT,
+      ALIGN_CENTER,
+      ALIGN_RIGHT,
+      ALIGN_BOTTOM,
+      ALIGN_MIDDLE,
+      ALIGN_TOP,
+    } = mx.mxConstants;
+
+    return (
+      <div className={'c-alvis-graph-panel__toolbar'}>
+        <ButtonToolbar>
+          <ButtonGroup>
+            <EditorButton
+              icon="format-horizontal-align-left"
+              title="Left"
+              onClick={this.handleElementsAlign(ALIGN_LEFT)}
+            />
+            <EditorButton
+              icon="format-horizontal-align-center"
+              title="Center"
+              onClick={this.handleElementsAlign(ALIGN_CENTER)}
+            />
+            <EditorButton
+              icon="format-horizontal-align-right"
+              title="Right"
+              onClick={this.handleElementsAlign(ALIGN_RIGHT)}
+            />
+          </ButtonGroup>
+          <ButtonGroup>
+            <EditorButton
+              icon="format-vertical-align-bottom"
+              title="Left"
+              onClick={this.handleElementsAlign(ALIGN_BOTTOM)}
+            />
+            <EditorButton
+              icon="format-vertical-align-center"
+              title="Center"
+              onClick={this.handleElementsAlign(ALIGN_MIDDLE)}
+            />
+            <EditorButton
+              icon="format-vertical-align-top"
+              title="Right"
+              onClick={this.handleElementsAlign(ALIGN_TOP)}
+            />
+          </ButtonGroup>
+        </ButtonToolbar>
+      </div>
+    );
+  }
+
+  renderMainToolbar() {
     const { onUndo, onRedo } = this.props;
     const { selectedColor, isColoringModeEnabled } = this.state;
 
     return (
-      <div className={'c-alvis-graph-panel__btn-panel'}>
+      <div className={'c-alvis-graph-panel__toolbar'}>
         <ButtonToolbar>
           <EditorButtonSave />
           <ButtonGroup>
@@ -313,6 +635,23 @@ export class AlvisGraphPanel extends React.Component<
               icon="zoom-in"
               title="zoom-in"
               onClick={() => this.activeAlvisGraph.zoomIn()}
+            />
+          </ButtonGroup>
+          <ButtonGroup>
+            <EditorButton
+              icon="content-copy"
+              title="Copy"
+              onClick={this.handleCopy}
+            />
+            <EditorButton
+              icon="content-cut"
+              title="Cut"
+              onClick={this.handleCut}
+            />
+            <EditorButton
+              icon="content-paste"
+              title="Paste"
+              onClick={this.handlePaste}
             />
           </ButtonGroup>
           <ButtonGroup>
@@ -353,21 +692,33 @@ export class AlvisGraphPanel extends React.Component<
     );
   }
 
+  renderToolbars() {
+    const { selection: { agents, ports, connections } } = this.state;
+    const selectedElementsCount =
+      agents.length + ports.length + connections.length;
+    const isMultiSelection = selectedElementsCount > 1;
+
+    // TODO: instead of rendering selectively menus
+    // we can disable some buttons instead of hiding them. Is it a good idea?
+    return (
+      <div className={'c-alvis-graph-panel__toolbars-panel'}>
+        {this.renderMainToolbar()}
+        {isMultiSelection && this.renderElementsToolbar()}
+        {!isMultiSelection && agents.length === 1 && this.renderAgentToolbar()}
+        {!isMultiSelection && ports.length === 1 && this.renderPortToolbar()}
+        {!isMultiSelection &&
+          connections.length === 1 &&
+          this.renderConnectionToolbar()}
+      </div>
+    );
+  }
+
   render() {
     const {
       activePageId: activePageInternalId,
       onChangeActivePage,
       onClosePage,
-      onMxGraphPageAdded,
-      onMxGraphAgentAdded,
-      onMxGraphAgentDeleted,
-      onMxGraphAgentModified,
-      onMxGraphPortAdded,
-      onMxGraphPortDeleted,
-      onMxGraphPortModified,
-      onMxGraphConnectionAdded,
-      onMxGraphConnectionDeleted,
-      onMxGraphConnectionModified,
+      onProjectModify,
       onHierarchyRemove,
       openedPagesIds,
     } = this.props;
@@ -398,20 +749,12 @@ export class AlvisGraphPanel extends React.Component<
             connections={connections}
             pageInternalId={pageInternalId}
             onChangeActivePage={onChangeActivePage}
-            onMxGraphPageAdded={onMxGraphPageAdded}
-            onMxGraphAgentAdded={onMxGraphAgentAdded}
-            onMxGraphAgentDeleted={onMxGraphAgentDeleted}
-            onMxGraphAgentModified={onMxGraphAgentModified}
-            onMxGraphPortAdded={onMxGraphPortAdded}
-            onMxGraphPortDeleted={onMxGraphPortDeleted}
-            onMxGraphPortModified={onMxGraphPortModified}
-            onMxGraphConnectionAdded={onMxGraphConnectionAdded}
-            onMxGraphConnectionDeleted={onMxGraphConnectionDeleted}
-            onMxGraphConnectionModified={onMxGraphConnectionModified}
+            onProjectModify={onProjectModify}
             onHierarchyRemove={onHierarchyRemove}
             onAgentClick={this.onAgentClick}
             onPortClick={this.onPortClick}
             getNameFromUser={this.getNameFromUser}
+            setSelection={this.setSelection}
           />
         </Tab>
       );
@@ -426,7 +769,7 @@ export class AlvisGraphPanel extends React.Component<
             this.namePicker = namePicker;
           }}
         />
-        {this.renderBtns()}
+        {this.renderToolbars()}
         <div className={'c-alvis-graph-panel__tabs'}>
           <Tabs
             activeId={activePageInternalId}

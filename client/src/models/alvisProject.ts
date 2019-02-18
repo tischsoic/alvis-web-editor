@@ -1,5 +1,6 @@
 import { Record, List, Set, Map } from 'immutable';
 import { IProjectModification } from './project';
+import { CONNECTION_STYLE } from '../constants/defaults';
 
 export type IInternalId = string;
 
@@ -78,13 +79,14 @@ const defaultAgentRecord: IAgent = {
 export const agentRecordFactory = Record<IAgent>(defaultAgentRecord);
 
 export type ConnectionDirection = 'target' | 'source' | 'none'; // TO DO: that is all?
+export type ConnectionStyle = 'straight' | 'relational'; 
 export interface IConnection extends IIdentifiableElement {
   internalId: string; // TODO: should we remove ''? Record.Factory does not need this, but wouldnt it be good
   // to let it be in order to make this interface more practical?
   direction: ConnectionDirection;
   sourcePortInternalId: string;
   targetPortInternalId: string;
-  style: string;
+  style: ConnectionStyle;
 }
 export type IConnectionRecord = ReturnType<Record.Factory<IConnection>>;
 const defaultConnectionRecord: IConnection = {
@@ -92,7 +94,7 @@ const defaultConnectionRecord: IConnection = {
   direction: null,
   sourcePortInternalId: null,
   targetPortInternalId: null,
-  style: null,
+  style: CONNECTION_STYLE,
 };
 export const connectionRecordFactory = Record<IConnection>(
   defaultConnectionRecord,

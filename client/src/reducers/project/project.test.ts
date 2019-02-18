@@ -1,21 +1,5 @@
 import project, { initialState } from './project';
 import {
-  setProjectXML,
-  addPage,
-  deletePage,
-  modifyPage,
-  addAgent,
-  deleteAgent,
-  modifyAgent,
-  addPort,
-  deletePort,
-  modifyPort,
-  addConnection,
-  deleteConnection,
-  modifyConnection,
-  setAlvisProject,
-} from '../../actions/project/project';
-import {
   projectRecordFactory,
   IProjectModification,
   projectModificationRecordFactoryPartial,
