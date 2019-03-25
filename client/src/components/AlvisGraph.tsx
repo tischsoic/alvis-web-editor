@@ -23,7 +23,6 @@ import {
 } from '../models/alvisProject';
 import { List, Map, Set } from 'immutable';
 import { newUuid } from '../utils/uuidGenerator';
-import { addPopupMenu } from '../utils/mxGraphPopupMenu';
 import {
   IProjectModificationRecord,
   projectModificationRecordFactoryPartial,
@@ -56,6 +55,8 @@ export interface AlvisGraphProps {
 
   getNameFromUser: (callback: (chosenName: string) => void) => void;
   setSelection: (selection: IPageSelection) => void;
+
+  popupMenuCreate: mxClasses.mxPopupMenuHandler['factoryMethod']
 }
 
 export interface AlvisGraphState {}
@@ -245,7 +246,7 @@ export class AlvisGraph extends React.Component<
     this.mxAlvisGraphModel = new mxAlvisGraphModel();
     this.graph = new mx.mxGraph(graphDiv, this.mxAlvisGraphModel);
     modifyMxGraph(mx, this.graph, this, this.onProcessChange);
-    addPopupMenu(mx, this.graph, alvisGraph);
+    this.initializePopupMenu();
     const oldCellConnected = this.graph.cellConnected;
     const graph = this.graph;
     this.graph.cellConnected = function() {
@@ -341,6 +342,16 @@ export class AlvisGraph extends React.Component<
 
     this.applyChanges();
     this.graph.center();
+  }
+
+  private initializePopupMenu() {
+    (mx as any).mxEvent.disableContextMenu(document.body);
+
+    // Configures automatic expand on mouseover
+    this.graph.popupMenuHandler.autoExpand = true;
+
+    // Installs context menu
+    this.graph.popupMenuHandler.factoryMethod = this.props.popupMenuCreate;
   }
 
   private getSelectionData(selectedCells: mxClasses.mxCell[]): IPageSelection {
