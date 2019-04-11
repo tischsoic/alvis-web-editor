@@ -1,178 +1,173 @@
-import mxgraph = require('mxgraph');
+// import mxgraph = require('mxgraph');
 import * as mxClasses from 'mxgraphAllClasses';
-import { AlvisGraph } from '../components/AlvisGraph';
-import { ConnectionDirection } from '../models/alvisProject';
-import { List } from 'immutable';
-import { projectModificationRecordFactoryPartial } from '../models/project';
+import { mx } from '../utils/mx';
 
-export function addPopupMenu(
-  mx: mxgraph.allClasses,
-  graph: mxClasses.mxGraph,
-  alvisGraph: AlvisGraph,
-) {
-  // Disables built-in context menu
-  (mx as any).mxEvent.disableContextMenu(document.body);
+// import { AlvisGraph } from '../components/AlvisGraph';
+// import { ConnectionDirection } from '../models/alvisProject';
+// import { List } from 'immutable';
 
-  // Configures automatic expand on mouseover
-  graph.popupMenuHandler.autoExpand = true;
+export const createPopupMenu = ({
+  addAgent,
+  handleElementsAlign,
+  onGetGraphImage,
+  handleConnectionModify,
+  handleConnectionDelete,
+  handlePortModify,
+  handlePortDelete,
+  handlePageAdd,
+  handlePortAdd,
+  handleAgentModify,
+  handleHierarchyRemove,
+  handleAgentDelete,
+  getSelectedColor,
+}) => (
+  menu: mxClasses.mxPopupMenuHandler,
+  cell: mxClasses.mxCell,
+  evt: PointerEvent,
+) => {
+  const nothingSelected = cell === null;
 
-  // Installs context menu
-  graph.popupMenuHandler.factoryMethod = function(
-    menu,
-    cell,
-    evt: PointerEvent,
-  ) {
-    const { onProjectModify, agents } = alvisGraph.props;
+  if (nothingSelected) {
+    menu.addItem(
+      'Add active agent',
+      null,
+      addAgent({
+        active: 1,
+        x: evt.offsetX,
+        y: evt.offsetY,
+      }),
+    );
+    menu.addItem(
+      'Add passive agent',
+      null,
+      addAgent({
+        active: 0,
+        x: evt.offsetX,
+        y: evt.offsetY,
+      }),
+    );
+    menu.addItem('Download as image', null, onGetGraphImage);
 
-    if (cell == null) {
-      const addAgent = (active: boolean) => {
-        const agent = alvisGraph.createAgent({
-          x: evt.offsetX,
-          y: evt.offsetY,
-          name: 'Agent_' + agents.size,
-          active: active ? 1 : 0,
-          color: 'white',
-        });
+    return;
+  }
 
-        onProjectModify({
-          agents: { added: List([agent]) },
-        });
-      };
-      menu.addItem('Add active agent.', null, () => addAgent(true));
-      menu.addItem('Add passive agent.', null, () => addAgent(false));
-      return;
-    }
+  const selectedCells = menu.graph.getSelectionCells();
+  const manyCellsSelected = selectedCells && selectedCells.length > 1;
 
-    if (cell.isEdge()) {
-      const modifyConnection = (direction: ConnectionDirection) => {
-        const modifiedConnection = alvisGraph.createConnection({
-          direction,
-          internalId: cell.getId(),
-        });
-
-        onProjectModify({
-          connections: { modified: List([modifiedConnection]) },
-        });
-      };
-      menu.addItem('Direct to source', null, () => {
-        modifyConnection('source');
-      });
-      menu.addItem('Direct to target', null, () => {
-        modifyConnection('target');
-      });
-      menu.addItem('Undirect', null, () => {
-        modifyConnection('none');
-      });
-      return;
-    }
-
-    if (graph.isPort(cell)) {
-      const portId = cell.getId();
-
-      menu.addItem('Delete', null, () => {
-        onProjectModify({
-          ports: { deleted: List([portId]) },
-        });
-      });
-      // menu.addItem('Edit', null, () => { });
-      // menu.addItem('Color', null, () => { });
-      return;
-    }
-
-    menu.addItem('Add port', null, () => {
-      const { ports } = alvisGraph.props;
-      const portsCount = ports.size;
-      const portName = 'port_' + portsCount;
-
-      graph.getModel().beginUpdate();
-      try {
-        const portVertex = graph.insertVertex(
-          cell,
-          null,
-          portName,
-          1,
-          1,
-          20,
-          20,
-          'PORT_STYLE',
-          true,
-        );
-        portVertex.geometry.offset = new mx.mxPoint(-10, -10);
-      } finally {
-        graph.getModel().endUpdate();
-      }
-    });
-
-    const agentId = cell.getId();
-    const agent = alvisGraph.props.agents.get(agentId); // TODO: reading from props here is not a good idea - refactor later
-    const agentHasSubpage = !!agent.subPageInternalId;
-
-    if (agentHasSubpage) {
-      const { onHierarchyRemove } = alvisGraph.props;
-
-      menu.addItem('Remove hierarchy', null, () => {
-        onHierarchyRemove(agentId);
-      });
-    } else {
-      menu.addItem('Add page', null, () => {
-        const { getNameFromUser } = alvisGraph.props;
-        const agentInternalId = cell.getId();
-
-        getNameFromUser((chosenName: string) => {
-          if (chosenName === null) {
-            return;
-          }
-
-          const page = alvisGraph.createPage(chosenName, agentInternalId);
-
-          onProjectModify({
-            pages: { added: List([page]) },
-          });
-        });
-      });
-    }
-
+  if (manyCellsSelected) {
+    const {
+      ALIGN_LEFT,
+      ALIGN_CENTER,
+      ALIGN_RIGHT,
+      ALIGN_BOTTOM,
+      ALIGN_MIDDLE,
+      ALIGN_TOP,
+    } = mx.mxConstants;
     const alignSubmenu = menu.addItem('Align', null, null);
-    const getAlignFn = (align: string): (() => void) => {
-      return () => {
-        graph.alignCells(align, graph.getSelectionCells());
-      };
-    };
-    menu.addItem(
-      'Top',
-      null,
-      getAlignFn(mx.mxConstants.ALIGN_TOP),
-      alignSubmenu,
-    );
-    menu.addItem(
-      'Bottom',
-      null,
-      getAlignFn(mx.mxConstants.ALIGN_BOTTOM),
-      alignSubmenu,
-    );
-    menu.addItem(
-      'Left',
-      null,
-      getAlignFn(mx.mxConstants.ALIGN_LEFT),
-      alignSubmenu,
-    );
-    menu.addItem(
-      'Right',
-      null,
-      getAlignFn(mx.mxConstants.ALIGN_RIGHT),
-      alignSubmenu,
-    );
+
+    menu.addItem('Left', null, handleElementsAlign(ALIGN_LEFT), alignSubmenu);
     menu.addItem(
       'Center',
       null,
-      getAlignFn(mx.mxConstants.ALIGN_MIDDLE),
+      handleElementsAlign(ALIGN_CENTER),
+      alignSubmenu,
+    );
+    menu.addItem('Right', null, handleElementsAlign(ALIGN_RIGHT), alignSubmenu);
+
+    menu.addItem(
+      'Bottom',
+      null,
+      handleElementsAlign(ALIGN_BOTTOM),
       alignSubmenu,
     );
     menu.addItem(
       'Middle',
       null,
-      getAlignFn(mx.mxConstants.ALIGN_CENTER),
+      handleElementsAlign(ALIGN_MIDDLE),
       alignSubmenu,
     );
-  };
-}
+    menu.addItem('Top', null, handleElementsAlign(ALIGN_TOP), alignSubmenu);
+
+    return;
+  }
+
+  const cellId = cell.getId();
+
+  if (cell.isEdge()) {
+    menu.addItem(
+      'Direct to source',
+      null,
+      handleConnectionModify(cellId)({
+        direction: 'source',
+      }),
+    );
+    menu.addItem(
+      'Undirect',
+      null,
+      handleConnectionModify(cellId)({
+        direction: 'none',
+      }),
+    );
+    menu.addItem(
+      'Direct to target',
+      null,
+      handleConnectionModify(cellId)({
+        direction: 'target',
+      }),
+    );
+    menu.addItem(
+      'Straight style',
+      null,
+      handleConnectionModify(cellId)({
+        style: 'straight',
+      }),
+    );
+    menu.addItem(
+      'Relational style',
+      null,
+      handleConnectionModify(cellId)({
+        style: 'relational',
+      }),
+    );
+    menu.addItem('Delete', null, handleConnectionDelete(cellId));
+
+    return;
+  }
+
+  if (menu.graph.isPort(cell)) {
+    menu.addItem(
+      'Color',
+      null,
+      handlePortModify(cellId)({ color: getSelectedColor() }),
+    );
+    menu.addItem('Delete', null, handlePortDelete(cellId));
+    // menu.addItem('Edit', null, () => { });
+
+    return;
+  }
+
+  // it must be an agent - everything else checked
+  menu.addItem('Add page', null, handlePageAdd(cellId));
+  menu.addItem('Add port', null, handlePortAdd(cellId));
+  menu.addItem(
+    'Start in Initial State',
+    null,
+    handleAgentModify(cellId)({
+      running: 0,
+    }),
+  );
+  menu.addItem(
+    'Start in Running State',
+    null,
+    handleAgentModify(cellId)({
+      running: 1,
+    }),
+  );
+  menu.addItem('Remove hierarchy', null, handleHierarchyRemove(cellId));
+  menu.addItem(
+    'Color',
+    null,
+    handleAgentModify(cellId)({ color: getSelectedColor() }),
+  );
+  menu.addItem('Delete', null, handleAgentDelete(cellId));
+};

@@ -30,6 +30,7 @@ import { Tabs } from './Tab/Tabs';
 import EditorButtonSave from './EditorSaveButton/EditorButtonSave';
 import { EditorButton } from './EditorButton/EditorButton';
 import { IPartialModification } from '../models/project';
+import { createPopupMenu } from '../utils/mxGraphPopupMenu';
 
 const style = require('./AlvisGraphPanel.scss');
 
@@ -115,7 +116,7 @@ export class AlvisGraphPanel extends React.Component<
     this.addAgent({ x, y, active: isActive ? 1 : 0 });
   };
 
-  private addAgent = (agentData: Partial<IAgent>) => {
+  private addAgent = (agentData: Partial<IAgent>) => () => {
     const { onProjectModify, activePageId: activePageInternalId } = this.props;
     const agent = agentRecordFactory({
       // TODO: create util for creating objects like this.
@@ -408,6 +409,10 @@ export class AlvisGraphPanel extends React.Component<
     }
   };
 
+  getSelectedColor = (): string => {
+    return this.state.selectedColor;
+  }
+
   renderAgentToolbar() {
     const { alvisProject: { agents } } = this.props;
     const {
@@ -673,13 +678,13 @@ export class AlvisGraphPanel extends React.Component<
           <EditorButton
             icon="agent-active"
             title="drag&drop active agent"
-            onClick={() => this.addAgent({ active: 1 })}
+            onClick={this.addAgent({ active: 1 })}
             ref={this.addActiveAgentBtn}
           />
           <EditorButton
             icon="agent-passive"
             title="drag&drop passive agent"
-            onClick={() => this.addAgent({ active: 0 })}
+            onClick={this.addAgent({ active: 0 })}
             ref={this.addStaticAgentBtn}
           />
           <EditorButton
@@ -722,6 +727,21 @@ export class AlvisGraphPanel extends React.Component<
       onHierarchyRemove,
       openedPagesIds,
     } = this.props;
+    const popupMenuFactory = createPopupMenu({
+      addAgent: this.addAgent,
+      handleElementsAlign: this.handleElementsAlign,
+      onGetGraphImage: this.onGetGraphImage,
+      handleConnectionModify: this.handleConnectionModify,
+      handleConnectionDelete: this.handleConnectionDelete,
+      handlePortModify: this.handlePortModify,
+      handlePortDelete: this.handlePortDelete,
+      handlePageAdd: this.handlePageAdd,
+      handlePortAdd: this.handlePortAdd,
+      handleAgentModify: this.handleAgentModify,
+      handleAgentDelete: this.handleAgentDelete,
+      handleHierarchyRemove: this.handleHierarchyRemove,
+      getSelectedColor: this.getSelectedColor,
+    });
 
     const pagesElements = openedPagesIds.map((pageInternalId) =>
       this.getPageElements(pageInternalId),
@@ -755,6 +775,7 @@ export class AlvisGraphPanel extends React.Component<
             onPortClick={this.onPortClick}
             getNameFromUser={this.getNameFromUser}
             setSelection={this.setSelection}
+            popupMenuCreate={popupMenuFactory}
           />
         </Tab>
       );
