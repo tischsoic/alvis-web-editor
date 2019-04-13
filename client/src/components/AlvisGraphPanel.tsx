@@ -31,6 +31,7 @@ import EditorButtonSave from './EditorSaveButton/EditorButtonSave';
 import { EditorButton } from './EditorButton/EditorButton';
 import { IPartialModification } from '../models/project';
 import { createPopupMenu } from '../utils/mxGraphPopupMenu';
+import { getNextPortName } from '../utils/getNextPortName';
 
 const style = require('./AlvisGraphPanel.scss');
 
@@ -265,9 +266,14 @@ export class AlvisGraphPanel extends React.Component<
   };
 
   private handlePortAdd = (agentId: string) => () => {
+    const agentPorts = this.props.alvisProject.ports.filter(
+      (port) => port.agentInternalId === agentId,
+    );
+    const agentPortsNames = [...agentPorts.values()].map((port) => port.name);
+    const portName = getNextPortName(agentPortsNames);
     const port = portRecordFactory({
       internalId: newUuid(),
-      name: 'port_',
+      name: portName,
       agentInternalId: agentId,
       x: 0,
       y: 0.2,
@@ -411,7 +417,7 @@ export class AlvisGraphPanel extends React.Component<
 
   getSelectedColor = (): string => {
     return this.state.selectedColor;
-  }
+  };
 
   renderAgentToolbar() {
     const { alvisProject: { agents } } = this.props;
