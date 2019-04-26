@@ -1,0 +1,51 @@
+.c-hierarchy-tree-leaf {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+
+  padding-right: 56px;
+  position: relative;
+
+  &:hover {
+    .c-hierarchy-tree-leaf__btn {
+      display: flex;
+    }
+  }
+
+  &__input {
+    margin: 5px 5px 5px 10px;
+    height: 20px;
+    width: 100px;
+    font-size: 12px;
+  }
+
+  &__action-btns {
+    display: flex;
+    position: absolute;
+    right: 0;
+  }
+
+  &__input-btn,
+  &__btn {
+    line-height: 0;
+    padding: 4px;
+    box-sizing: border-box;
+    border: 0;
+    color: #333;
+    background-color: #fff;
+    border-radius: 50%;
+
+    &:hover {
+      background-color: #e6e6e6;
+    }
+  }
+
+  &__btn {
+    display: none;
+  }
+
+  &__btn-icon {
+    width: 20px;
+    height: 20px;
+  }
+}

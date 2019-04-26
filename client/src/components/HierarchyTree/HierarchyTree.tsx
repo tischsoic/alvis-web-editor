@@ -1,19 +1,11 @@
 import * as React from 'react';
-import {
-  IAgentRecord,
-  agentRecordFactory,
-  IPortRecord,
-  portRecordFactory,
-  IConnectionRecord,
-  connectionRecordFactory,
-  IIdentifiableElement,
-  IAlvisPageElement,
-  ConnectionDirection,
-  IPageRecord,
-} from '../models/alvisProject';
+import { IAgentRecord, IPageRecord } from '../../models/alvisProject';
 import { List, Map } from 'immutable';
 import { Button, Glyphicon } from 'react-bootstrap';
-import { IPartialModification } from '../models/project';
+import { IPartialModification } from '../../models/project';
+import { HierarchyTreeLeaf } from './HierarchyTreeLeaf';
+
+const style = require('./HierarchyTree.scss');
 
 export interface HierarchyTreeProps {
   pages: Map<string, IPageRecord>;
@@ -65,6 +57,14 @@ export class HierarchyTree extends React.Component<
     });
   };
 
+  private handlePageNameChange = (page: IPageRecord, newName: string) => {
+    const modifiedPage = page.set('name', newName);
+
+    this.props.onProjectModify({
+      pages: { modified: List([modifiedPage]) },
+    });
+  };
+
   getPageTree(page: IPageRecord) {
     const { onPageClick, onProjectModify } = this.props;
     const subPages = page.subPagesInternalIds.map((pageInternalId) =>
@@ -76,19 +76,13 @@ export class HierarchyTree extends React.Component<
 
     return (
       <li key={pageInternalId}>
-        <Button bsStyle="link" bsSize="small" onClick={() => onPageClick(page)}>
-          {page.name + (supAgent ? ' < ' + supAgent.name : '')}
-        </Button>
-        {page.name !== 'System' && (
-          <Button
-            bsStyle="danger"
-            bsSize="xsmall"
-            onClick={this.handlePageDelete(pageInternalId)}
-          >
-            <Glyphicon glyph="remove" />
-          </Button>
-        )}{' '}
-        {/* TO DO: store 'System' name in some config! */}
+        <HierarchyTreeLeaf
+          page={page}
+          supAgent={supAgent}
+          onPageClick={onPageClick}
+          onPageDelete={this.handlePageDelete}
+          onPageChangeName={this.handlePageNameChange}
+        />
         {subPagesTrees.size !== 0 ? <ul> {subPagesTrees} </ul> : null}
       </li>
     );
@@ -97,6 +91,10 @@ export class HierarchyTree extends React.Component<
   render() {
     const systemPage = this.getSystemPage();
 
-    return <ul className={'hierarchy-tree'}>{this.getPageTree(systemPage)}</ul>;
+    return (
+      <div className="c-hierarchy-tree">
+        <ul className={'hierarchy-tree'}>{this.getPageTree(systemPage)}</ul>
+      </div>
+    );
   }
 }

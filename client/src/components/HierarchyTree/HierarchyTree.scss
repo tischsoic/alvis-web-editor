@@ -1,0 +1,9 @@
+.c-hierarchy-tree {
+  overflow: auto;
+  height: 100%;
+
+  &__branch {
+    display: flex;
+    flex-wrap: nowrap;
+  }
+}

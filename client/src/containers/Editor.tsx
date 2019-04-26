@@ -18,7 +18,7 @@ import { Nav, NavItem, Grid, Row, Col, Modal, Button } from 'react-bootstrap';
 
 import { AlvisGraph } from '../components/AlvisGraph';
 import { AlvisGraphPanel } from '../components/AlvisGraphPanel';
-import { HierarchyTree } from '../components/HierarchyTree';
+import { HierarchyTree } from '../components/HierarchyTree/HierarchyTree';
 
 // import mxgraph = require('mxgraph');
 import { mx } from '../utils/mx';
