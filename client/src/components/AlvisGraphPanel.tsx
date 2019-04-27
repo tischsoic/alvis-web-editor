@@ -114,7 +114,7 @@ export class AlvisGraphPanel extends React.Component<
   };
 
   private onAgentDrop = (x, y, isActive: boolean) => {
-    this.addAgent({ x, y, active: isActive ? 1 : 0 });
+    this.addAgent({ x, y, active: isActive ? 1 : 0 })();
   };
 
   private addAgent = (agentData: Partial<IAgent>) => () => {
